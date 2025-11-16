@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GymSystem.Abstractions\GymSystem.Application.Abstractions.csproj" />
+    <ProjectReference Include="..\GymSystem.Common\GymSystem.Common.csproj" />
+    <ProjectReference Include="..\GymSystem.Domain\GymSystem.Domain.csproj" />
+    <ProjectReference Include="..\GymSystem.Infastructure\GymSystem.Infastructure.csproj" />
+    <ProjectReference Include="..\GymSystem.Persistance\GymSystem.Persistance.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
+  </ItemGroup>
+
+</Project>

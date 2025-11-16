@@ -1,0 +1,77 @@
+﻿@model GymSystem.Mvc.Models.CreateMemberViewModel
+
+@{
+    ViewData["Title"] = "Yeni Üye Ekle";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Yeni Üye Ekle</h2>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+                        
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FirstName" class="form-label">Ad</label>
+                                <input asp-for="FirstName" class="form-control" placeholder="Ad giriniz" />
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="LastName" class="form-label">Soyad</label>
+                                <input asp-for="LastName" class="form-control" placeholder="Soyad giriniz" />
+                                <span asp-validation-for="LastName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">Email</label>
+                            <input asp-for="Email" type="email" class="form-control" placeholder="ornek@email.com" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="PhoneNumber" class="form-label">Telefon</label>
+                            <input asp-for="PhoneNumber" type="tel" class="form-control" placeholder="5551234567" />
+                            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="MembershipStartDate" class="form-label">Üyelik Başlangıç Tarihi</label>
+                                <input asp-for="MembershipStartDate" type="date" class="form-control" />
+                                <span asp-validation-for="MembershipStartDate" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="MembershipEndDate" class="form-label">Üyelik Bitiş Tarihi (Opsiyonel)</label>
+                                <input asp-for="MembershipEndDate" type="date" class="form-control" />
+                                <span asp-validation-for="MembershipEndDate" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a asp-action="Index" class="btn btn-secondary me-2">
+                                <i class="bi bi-arrow-left"></i> İptal
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Kaydet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

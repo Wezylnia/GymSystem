@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GymSystem.Common\GymSystem.Common.csproj" />
+    <ProjectReference Include="..\GymSystem.Domain\GymSystem.Domain.csproj" />
+    <ProjectReference Include="..\GymSystem.Infastructure\GymSystem.Infastructure.csproj" />
+  </ItemGroup>
+
+</Project>
