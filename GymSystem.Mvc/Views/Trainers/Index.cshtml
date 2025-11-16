@@ -1,0 +1,138 @@
+﻿@model List<GymSystem.Mvc.Models.TrainerViewModel>
+
+@{
+    ViewData["Title"] = "Antrenörler";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-person-badge"></i> Antrenörler</h1>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Yeni Antrenör Ekle
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @ViewBag.ErrorMessage
+        </div>
+    }
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="row">
+            @foreach (var trainer in Model)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
+                                     style="width: 60px; height: 60px; font-size: 24px;">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <h5 class="card-title mb-0">@trainer.FirstName @trainer.LastName</h5>
+                                    @if (!string.IsNullOrEmpty(trainer.GymLocationName))
+                                    {
+                                        <small class="text-muted">@trainer.GymLocationName</small>
+                                    }
+                                </div>
+                            </div>
+                            
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-envelope"></i> @trainer.Email</li>
+                                @if (!string.IsNullOrEmpty(trainer.PhoneNumber))
+                                {
+                                    <li><i class="bi bi-telephone"></i> @trainer.PhoneNumber</li>
+                                }
+                            </ul>
+
+                            @if (!string.IsNullOrEmpty(trainer.Bio))
+                            {
+                                <p class="card-text"><small>@trainer.Bio</small></p>
+                            }
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between align-items-center">
+                                @if (trainer.IsActive)
+                                {
+                                    <span class="badge bg-success">Aktif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Pasif</span>
+                                }
+                                <div>
+                                    <a asp-action="Edit" asp-route-id="@trainer.Id" class="btn btn-sm btn-warning">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal@(trainer.Id)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete Modal -->
+                <div class="modal fade" id="deleteModal@(trainer.Id)" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Antrenörü Sil</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <strong>@trainer.FirstName @trainer.LastName</strong> antrenörünü silmek istediğinizden emin misiniz?
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                                <form asp-action="Delete" asp-route-id="@trainer.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-danger">Sil</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="alert">
+            <i class="bi bi-info-circle"></i> Henüz antrenör kaydı bulunmamaktadır.
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert-dismissible');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 3000);
+    </script>
+}

@@ -1,0 +1,130 @@
+﻿@model List<GymSystem.Mvc.Models.GymLocationViewModel>
+
+@{
+    ViewData["Title"] = "Spor Salonları";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Spor Salonları</h1>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Yeni Salon Ekle
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @ViewBag.ErrorMessage
+        </div>
+    }
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="row">
+            @foreach (var gym in Model)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">@gym.Name</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">@gym.City</h6>
+                            <p class="card-text">
+                                <i class="bi bi-geo-alt"></i> @gym.Address<br/>
+                                @if (!string.IsNullOrEmpty(gym.PhoneNumber))
+                                {
+                                    <i class="bi bi-telephone"></i> <text>@gym.PhoneNumber</text><br/>
+                                }
+                                @if (!string.IsNullOrEmpty(gym.Email))
+                                {
+                                    <i class="bi bi-envelope"></i> <text>@gym.Email</text><br/>
+                                }
+                            </p>
+                            @if (!string.IsNullOrEmpty(gym.Description))
+                            {
+                                <p class="card-text"><small class="text-muted">@gym.Description</small></p>
+                            }
+                            <div class="d-flex justify-content-between align-items-center">
+                                @if (gym.IsActive)
+                                {
+                                    <span class="badge bg-success">Aktif</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Pasif</span>
+                                }
+                                <div>
+                                    <a asp-action="Edit" asp-route-id="@gym.Id" class="btn btn-sm btn-warning">
+                                        <i class="bi bi-pencil"></i> Düzenle
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal@(gym.Id)">
+                                        <i class="bi bi-trash"></i> Sil
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer text-muted">
+                            <small>Kayıt: @gym.CreatedAt.ToString("dd.MM.yyyy")</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete Modal -->
+                <div class="modal fade" id="deleteModal@(gym.Id)" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Salonu Sil</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <strong>@gym.Name</strong> salonunu silmek istediğinizden emin misiniz?
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                                <form asp-action="Delete" asp-route-id="@gym.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-danger">Sil</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="alert">
+            <i class="bi bi-info-circle"></i> Henüz spor salonu kaydı bulunmamaktadır.
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert-dismissible');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 3000);
+    </script>
+}

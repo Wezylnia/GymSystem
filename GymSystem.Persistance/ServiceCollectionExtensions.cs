@@ -1,5 +1,7 @@
-﻿using GymSystem.Persistance.Contexts;
+﻿using GymSystem.Domain.Entities;
+using GymSystem.Persistance.Contexts;
 using GymSystem.Persistance.Database;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,12 +21,26 @@ public static class ServiceCollectionExtensions
             options.ConfigureDatabase("GymDbContext", configuration["Data:Gym:MigrationsAssembly"], settingsFileName);
         });
 
-        // İleride başka DbContext'ler eklenebilir
-        // Örnek:
-        // serviceCollection.AddDbContext<AnotherDbContext>((serviceProvider, options) =>
-        // {
-        //     options.ConfigureDatabase("AnotherDbContext", configuration["Data:Another:MigrationsAssembly"], settingsFileName);
-        // });
+        // ASP.NET Core Identity
+        serviceCollection.AddIdentity<AppUser, IdentityRole<int>>(options =>
+        {
+            // Password settings
+            options.Password.RequireDigit = false;
+            options.Password.RequireLowercase = false;
+            options.Password.RequireNonAlphanumeric = false;
+            options.Password.RequireUppercase = false;
+            options.Password.RequiredLength = 3;
+            options.Password.RequiredUniqueChars = 0;
+
+            // User settings
+            options.User.RequireUniqueEmail = true;
+
+            // SignIn settings
+            options.SignIn.RequireConfirmedEmail = false;
+            options.SignIn.RequireConfirmedPhoneNumber = false;
+        })
+        .AddEntityFrameworkStores<GymDbContext>()
+        .AddDefaultTokenProviders();
     }
 
     public static void ConfigureDatabase(
@@ -49,22 +65,5 @@ public static class ServiceCollectionExtensions
                 }
             });
         }
-
-        // İleride başka context'ler için configuration eklenebilir
-        // if (contextName == "AnotherDbContext")
-        // {
-        //     var connectionStringManager = new ConnectionStringManager(
-        //         connectionStringKey: "AnotherDbContext", 
-        //         settingsFileName: settingsFileName);
-        //     
-        //     string connectionString = connectionStringManager.GetConnectionString();
-        //     builder.UseSqlServer(connectionString, sqlOptions =>
-        //     {
-        //         if (!string.IsNullOrEmpty(migrationAssembly))
-        //         {
-        //             sqlOptions.MigrationsAssembly(migrationAssembly);
-        //         }
-        //     });
-        // }
     }
 }

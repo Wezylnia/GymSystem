@@ -1,49 +1,49 @@
 ﻿using GymSystem.Domain.Entities;
+using GymSystem.Persistance.Data;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace GymSystem.Persistance.Contexts;
 
-public class GymDbContext : DbContext
+public class GymDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
 {
     public GymDbContext(DbContextOptions<GymDbContext> options)
         : base(options)
     {
     }
 
-    public DbSet<Member> Members { get; set; }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder); // Identity tables için gerekli
+
         modelBuilder.HasDefaultSchema("public");
 
-        // Member entity configuration
-        modelBuilder.Entity<Member>(entity =>
+        // Tüm mapping'leri otomatik yükle (Mappings klasöründeki IEntityTypeConfiguration'lar)
+        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+        // AppUser - Member ilişkisi
+        modelBuilder.Entity<AppUser>(entity =>
         {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).UseIdentityAlwaysColumn();
-            entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.Email).IsRequired().HasMaxLength(200);
-            entity.Property(e => e.PhoneNumber).HasMaxLength(20);
-            entity.Property(e => e.IsActive).HasDefaultValue(true);
-            
-            // PostgreSQL timestamp without time zone
-            entity.Property(e => e.CreatedAt)
-                .HasColumnType("timestamp without time zone")
-                .HasDefaultValueSql("CURRENT_TIMESTAMP");
-            
-            entity.Property(e => e.UpdatedAt)
-                .HasColumnType("timestamp without time zone");
-            
-            entity.Property(e => e.MembershipStartDate)
-                .HasColumnType("timestamp without time zone");
-            
-            entity.Property(e => e.MembershipEndDate)
-                .HasColumnType("timestamp without time zone");
-            
-            entity.ToTable("members");
+            entity.HasOne(u => u.Member)
+                .WithOne()
+                .HasForeignKey<AppUser>(u => u.MemberId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
-        base.OnModelCreating(modelBuilder);
+        // Seed Data
+        DatabaseSeeder.SeedData(modelBuilder);
+        IdentitySeeder.SeedIdentityData(modelBuilder);
+    }
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        // PostgreSQL için DateTime'ı timestamp without time zone olarak kullan
+        configurationBuilder.Properties<DateTime>()
+            .HaveColumnType("timestamp without time zone");
+            
+        configurationBuilder.Properties<DateTime?>()
+            .HaveColumnType("timestamp without time zone");
     }
 }
