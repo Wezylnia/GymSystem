@@ -1,11 +1,13 @@
 ﻿using GymSystem.Application.Abstractions.Services;
 using GymSystem.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymSystem.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ServicesController : ControllerBase
 {
     private readonly IServiceService _serviceService;
@@ -18,6 +20,7 @@ public class ServicesController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll()
     {
         var response = await _serviceService.GetAllAsync();
@@ -31,6 +34,7 @@ public class ServicesController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> Get(int id)
     {
         var response = await _serviceService.GetByIdAsync(id);
@@ -44,6 +48,7 @@ public class ServicesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> Create(Service service)
     {
         var response = await _serviceService.CreateAsync(service);
@@ -57,6 +62,7 @@ public class ServicesController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> Update(int id, Service service)
     {
         if (id != service.Id)
@@ -75,6 +81,7 @@ public class ServicesController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> Delete(int id)
     {
         var response = await _serviceService.DeleteAsync(id);

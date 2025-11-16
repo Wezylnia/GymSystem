@@ -4,7 +4,7 @@ namespace GymSystem.Domain.Entities;
 
 /// <summary>
 /// Uygulama kullanıcısı - IdentityUser'dan türetilmiş
-/// Member tablosu ile 1-1 ilişki (opsiyonel)
+/// 3 Rol: Admin, GymOwner, Member
 /// </summary>
 public class AppUser : IdentityUser<int>
 {
@@ -24,14 +24,24 @@ public class AppUser : IdentityUser<int>
     public int? MemberId { get; set; }
     
     /// <summary>
-    /// Navigation property
+    /// GymLocation ile ilişki (opsiyonel - sadece GymOwner rolündekiler için)
+    /// </summary>
+    public int? GymLocationId { get; set; }
+    
+    /// <summary>
+    /// Member navigation property
     /// </summary>
     public Member? Member { get; set; }
     
     /// <summary>
+    /// GymLocation navigation property
+    /// </summary>
+    public GymLocation? GymLocation { get; set; }
+    
+    /// <summary>
     /// Kayıt tarihi
     /// </summary>
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     /// <summary>
     /// Aktif mi?

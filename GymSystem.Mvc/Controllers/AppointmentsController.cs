@@ -1,4 +1,5 @@
 ﻿using GymSystem.Mvc.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Text;
@@ -6,6 +7,7 @@ using System.Text.Json;
 
 namespace GymSystem.Mvc.Controllers;
 
+[Authorize]
 public class AppointmentsController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;
@@ -30,9 +32,29 @@ public class AppointmentsController : Controller
                 var appointments = JsonSerializer.Deserialize<List<AppointmentViewModel>>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
-                });
+                }) ?? new List<AppointmentViewModel>();
 
-                return View(appointments ?? new List<AppointmentViewModel>());
+                // Member ise sadece kendi randevularını göster
+                if (User.IsInRole("Member"))
+                {
+                    var memberIdClaim = User.FindFirst("MemberId")?.Value;
+                    if (int.TryParse(memberIdClaim, out var memberId))
+                    {
+                        appointments = appointments.Where(a => a.MemberId == memberId).ToList();
+                    }
+                }
+                // GymOwner ise kendi salonunun randevularını göster
+                else if (User.IsInRole("GymOwner"))
+                {
+                    var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+                    if (int.TryParse(gymLocationId, out var locationId))
+                    {
+                        // Salon bazlı filtreleme için API'ye parametre gönderilmeli
+                        // Şimdilik basit filtreleme
+                    }
+                }
+
+                return View(appointments);
             }
             else
             {
@@ -58,6 +80,16 @@ public class AppointmentsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateAppointmentViewModel model)
     {
+        // Member ise kendi ID'sini otomatik set et
+        if (User.IsInRole("Member"))
+        {
+            var memberIdClaim = User.FindFirst("MemberId")?.Value;
+            if (int.TryParse(memberIdClaim, out var memberId))
+            {
+                model.MemberId = memberId;
+            }
+        }
+
         if (!ModelState.IsValid)
         {
             await LoadDropdowns();
@@ -68,7 +100,7 @@ public class AppointmentsController : Controller
         {
             var client = _httpClientFactory.CreateClient("GymApi");
             
-            // Service bilgisini al (süre ve fiyat için)
+            // Service bilgisini al
             var serviceResponse = await client.GetAsync($"/api/services/{model.ServiceId}");
             if (!serviceResponse.IsSuccessStatusCode)
             {
@@ -83,7 +115,6 @@ public class AppointmentsController : Controller
                 PropertyNameCaseInsensitive = true
             });
 
-            // Appointment nesnesi oluştur
             var appointment = new
             {
                 MemberId = model.MemberId,
@@ -144,6 +175,7 @@ public class AppointmentsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = "AdminOrGymOwner")]
     public async Task<IActionResult> Confirm(int id)
     {
         try
@@ -271,21 +303,32 @@ public class AppointmentsController : Controller
         {
             var client = _httpClientFactory.CreateClient("GymApi");
 
-            // Members
-            var membersResponse = await client.GetAsync("/api/members");
-            if (membersResponse.IsSuccessStatusCode)
+            // Members - Member rolündeyse kendini otomatik set et
+            if (User.IsInRole("Member"))
             {
-                var content = await membersResponse.Content.ReadAsStringAsync();
-                var members = JsonSerializer.Deserialize<List<MemberViewModel>>(content, new JsonSerializerOptions
+                var memberIdClaim = User.FindFirst("MemberId")?.Value;
+                if (int.TryParse(memberIdClaim, out var memberId))
                 {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                ViewBag.Members = new SelectList(members, "Id", "FirstName");
+                    ViewBag.Members = new SelectList(new[] { new { Id = memberId, Name = User.Identity!.Name } }, "Id", "Name");
+                }
             }
             else
             {
-                ViewBag.Members = new SelectList(Enumerable.Empty<SelectListItem>());
+                var membersResponse = await client.GetAsync("/api/members");
+                if (membersResponse.IsSuccessStatusCode)
+                {
+                    var content = await membersResponse.Content.ReadAsStringAsync();
+                    var members = JsonSerializer.Deserialize<List<MemberViewModel>>(content, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    ViewBag.Members = new SelectList(members, "Id", "FirstName");
+                }
+                else
+                {
+                    ViewBag.Members = new SelectList(Enumerable.Empty<SelectListItem>());
+                }
             }
 
             // GymLocations
@@ -296,7 +339,17 @@ public class AppointmentsController : Controller
                 var gyms = JsonSerializer.Deserialize<List<GymLocationViewModel>>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
-                });
+                }) ?? new List<GymLocationViewModel>();
+
+                // GymOwner ise sadece kendi salonu
+                if (User.IsInRole("GymOwner"))
+                {
+                    var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+                    if (int.TryParse(gymLocationId, out var locationId))
+                    {
+                        gyms = gyms.Where(g => g.Id == locationId).ToList();
+                    }
+                }
 
                 ViewBag.GymLocations = new SelectList(gyms, "Id", "Name");
             }

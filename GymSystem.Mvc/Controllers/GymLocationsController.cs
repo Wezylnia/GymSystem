@@ -1,16 +1,21 @@
-﻿using GymSystem.Mvc.Models;
+﻿using GymSystem.Domain.Entities;
+using GymSystem.Mvc.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.Text.Json;
 
 namespace GymSystem.Mvc.Controllers;
 
+[Authorize(Policy = "AdminOrGymOwner")]
 public class GymLocationsController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<GymLocationsController> _logger;
 
-    public GymLocationsController(IHttpClientFactory httpClientFactory, ILogger<GymLocationsController> logger)
+    public GymLocationsController(
+        IHttpClientFactory httpClientFactory,
+        ILogger<GymLocationsController> logger)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
@@ -29,9 +34,19 @@ public class GymLocationsController : Controller
                 var gyms = JsonSerializer.Deserialize<List<GymLocationViewModel>>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
-                });
+                }) ?? new List<GymLocationViewModel>();
 
-                return View(gyms ?? new List<GymLocationViewModel>());
+                // GymOwner ise sadece kendi salonunu göster
+                if (User.IsInRole("GymOwner"))
+                {
+                    var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+                    if (int.TryParse(gymLocationId, out var locationId))
+                    {
+                        gyms = gyms.Where(g => g.Id == locationId).ToList();
+                    }
+                }
+
+                return View(gyms);
             }
             else
             {
@@ -47,6 +62,7 @@ public class GymLocationsController : Controller
         }
     }
 
+    [Authorize(Policy = "AdminOnly")]
     public IActionResult Create()
     {
         return View();
@@ -54,6 +70,7 @@ public class GymLocationsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Create(GymLocationViewModel model)
     {
         if (!ModelState.IsValid)
@@ -64,10 +81,10 @@ public class GymLocationsController : Controller
         try
         {
             var client = _httpClientFactory.CreateClient("GymApi");
-            
+
             var json = JsonSerializer.Serialize(model);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-            
+
             var response = await client.PostAsync("/api/gymlocations", content);
 
             if (response.IsSuccessStatusCode)
@@ -78,9 +95,9 @@ public class GymLocationsController : Controller
             else
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("Spor salonu eklenirken hata oluştu. Status Code: {StatusCode}, Error: {Error}", 
+                _logger.LogError("Spor salonu eklenirken hata oluştu. Status Code: {StatusCode}, Error: {Error}",
                     response.StatusCode, errorContent);
-                
+
                 ModelState.AddModelError("", "Spor salonu eklenirken bir hata oluştu.");
                 return View(model);
             }
@@ -95,6 +112,16 @@ public class GymLocationsController : Controller
 
     public async Task<IActionResult> Edit(int id)
     {
+        // GymOwner yetki kontrolü
+        if (User.IsInRole("GymOwner"))
+        {
+            var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+            if (!int.TryParse(gymLocationId, out var locationId) || locationId != id)
+            {
+                return RedirectToAction("AccessDenied", "Account");
+            }
+        }
+
         try
         {
             var client = _httpClientFactory.CreateClient("GymApi");
@@ -128,6 +155,16 @@ public class GymLocationsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, GymLocationViewModel model)
     {
+        // GymOwner yetki kontrolü
+        if (User.IsInRole("GymOwner"))
+        {
+            var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+            if (!int.TryParse(gymLocationId, out var locationId) || locationId != id)
+            {
+                return RedirectToAction("AccessDenied", "Account");
+            }
+        }
+
         if (id != model.Id)
         {
             return BadRequest();
@@ -141,10 +178,10 @@ public class GymLocationsController : Controller
         try
         {
             var client = _httpClientFactory.CreateClient("GymApi");
-            
+
             var json = JsonSerializer.Serialize(model);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-            
+
             var response = await client.PutAsync($"/api/gymlocations/{id}", content);
 
             if (response.IsSuccessStatusCode)
@@ -155,9 +192,9 @@ public class GymLocationsController : Controller
             else
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("Spor salonu güncellenirken hata oluştu. Status Code: {StatusCode}, Error: {Error}", 
+                _logger.LogError("Spor salonu güncellenirken hata oluştu. Status Code: {StatusCode}, Error: {Error}",
                     response.StatusCode, errorContent);
-                
+
                 ModelState.AddModelError("", "Spor salonu güncellenirken bir hata oluştu.");
                 return View(model);
             }
@@ -172,6 +209,7 @@ public class GymLocationsController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = "AdminOnly")]
     public async Task<IActionResult> Delete(int id)
     {
         try

@@ -1,11 +1,13 @@
 ﻿using GymSystem.Application.Abstractions.Services;
 using GymSystem.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymSystem.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class MembersController : ControllerBase
 {
     private readonly IMemberService _memberService;
@@ -18,6 +20,7 @@ public class MembersController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> GetAll()
     {
         var response = await _memberService.GetAllAsync();
@@ -44,6 +47,7 @@ public class MembersController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> Create(Member member)
     {
         var response = await _memberService.CreateAsync(member);
@@ -75,6 +79,7 @@ public class MembersController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
         var response = await _memberService.DeleteAsync(id);

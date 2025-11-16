@@ -1,4 +1,5 @@
 ﻿using GymSystem.Mvc.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Text;
@@ -6,6 +7,7 @@ using System.Text.Json;
 
 namespace GymSystem.Mvc.Controllers;
 
+[Authorize(Policy = "AdminOrGymOwner")]
 public class TrainersController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;
@@ -30,9 +32,19 @@ public class TrainersController : Controller
                 var trainers = JsonSerializer.Deserialize<List<TrainerViewModel>>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
-                });
+                }) ?? new List<TrainerViewModel>();
 
-                return View(trainers ?? new List<TrainerViewModel>());
+                // GymOwner ise sadece kendi salonunun antrenörlerini göster
+                if (User.IsInRole("GymOwner"))
+                {
+                    var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+                    if (int.TryParse(gymLocationId, out var locationId))
+                    {
+                        trainers = trainers.Where(t => t.GymLocationId == locationId).ToList();
+                    }
+                }
+
+                return View(trainers);
             }
             else
             {
@@ -58,6 +70,16 @@ public class TrainersController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(TrainerViewModel model)
     {
+        // GymOwner için salon otomatik set
+        if (User.IsInRole("GymOwner"))
+        {
+            var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+            if (int.TryParse(gymLocationId, out var locationId))
+            {
+                model.GymLocationId = locationId;
+            }
+        }
+
         if (!ModelState.IsValid)
         {
             await LoadGymLocations();
@@ -113,6 +135,16 @@ public class TrainersController : Controller
                     PropertyNameCaseInsensitive = true
                 });
 
+                // GymOwner yetki kontrolü
+                if (User.IsInRole("GymOwner"))
+                {
+                    var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+                    if (trainer != null && int.TryParse(gymLocationId, out var locationId) && trainer.GymLocationId != locationId)
+                    {
+                        return RedirectToAction("AccessDenied", "Account");
+                    }
+                }
+
                 await LoadGymLocations();
                 return View(trainer);
             }
@@ -137,6 +169,16 @@ public class TrainersController : Controller
         if (id != model.Id)
         {
             return BadRequest();
+        }
+
+        // GymOwner yetki kontrolü
+        if (User.IsInRole("GymOwner"))
+        {
+            var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+            if (int.TryParse(gymLocationId, out var locationId) && model.GymLocationId != locationId)
+            {
+                return RedirectToAction("AccessDenied", "Account");
+            }
         }
 
         if (!ModelState.IsValid)
@@ -219,7 +261,17 @@ public class TrainersController : Controller
                 var gyms = JsonSerializer.Deserialize<List<GymLocationViewModel>>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
-                });
+                }) ?? new List<GymLocationViewModel>();
+
+                // GymOwner ise sadece kendi salonunu göster
+                if (User.IsInRole("GymOwner"))
+                {
+                    var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+                    if (int.TryParse(gymLocationId, out var locationId))
+                    {
+                        gyms = gyms.Where(g => g.Id == locationId).ToList();
+                    }
+                }
 
                 ViewBag.GymLocations = new SelectList(gyms, "Id", "Name");
             }

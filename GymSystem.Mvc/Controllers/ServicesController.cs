@@ -1,4 +1,6 @@
-﻿using GymSystem.Mvc.Models;
+﻿using GymSystem.Domain.Entities;
+using GymSystem.Mvc.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Text;
@@ -6,12 +8,15 @@ using System.Text.Json;
 
 namespace GymSystem.Mvc.Controllers;
 
+[Authorize(Policy = "AdminOrGymOwner")]
 public class ServicesController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ServicesController> _logger;
 
-    public ServicesController(IHttpClientFactory httpClientFactory, ILogger<ServicesController> logger)
+    public ServicesController(
+        IHttpClientFactory httpClientFactory, 
+        ILogger<ServicesController> logger)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
@@ -30,9 +35,19 @@ public class ServicesController : Controller
                 var services = JsonSerializer.Deserialize<List<ServiceViewModel>>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
-                });
+                }) ?? new List<ServiceViewModel>();
 
-                return View(services ?? new List<ServiceViewModel>());
+                // GymOwner ise sadece kendi salonunun hizmetlerini göster
+                if (User.IsInRole("GymOwner"))
+                {
+                    var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+                    if (int.TryParse(gymLocationId, out var locationId))
+                    {
+                        services = services.Where(s => s.GymLocationId == locationId).ToList();
+                    }
+                }
+
+                return View(services);
             }
             else
             {
@@ -58,6 +73,16 @@ public class ServicesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(ServiceViewModel model)
     {
+        // GymOwner için salon otomatik set
+        if (User.IsInRole("GymOwner"))
+        {
+            var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+            if (int.TryParse(gymLocationId, out var locationId))
+            {
+                model.GymLocationId = locationId;
+            }
+        }
+
         if (!ModelState.IsValid)
         {
             await LoadGymLocations();
@@ -113,6 +138,16 @@ public class ServicesController : Controller
                     PropertyNameCaseInsensitive = true
                 });
 
+                // GymOwner yetki kontrolü
+                if (User.IsInRole("GymOwner"))
+                {
+                    var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+                    if (service != null && int.TryParse(gymLocationId, out var locationId) && service.GymLocationId != locationId)
+                    {
+                        return RedirectToAction("AccessDenied", "Account");
+                    }
+                }
+
                 await LoadGymLocations();
                 return View(service);
             }
@@ -137,6 +172,16 @@ public class ServicesController : Controller
         if (id != model.Id)
         {
             return BadRequest();
+        }
+
+        // GymOwner yetki kontrolü
+        if (User.IsInRole("GymOwner"))
+        {
+            var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+            if (int.TryParse(gymLocationId, out var locationId) && model.GymLocationId != locationId)
+            {
+                return RedirectToAction("AccessDenied", "Account");
+            }
         }
 
         if (!ModelState.IsValid)
@@ -219,7 +264,17 @@ public class ServicesController : Controller
                 var gyms = JsonSerializer.Deserialize<List<GymLocationViewModel>>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
-                });
+                }) ?? new List<GymLocationViewModel>();
+
+                // GymOwner ise sadece kendi salonunu göster
+                if (User.IsInRole("GymOwner"))
+                {
+                    var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+                    if (int.TryParse(gymLocationId, out var locationId))
+                    {
+                        gyms = gyms.Where(g => g.Id == locationId).ToList();
+                    }
+                }
 
                 ViewBag.GymLocations = new SelectList(gyms, "Id", "Name");
             }

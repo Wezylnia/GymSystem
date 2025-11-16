@@ -30,6 +30,11 @@ public class GymDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
                 .WithOne()
                 .HasForeignKey<AppUser>(u => u.MemberId)
                 .OnDelete(DeleteBehavior.SetNull);
+                
+            entity.HasOne(u => u.GymLocation)
+                .WithMany()
+                .HasForeignKey(u => u.GymLocationId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         // Seed Data

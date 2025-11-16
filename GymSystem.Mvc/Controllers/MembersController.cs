@@ -1,10 +1,12 @@
 ﻿using GymSystem.Mvc.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.Text.Json;
 
 namespace GymSystem.Mvc.Controllers;
 
+[Authorize(Policy = "AdminOrGymOwner")]
 public class MembersController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;

@@ -10,4 +10,9 @@
     <Content Include="Properties\launchSettings.json" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\GymSystem.Infastructure\GymSystem.Infastructure.csproj" />
+    <ProjectReference Include="..\GymSystem.Domain\GymSystem.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
