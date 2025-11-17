@@ -1,4 +1,5 @@
-﻿using GymSystem.Domain.Entities;
+﻿using GymSystem.Common.Helpers;
+using GymSystem.Domain.Entities;
 using GymSystem.Mvc.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -126,7 +127,7 @@ public class AccountController : Controller
             PhoneNumber = model.PhoneNumber,
             EmailConfirmed = false,
             IsActive = true,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeHelper.Now  // PostgreSQL-safe DateTime
         };
 
         var result = await _userManager.CreateAsync(user, model.Password);

@@ -1,4 +1,5 @@
 ﻿using GymSystem.Application.Abstractions.Services;
+using GymSystem.Common.Helpers;
 using GymSystem.Domain.Entities;
 using GymSystem.Persistance.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -69,7 +70,7 @@ public class MembershipRequestService : IMembershipRequestService
                 Price = price,
                 Notes = notes,
                 Status = MembershipRequestStatus.Pending,
-                CreatedAt = DateTime.Now,
+                CreatedAt = DateTimeHelper.Now,
                 IsActive = true
             };
 
@@ -154,22 +155,23 @@ public class MembershipRequestService : IMembershipRequestService
             request.Status = MembershipRequestStatus.Approved;
             request.AdminNotes = adminNotes;
             request.ApprovedBy = approvedByUserId;
-            request.ApprovedAt = DateTime.Now;
-            request.UpdatedAt = DateTime.Now;
+            request.ApprovedAt = DateTimeHelper.Now;
+            request.UpdatedAt = DateTimeHelper.Now;
 
             // Member'ın üyelik tarihlerini ve salon bilgisini güncelle
             var member = await _context.Set<Member>().FindAsync(request.MemberId);
             if (member != null)
             {
-                var startDate = member.MembershipEndDate > DateTime.Now 
+                var now = DateTimeHelper.Now;
+                var startDate = member.MembershipEndDate > now
                     ? member.MembershipEndDate.Value 
-                    : DateTime.Now;
+                    : now;
                     
                 member.MembershipStartDate = startDate;
-                member.MembershipEndDate = startDate.AddMonths((int)request.Duration);
-                member.CurrentGymLocationId = request.GymLocationId; // Aktif salon üyeliğini kaydet
+                member.MembershipEndDate = startDate.AddMonthsSafe((int)request.Duration);
+                member.CurrentGymLocationId = request.GymLocationId;
                 member.IsActive = true;
-                member.UpdatedAt = DateTime.Now;
+                member.UpdatedAt = DateTimeHelper.Now;
             }
 
             await _context.SaveChangesAsync();
@@ -204,8 +206,8 @@ public class MembershipRequestService : IMembershipRequestService
             request.Status = MembershipRequestStatus.Rejected;
             request.AdminNotes = adminNotes;
             request.ApprovedBy = rejectedByUserId;
-            request.RejectedAt = DateTime.Now;
-            request.UpdatedAt = DateTime.Now;
+            request.RejectedAt = DateTimeHelper.Now;
+            request.UpdatedAt = DateTimeHelper.Now;
 
             await _context.SaveChangesAsync();
 
@@ -237,7 +239,7 @@ public class MembershipRequestService : IMembershipRequestService
             }
 
             request.IsActive = false;
-            request.UpdatedAt = DateTime.Now;
+            request.UpdatedAt = DateTimeHelper.Now;
             await _context.SaveChangesAsync();
 
             _logger.LogInformation("Üyelik talebi silindi. Request ID: {RequestId}", id);

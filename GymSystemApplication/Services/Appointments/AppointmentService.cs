@@ -1,5 +1,6 @@
 ﻿using GymSystem.Application.Abstractions.Services;
 using GymSystem.Common.Factory.Managers;
+using GymSystem.Common.Helpers;
 using GymSystem.Common.Models;
 using GymSystem.Common.Services;
 using GymSystem.Domain.Entities;
@@ -196,7 +197,7 @@ public class AppointmentService : GenericCrudService<Appointment>, IAppointmentS
 
             // 4. Randevuyu oluştur
             appointment.Status = AppointmentStatus.Pending;
-            appointment.CreatedAt = DateTime.Now;
+            appointment.CreatedAt = DateTimeHelper.Now;
             appointment.IsActive = true;
 
             var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Appointment>();
@@ -244,7 +245,7 @@ public class AppointmentService : GenericCrudService<Appointment>, IAppointmentS
             }
 
             appointment.Status = AppointmentStatus.Confirmed;
-            appointment.UpdatedAt = DateTime.Now;
+            appointment.UpdatedAt = DateTimeHelper.Now;
 
             await repository.UpdateAsync(appointment);
             await repository.SaveChangesAsync();
@@ -299,7 +300,7 @@ public class AppointmentService : GenericCrudService<Appointment>, IAppointmentS
             }
 
             appointment.Status = AppointmentStatus.Cancelled;
-            appointment.UpdatedAt = DateTime.Now;
+            appointment.UpdatedAt = DateTimeHelper.Now;
             if (!string.IsNullOrEmpty(reason))
             {
                 appointment.Notes = $"İptal Nedeni: {reason}";

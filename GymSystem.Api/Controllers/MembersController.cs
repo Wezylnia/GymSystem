@@ -1,4 +1,5 @@
 ﻿using GymSystem.Application.Abstractions.Services;
+using GymSystem.Common.Helpers;
 using GymSystem.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -59,10 +60,10 @@ public class MembersController : ControllerBase
             LastName = dto.LastName,
             Email = dto.Email,
             PhoneNumber = dto.PhoneNumber,
-            MembershipStartDate = dto.MembershipStartDate,
-            MembershipEndDate = dto.MembershipEndDate,
+            MembershipStartDate = dto.MembershipStartDate.ToUnspecified(),
+            MembershipEndDate = dto.MembershipEndDate.ToUnspecified(),
             IsActive = true,
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTimeHelper.Now
         };
 
         var response = await _memberService.CreateAsync(member);
@@ -99,9 +100,9 @@ public class MembersController : ControllerBase
         member.LastName = dto.LastName;
         member.Email = dto.Email;
         member.PhoneNumber = dto.PhoneNumber;
-        member.MembershipStartDate = dto.MembershipStartDate;
-        member.MembershipEndDate = dto.MembershipEndDate;
-        member.UpdatedAt = DateTime.Now;
+        member.MembershipStartDate = dto.MembershipStartDate.ToUnspecified();
+        member.MembershipEndDate = dto.MembershipEndDate.ToUnspecified();
+        member.UpdatedAt = DateTimeHelper.Now;
 
         var response = await _memberService.UpdateAsync(id, member);
         

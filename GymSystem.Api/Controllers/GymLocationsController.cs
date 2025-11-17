@@ -1,4 +1,5 @@
 ﻿using GymSystem.Application.Abstractions.Services;
+using GymSystem.Common.Helpers;
 using GymSystem.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -65,7 +66,7 @@ public class GymLocationsController : ControllerBase
             Email = dto.Email,
             Description = dto.Description,
             IsActive = true,
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTimeHelper.Now
         };
 
         var response = await _gymLocationService.CreateAsync(gymLocation);
@@ -106,7 +107,7 @@ public class GymLocationsController : ControllerBase
         gymLocation.Email = dto.Email;
         gymLocation.Description = dto.Description;
         gymLocation.IsActive = dto.IsActive;
-        gymLocation.UpdatedAt = DateTime.Now;
+        gymLocation.UpdatedAt = DateTimeHelper.Now;
 
         var response = await _gymLocationService.UpdateAsync(id, gymLocation);
         

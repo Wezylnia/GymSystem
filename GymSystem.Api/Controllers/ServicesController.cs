@@ -1,4 +1,5 @@
 ﻿using GymSystem.Application.Abstractions.Services;
+using GymSystem.Common.Helpers;
 using GymSystem.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
@@ -59,7 +60,7 @@ public class ServicesController : ControllerBase
             Price = dto.Price,
             GymLocationId = dto.GymLocationId,
             IsActive = true,
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTimeHelper.Now
         };
 
         var response = await _serviceService.CreateAsync(service);
@@ -85,7 +86,6 @@ public class ServicesController : ControllerBase
             return BadRequest(new { ErrorMessage = "Service ID mismatch", ErrorCode = "VALIDATION_001" });
         }
 
-        // Önce mevcut entity'yi al
         var existingResponse = await _serviceService.GetByIdAsync(id);
         if (!existingResponse.IsSuccessful || existingResponse.Data == null)
         {
@@ -99,7 +99,7 @@ public class ServicesController : ControllerBase
         service.Price = dto.Price;
         service.GymLocationId = dto.GymLocationId;
         service.IsActive = dto.IsActive;
-        service.UpdatedAt = DateTime.Now;
+        service.UpdatedAt = DateTimeHelper.Now;
 
         var response = await _serviceService.UpdateAsync(id, service);
         

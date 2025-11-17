@@ -1,4 +1,5 @@
 ﻿using GymSystem.Application.Abstractions.Services;
+using GymSystem.Common.Helpers;
 using GymSystem.Domain.Entities;
 using GymSystem.Persistance.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -48,7 +49,7 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService
                 Goal = goal,
                 AIGeneratedPlan = aiPlan,
                 AIModel = !string.IsNullOrEmpty(photoBase64) ? "gemini-2.0-flash-exp-vision" : "gemini-2.0-flash-exp",
-                CreatedAt = DateTime.Now, // UTC yerine local time
+                CreatedAt = DateTimeHelper.Now,
                 IsActive = true
             };
 
@@ -93,7 +94,7 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService
                 Goal = goal,
                 AIGeneratedPlan = aiPlan,
                 AIModel = !string.IsNullOrEmpty(photoBase64) ? "gemini-2.0-flash-exp-vision" : "gemini-2.0-flash-exp",
-                CreatedAt = DateTime.Now, // UTC yerine local time
+                CreatedAt = DateTimeHelper.Now,
                 IsActive = true
             };
 
@@ -139,7 +140,7 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService
             }
 
             plan.IsActive = false;
-            plan.UpdatedAt = DateTime.Now; // UTC yerine local time
+            plan.UpdatedAt = DateTimeHelper.Now;
             await _context.SaveChangesAsync();
 
             _logger.LogInformation("AI Plan silindi. Plan ID: {PlanId}", id);

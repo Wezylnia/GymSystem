@@ -39,9 +39,9 @@ public class AppUser : IdentityUser<int>
     public GymLocation? GymLocation { get; set; }
     
     /// <summary>
-    /// Kayıt tarihi
+    /// Kayıt tarihi - PostgreSQL uyumlu (Unspecified Kind)
     /// </summary>
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
     
     /// <summary>
     /// Aktif mi?
