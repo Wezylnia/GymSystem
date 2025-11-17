@@ -43,9 +43,31 @@ public class AIWorkoutPlansController : ControllerBase
                 request.PhotoBase64
             );
 
-            return Ok(plan);
+            // Entity'den DTO'ya dönüştür (circular reference önlemek için)
+            var dto = new
+            {
+                plan.Id,
+                plan.MemberId,
+                plan.PlanType,
+                plan.Height,
+                plan.Weight,
+                plan.BodyType,
+                plan.Goal,
+                plan.AIGeneratedPlan,
+                plan.ImageUrl,
+                plan.AIModel,
+                plan.IsActive,
+                plan.CreatedAt,
+                MemberName = $"{plan.Member?.FirstName} {plan.Member?.LastName}"
+            };
+
+            return Ok(dto);
         }
         catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
         {
             return BadRequest(new { error = ex.Message });
         }
@@ -80,9 +102,31 @@ public class AIWorkoutPlansController : ControllerBase
                 request.PhotoBase64
             );
 
-            return Ok(plan);
+            // Entity'den DTO'ya dönüştür (circular reference önlemek için)
+            var dto = new
+            {
+                plan.Id,
+                plan.MemberId,
+                plan.PlanType,
+                plan.Height,
+                plan.Weight,
+                plan.BodyType,
+                plan.Goal,
+                plan.AIGeneratedPlan,
+                plan.ImageUrl,
+                plan.AIModel,
+                plan.IsActive,
+                plan.CreatedAt,
+                MemberName = $"{plan.Member?.FirstName} {plan.Member?.LastName}"
+            };
+
+            return Ok(dto);
         }
         catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
         {
             return BadRequest(new { error = ex.Message });
         }
@@ -108,7 +152,26 @@ public class AIWorkoutPlansController : ControllerBase
             }
 
             var plans = await _aiWorkoutPlanService.GetMemberPlansAsync(memberId);
-            return Ok(plans);
+            
+            // Entity'den DTO'ya dönüştür (circular reference önlemek için)
+            var dtos = plans.Select(p => new
+            {
+                p.Id,
+                p.MemberId,
+                p.PlanType,
+                p.Height,
+                p.Weight,
+                p.BodyType,
+                p.Goal,
+                p.AIGeneratedPlan,
+                p.ImageUrl,
+                p.AIModel,
+                p.IsActive,
+                p.CreatedAt,
+                MemberName = $"{p.Member?.FirstName} {p.Member?.LastName}"
+            }).ToList();
+
+            return Ok(dtos);
         }
         catch (Exception ex)
         {
@@ -137,7 +200,25 @@ public class AIWorkoutPlansController : ControllerBase
                 return NotFound(new { error = "Plan bulunamadı." });
             }
 
-            return Ok(plan);
+            // Entity'den DTO'ya dönüştür (circular reference önlemek için)
+            var dto = new
+            {
+                plan.Id,
+                plan.MemberId,
+                plan.PlanType,
+                plan.Height,
+                plan.Weight,
+                plan.BodyType,
+                plan.Goal,
+                plan.AIGeneratedPlan,
+                plan.ImageUrl,
+                plan.AIModel,
+                plan.IsActive,
+                plan.CreatedAt,
+                MemberName = $"{plan.Member?.FirstName} {plan.Member?.LastName}"
+            };
+
+            return Ok(dto);
         }
         catch (Exception ex)
         {
@@ -147,7 +228,7 @@ public class AIWorkoutPlansController : ControllerBase
     }
 
     /// <summary>
-    /// Planı siler
+    /// Planı siler (soft delete)
     /// </summary>
     [HttpDelete("{id}")]
     [AllowAnonymous] // MVC'den internal çağrı için
@@ -161,12 +242,13 @@ public class AIWorkoutPlansController : ControllerBase
             }
 
             var result = await _aiWorkoutPlanService.DeletePlanAsync(id);
+            
             if (!result)
             {
-                return NotFound(new { error = "Plan bulunamadı." });
+                return NotFound(new { error = "Plan bulunamadı veya silinemedi." });
             }
 
-            return Ok(new { message = "Plan silindi." });
+            return Ok(new { message = "Plan başarıyla silindi.", success = true });
         }
         catch (Exception ex)
         {
@@ -179,13 +261,32 @@ public class AIWorkoutPlansController : ControllerBase
     /// Tüm planları getirir (Admin)
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin")] // Bu endpoint için authentication gerekli
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAllPlans()
     {
         try
         {
             var plans = await _aiWorkoutPlanService.GetAllPlansAsync();
-            return Ok(plans);
+            
+            // Entity'den DTO'ya dönüştür (circular reference önlemek için)
+            var dtos = plans.Select(p => new
+            {
+                p.Id,
+                p.MemberId,
+                p.PlanType,
+                p.Height,
+                p.Weight,
+                p.BodyType,
+                p.Goal,
+                p.AIGeneratedPlan,
+                p.ImageUrl,
+                p.AIModel,
+                p.IsActive,
+                p.CreatedAt,
+                MemberName = $"{p.Member?.FirstName} {p.Member?.LastName}"
+            }).ToList();
+
+            return Ok(dtos);
         }
         catch (Exception ex)
         {

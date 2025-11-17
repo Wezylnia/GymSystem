@@ -113,10 +113,10 @@ Türkçe olarak detaylı bir analiz yap.";
             },
             generationConfig = new
             {
-                temperature = 0.7,
-                topK = 40,
-                topP = 0.95,
-                maxOutputTokens = 8192
+                temperature = 0.4,  // Daha tutarlı yanıtlar için düşürüldü
+                topK = 20,
+                topP = 0.8,
+                maxOutputTokens = 2048  // Daha kısa yanıtlar için azaltıldı
             }
         };
 
@@ -197,10 +197,10 @@ Türkçe olarak detaylı bir analiz yap.";
             },
             generationConfig = new
             {
-                temperature = 0.7,
-                topK = 40,
-                topP = 0.95,
-                maxOutputTokens = 8192
+                temperature = 0.4,  // Daha tutarlı yanıtlar için düşürüldü
+                topK = 20,
+                topP = 0.8,
+                maxOutputTokens = 2048  // Daha kısa yanıtlar için azaltıldı
             }
         };
 
@@ -251,102 +251,118 @@ Türkçe olarak detaylı bir analiz yap.";
     {
         var bmi = weight / ((height / 100) * (height / 100));
 
-        return $@"Bir fitness uzmanı olarak, aşağıdaki bilgilere göre detaylı bir egzersiz planı oluştur:
+        return $@"Sen bir fitness koçusun. Aşağıdaki bilgilere göre KISA ve ÖZ bir haftalık egzersiz planı oluştur.
 
-Kişisel Bilgiler:
-- Boy: {height} cm
-- Kilo: {weight} kg
-- BMI: {bmi:F2}
+Bilgiler:
+- Boy: {height} cm, Kilo: {weight} kg, BMI: {bmi:F2}
 - Vücut Tipi: {bodyType ?? "Belirtilmemiş"}
 - Hedef: {goal}
 
-Lütfen şu başlıkları içeren detaylı bir plan hazırlayın:
+SADECE ŞU FORMATTA YAZ (gereksiz açıklama yapma):
 
-1. GENEL DEĞERLENDİRME
-   - Mevcut durum analizi
-   - Hedef analizi
+📊 DURUM ANALİZİ
+BMI: {bmi:F2} - [değerlendirme 1 cümle]
 
-2. EGZERSİZ PROGRAMI (Haftalık)
-   - Pazartesi
-   - Salı
-   - Çarşamba
-   - Perşembe
-   - Cuma
-   - Cumartesi
-   - Pazar
-   
-   Her gün için:
-   - Hangi kas grupları çalışılacak
-   - Yapılacak egzersizler (set x tekrar)
-   - Süre
-   - İpuçları
+💪 HAFTALIK EGZERSİZ PLANI
 
-3. BESLENME ÖNERİLERİ
-   - Günlük kalori ihtiyacı
-   - Makro besin dağılımı
-   - Örnek öğünler
+PAZARTESİ - [Kas Grubu]
+• Egzersiz 1: 3x12
+• Egzersiz 2: 3x12
+• Egzersiz 3: 3x10
 
-4. HEDEF VE TAKİP
-   - Beklenen ilerleme
-   - Takip edilecek metrikler
-   - Motivasyon tavsiyeleri
+SALI - [Kas Grubu]
+• Egzersiz 1: 3x12
+• Egzersiz 2: 3x12
 
-5. DİKKAT EDİLMESİ GEREKENLER
-   - Güvenlik uyarıları
-   - Yaygın hatalar
+ÇARŞAMBA - Dinlenme
 
-Plan en az 4 haftalık olsun ve detaylı açıklamalar içersin.
-Türkçe olarak yaz.";
+PERŞEMBE - [Kas Grubu]
+• Egzersiz 1: 3x12
+• Egzersiz 2: 3x12
+
+CUMA - [Kas Grubu]
+• Egzersiz 1: 3x12
+• Egzersiz 2: 3x12
+
+CUMARTESİ - Cardio veya Dinlenme
+
+PAZAR - Dinlenme
+
+🍎 BESLENME ÖNERİSİ
+Günlük kalori: [miktar] kcal
+Protein: [miktar]g | Karbonhidrat: [miktar]g | Yağ: [miktar]g
+
+⚠️ ÖNEMLİ NOTLAR
+• [Not 1]
+• [Not 2]
+
+Türkçe yaz. Kısa ve net ol. Gereksiz açıklama yapma!";
     }
 
     private string BuildDietPrompt(decimal height, decimal weight, string? bodyType, string goal)
     {
         var bmi = weight / ((height / 100) * (height / 100));
 
-        return $@"Bir beslenme uzmanı olarak, aşağıdaki bilgilere göre detaylı bir diyet planı oluştur:
+        return $@"Sen bir beslenme uzmanısın. Aşağıdaki bilgilere göre KISA ve ÖZ bir haftalık diyet planı oluştur.
 
-Kişisel Bilgiler:
-- Boy: {height} cm
-- Kilo: {weight} kg
-- BMI: {bmi:F2}
+Bilgiler:
+- Boy: {height} cm, Kilo: {weight} kg, BMI: {bmi:F2}
 - Vücut Tipi: {bodyType ?? "Belirtilmemiş"}
 - Hedef: {goal}
 
-Lütfen şu başlıkları içeren detaylı bir plan hazırlayın:
+SADECE ŞU FORMATTA YAZ (gereksiz açıklama yapma):
 
-1. GENEL BESİN ANALİZİ
-   - Günlük kalori ihtiyacı
-   - Makro besin dağılımı (Protein/Karbonhidrat/Yağ)
-   - Mikro besin önerileri
+📊 BESİN ANALİZİ
+Günlük kalori: [miktar] kcal
+Protein: [miktar]g | Karbonhidrat: [miktar]g | Yağ: [miktar]g
 
-2. HAFTALIK DİYET PROGRAMI
-   Her gün için detaylı öğün planı:
-   - Sabah Kahvaltısı
-   - Ara Öğün 1
-   - Öğle Yemeği
-   - Ara Öğün 2
-   - Akşam Yemeği
-   - Ara Öğün 3 (opsiyonel)
-   
-   Her öğün için:
-   - Yiyecekler ve porsiyon
-   - Kalori değeri
-   - Makro besin değerleri
+🍽️ HAFTALIK DİYET PLANI
 
-3. SUPPLEMENT ÖNERİLERİ
-   - Önerilen takviyeler
-   - Kullanım şekli ve zamanlaması
+PAZARTESİ
+Kahvaltı: [yiyecek] - [kalori]kcal
+Öğle: [yiyecek] - [kalori]kcal
+Akşam: [yiyecek] - [kalori]kcal
 
-4. SIVI TÜKETİMİ
-   - Günlük su ihtiyacı
-   - Diğer içecek önerileri
+SALI
+Kahvaltı: [yiyecek] - [kalori]kcal
+Öğle: [yiyecek] - [kalori]kcal
+Akşam: [yiyecek] - [kalori]kcal
 
-5. ÖZEL NOTLAR
-   - Kaçınılması gerekenler
-   - Serbest günler
-   - İpuçları
+ÇARŞAMBA
+Kahvaltı: [yiyecek] - [kalori]kcal
+Öğle: [yiyecek] - [kalori]kcal
+Akşam: [yiyecek] - [kalori]kcal
 
-Plan 7 günlük detaylı menü içersin.
-Türkçe olarak yaz.";
+PERŞEMBE
+Kahvaltı: [yiyecek] - [kalori]kcal
+Öğle: [yiyecek] - [kalori]kcal
+Akşam: [yiyecek] - [kalori]kcal
+
+CUMA
+Kahvaltı: [yiyecek] - [kalori]kcal
+Öğle: [yiyecek] - [kalori]kcal
+Akşam: [yiyecek] - [kalori]kcal
+
+CUMARTESİ
+Kahvaltı: [yiyecek] - [kalori]kcal
+Öğle: [yiyecek] - [kalori]kcal
+Akşam: [yiyecek] - [kalori]kcal
+
+PAZAR
+Kahvaltı: [yiyecek] - [kalori]kcal
+Öğle: [yiyecek] - [kalori]kcal
+Akşam: [yiyecek] - [kalori]kcal
+
+💊 SUPPLEMENT
+• [takviye 1]
+• [takviye 2]
+
+💧 SU: Günde en az 2.5 litre
+
+⚠️ ÖNEMLİ NOTLAR
+• [Not 1]
+• [Not 2]
+
+Türkçe yaz. Kısa ve net ol. Gereksiz açıklama yapma!";
     }
 }

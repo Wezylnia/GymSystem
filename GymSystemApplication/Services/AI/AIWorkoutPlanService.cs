@@ -26,91 +26,103 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService
     public async Task<AIWorkoutPlan> GenerateWorkoutPlanAsync(int memberId, decimal height, decimal weight, 
         string? bodyType, string goal, string? photoBase64 = null)
     {
+        // Member kontrolü
+        var member = await _context.Set<Member>().FindAsync(memberId);
+        if (member == null)
+        {
+            throw new ArgumentException($"Member ID {memberId} bulunamadı.");
+        }
+
+        string aiPlan;
         try
         {
-            // Member kontrolü
-            var member = await _context.Set<Member>().FindAsync(memberId);
-            if (member == null)
-            {
-                throw new ArgumentException($"Member ID {memberId} bulunamadı.");
-            }
-
             // AI'dan plan al
-            var aiPlan = await _geminiApiService.GenerateWorkoutPlanAsync(height, weight, bodyType, goal, photoBase64);
-
-            // Database'e kaydet
-            var workoutPlan = new AIWorkoutPlan
+            aiPlan = await _geminiApiService.GenerateWorkoutPlanAsync(height, weight, bodyType, goal, photoBase64);
+            
+            if (string.IsNullOrWhiteSpace(aiPlan))
             {
-                MemberId = memberId,
-                PlanType = "Workout",
-                Height = height,
-                Weight = weight,
-                BodyType = bodyType,
-                Goal = goal,
-                AIGeneratedPlan = aiPlan,
-                AIModel = !string.IsNullOrEmpty(photoBase64) ? "gemini-2.0-flash-exp-vision" : "gemini-2.0-flash-exp",
-                CreatedAt = DateTimeHelper.Now,
-                IsActive = true
-            };
-
-            _context.Set<AIWorkoutPlan>().Add(workoutPlan);
-            await _context.SaveChangesAsync();
-
-            _logger.LogInformation("Workout planı oluşturuldu. Member ID: {MemberId}, Plan ID: {PlanId}", 
-                memberId, workoutPlan.Id);
-
-            return workoutPlan;
+                throw new InvalidOperationException("AI'dan boş plan döndü.");
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Workout planı oluşturulurken hata oluştu. Member ID: {MemberId}", memberId);
-            throw;
+            _logger.LogError(ex, "Gemini API'den plan alınırken hata. Member ID: {MemberId}", memberId);
+            throw new InvalidOperationException("AI planı oluşturulamadı. Lütfen daha sonra tekrar deneyin.", ex);
         }
+
+        // Database'e kaydet
+        var workoutPlan = new AIWorkoutPlan
+        {
+            MemberId = memberId,
+            PlanType = "Workout",
+            Height = height,
+            Weight = weight,
+            BodyType = bodyType,
+            Goal = goal,
+            AIGeneratedPlan = aiPlan,
+            AIModel = !string.IsNullOrEmpty(photoBase64) ? "gemini-2.0-flash-exp-vision" : "gemini-2.0-flash-exp",
+            CreatedAt = DateTimeHelper.Now,
+            IsActive = true
+        };
+
+        _context.Set<AIWorkoutPlan>().Add(workoutPlan);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Workout planı oluşturuldu. Member ID: {MemberId}, Plan ID: {PlanId}", 
+            memberId, workoutPlan.Id);
+
+        return workoutPlan;
     }
 
     public async Task<AIWorkoutPlan> GenerateDietPlanAsync(int memberId, decimal height, decimal weight, 
         string? bodyType, string goal, string? photoBase64 = null)
     {
+        // Member kontrolü
+        var member = await _context.Set<Member>().FindAsync(memberId);
+        if (member == null)
+        {
+            throw new ArgumentException($"Member ID {memberId} bulunamadı.");
+        }
+
+        string aiPlan;
         try
         {
-            // Member kontrolü
-            var member = await _context.Set<Member>().FindAsync(memberId);
-            if (member == null)
-            {
-                throw new ArgumentException($"Member ID {memberId} bulunamadı.");
-            }
-
             // AI'dan plan al
-            var aiPlan = await _geminiApiService.GenerateDietPlanAsync(height, weight, bodyType, goal, photoBase64);
-
-            // Database'e kaydet
-            var dietPlan = new AIWorkoutPlan
+            aiPlan = await _geminiApiService.GenerateDietPlanAsync(height, weight, bodyType, goal, photoBase64);
+            
+            if (string.IsNullOrWhiteSpace(aiPlan))
             {
-                MemberId = memberId,
-                PlanType = "Diet",
-                Height = height,
-                Weight = weight,
-                BodyType = bodyType,
-                Goal = goal,
-                AIGeneratedPlan = aiPlan,
-                AIModel = !string.IsNullOrEmpty(photoBase64) ? "gemini-2.0-flash-exp-vision" : "gemini-2.0-flash-exp",
-                CreatedAt = DateTimeHelper.Now,
-                IsActive = true
-            };
-
-            _context.Set<AIWorkoutPlan>().Add(dietPlan);
-            await _context.SaveChangesAsync();
-
-            _logger.LogInformation("Diet planı oluşturuldu. Member ID: {MemberId}, Plan ID: {PlanId}", 
-                memberId, dietPlan.Id);
-
-            return dietPlan;
+                throw new InvalidOperationException("AI'dan boş plan döndü.");
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Diet planı oluşturulurken hata oluştu. Member ID: {MemberId}", memberId);
-            throw;
+            _logger.LogError(ex, "Gemini API'den plan alınırken hata. Member ID: {MemberId}", memberId);
+            throw new InvalidOperationException("AI planı oluşturulamadı. Lütfen daha sonra tekrar deneyin.", ex);
         }
+
+        // Database'e kaydet
+        var dietPlan = new AIWorkoutPlan
+        {
+            MemberId = memberId,
+            PlanType = "Diet",
+            Height = height,
+            Weight = weight,
+            BodyType = bodyType,
+            Goal = goal,
+            AIGeneratedPlan = aiPlan,
+            AIModel = !string.IsNullOrEmpty(photoBase64) ? "gemini-2.0-flash-exp-vision" : "gemini-2.0-flash-exp",
+            CreatedAt = DateTimeHelper.Now,
+            IsActive = true
+        };
+
+        _context.Set<AIWorkoutPlan>().Add(dietPlan);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Diet planı oluşturuldu. Member ID: {MemberId}, Plan ID: {PlanId}", 
+            memberId, dietPlan.Id);
+
+        return dietPlan;
     }
 
     public async Task<List<AIWorkoutPlan>> GetMemberPlansAsync(int memberId)
