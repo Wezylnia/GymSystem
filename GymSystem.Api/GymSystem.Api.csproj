@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\GymSystem.Abstractions\GymSystem.Application.Abstractions.csproj" />
     <ProjectReference Include="..\GymSystemApplication\GymSystem.Application.csproj" />
     <ProjectReference Include="..\GymSystem.Infastructure\GymSystem.Infastructure.csproj" />
   </ItemGroup>

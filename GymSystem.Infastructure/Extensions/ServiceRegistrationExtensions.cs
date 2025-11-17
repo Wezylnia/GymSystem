@@ -17,26 +17,32 @@ public static class ServiceRegistrationExtensions
     {
         foreach (var assembly in assemblies)
         {
+            Console.WriteLine($"[AutoRegister] Scanning assembly: {assembly.GetName().Name}");
+            
             var types = assembly.GetTypes()
                 .Where(t => t.IsClass && !t.IsAbstract)
                 .ToList();
+
+            Console.WriteLine($"[AutoRegister] Found {types.Count} concrete classes");
 
             foreach (var implementationType in types)
             {
                 var interfaces = implementationType.GetInterfaces();
 
                 // IApplicationService'i implement eden interface'leri bul
+                // DİKKAT: Interface'in kendisi IApplicationService'den türemiş olmalı
                 var serviceInterfaces = interfaces
-                    .Where(i => typeof(IApplicationService).IsAssignableFrom(i) 
-                             && i != typeof(IApplicationService) 
-                             && i != typeof(IService)
-                             && i.IsInterface)
+                    .Where(i => i.IsInterface && 
+                               i != typeof(IApplicationService) && 
+                               i != typeof(IService) &&
+                               typeof(IApplicationService).IsAssignableFrom(i))
                     .ToList();
 
                 // Her bir service interface için implementasyonu Scoped olarak kaydet
                 foreach (var serviceInterface in serviceInterfaces)
                 {
                     services.AddScoped(serviceInterface, implementationType);
+                    Console.WriteLine($"[AutoRegister] ✓ Registered: {serviceInterface.Name} -> {implementationType.Name}");
                 }
             }
         }

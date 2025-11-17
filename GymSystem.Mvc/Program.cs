@@ -12,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // Infrastructure servisleri (Database + Identity)
+// Project reference sayesinde assembly'ler otomatik yüklenecek
 builder.Services.AddInfrastructureServices(builder.Configuration, "appsettings.json");
 
 // HttpContextAccessor

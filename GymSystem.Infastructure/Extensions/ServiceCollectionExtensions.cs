@@ -1,6 +1,5 @@
 ﻿using GymSystem.Common.Factory.Managers;
 using GymSystem.Common.Factory.Utility;
-using GymSystem.Common.ServiceRegistration;
 using GymSystem.Common.Services;
 using GymSystem.Persistance;
 using Microsoft.Extensions.Configuration;
@@ -25,18 +24,8 @@ public static class ServiceCollectionExtensions
         // 3. Generic CRUD Service'i kaydet (open generic type)
         services.AddScoped(typeof(IGenericCrudService<>), typeof(GenericCrudService<>));
 
-        // 4. Common assembly'deki non-generic servisleri otomatik kaydet
-        services.AddAutoRegisteredServices(typeof(IApplicationService).Assembly);
-
-        // 5. Application assembly'deki non-generic servisleri otomatik kaydet
-        var applicationAssemblyName = "GymSystem.Application";
-        var applicationAssembly = AppDomain.CurrentDomain.GetAssemblies()
-            .FirstOrDefault(a => a.GetName().Name == applicationAssemblyName);
-
-        if (applicationAssembly != null)
-        {
-            services.AddAutoRegisteredServices(applicationAssembly);
-        }
+        // NOT: Application servisleri API/MVC Program.cs'de manuel olarak kaydedilecek
+        // Circular dependency nedeniyle burada kaydedemiyoruz
 
         return services;
     }
