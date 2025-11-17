@@ -1,8 +1,205 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Ana Sayfa";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container mt-4">
+    <div class="jumbotron bg-light p-5 rounded-3 mb-4">
+        <h1 class="display-4">
+            <i class="bi bi-heart-pulse"></i> GymSystem'e Hoş Geldiniz
+        </h1>
+        <p class="lead">Modern spor salonu yönetim sistemi</p>
+        <hr class="my-4">
+        <p>Randevularınızı yönetin, antrenörlerinizle iletişime geçin ve yapay zeka destekli egzersiz planları oluşturun.</p>
+    </div>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="row g-4">
+            @if (User.IsInRole("Member"))
+            {
+                <!-- AI Workout Plans Card - Öne Çıkan -->
+                <div class="col-md-12 mb-4">
+                    <div class="card border-warning shadow-lg">
+                        <div class="card-body bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div class="row align-items-center text-white">
+                                <div class="col-md-8">
+                                    <h3 class="card-title mb-3">
+                                        <i class="fas fa-robot fa-2x me-2"></i>
+                                        Yapay Zeka ile Kişisel Plan Oluştur
+                                    </h3>
+                                    <p class="card-text fs-5 mb-3">
+                                        Gemini AI ile size özel egzersiz ve diyet planları oluşturun. 
+                                        Fotoğraf yükleyerek daha detaylı analiz alabilirsiniz!
+                                    </p>
+                                    <ul class="list-unstyled mb-0">
+                                        <li><i class="fas fa-check-circle me-2"></i> Kişiselleştirilmiş egzersiz programı</li>
+                                        <li><i class="fas fa-check-circle me-2"></i> Detaylı beslenme planı</li>
+                                        <li><i class="fas fa-check-circle me-2"></i> Fotoğraf analizi ile vücut tipi değerlendirmesi</li>
+                                        <li><i class="fas fa-check-circle me-2"></i> 7/24 AI desteği</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <i class="fas fa-brain fa-5x mb-3 opacity-75"></i>
+                                    <div class="d-grid gap-2">
+                                        <a asp-controller="AIWorkoutPlans" asp-action="Create" class="btn btn-warning btn-lg">
+                                            <i class="fas fa-magic"></i> Hemen Oluştur
+                                        </a>
+                                        <a asp-controller="AIWorkoutPlans" asp-action="Index" class="btn btn-light">
+                                            <i class="fas fa-list"></i> Planlarımı Gör
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Diğer Member Kartları -->
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-card-checklist text-info"></i> Salon Üyeliği
+                            </h5>
+                            <p class="card-text">Salon üyeliği talebinde bulunun veya mevcut taleplerinizi görüntüleyin.</p>
+                            <a asp-controller="MembershipRequests" asp-action="Index" class="btn btn-info">
+                                Üyelik Talepleri
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-calendar-check text-primary"></i> Randevularım
+                            </h5>
+                            <p class="card-text">Randevularınızı görüntüleyin ve yeni randevu oluşturun.</p>
+                            <a asp-controller="Appointments" asp-action="Index" class="btn btn-primary">
+                                Randevulara Git
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-person-badge text-success"></i> Antrenörler
+                            </h5>
+                            <p class="card-text">Antrenörlerimizi inceleyin ve randevu alın.</p>
+                            <a asp-controller="Trainers" asp-action="Index" class="btn btn-success">
+                                Antrenörleri Gör
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (User.IsInRole("Admin") || User.IsInRole("GymOwner"))
+            {
+                <div class="col-md-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-clipboard-check text-danger"></i> Üyelik Talepleri
+                            </h5>
+                            <p class="card-text">Bekleyen üyelik taleplerini yönetin.</p>
+                            <a asp-controller="MembershipRequests" asp-action="Manage" class="btn btn-danger">
+                                Talepleri Yönet
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-building text-info"></i> Spor Salonları
+                            </h5>
+                            <p class="card-text">Spor salonlarını yönetin.</p>
+                            <a asp-controller="GymLocations" asp-action="Index" class="btn btn-info">
+                                Yönet
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-diagram-3 text-warning"></i> Hizmetler
+                            </h5>
+                            <p class="card-text">Sunulan hizmetleri yönetin.</p>
+                            <a asp-controller="Services" asp-action="Index" class="btn btn-warning">
+                                Yönet
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-people text-success"></i> Üyeler
+                            </h5>
+                            <p class="card-text">Üye kayıtlarını görüntüleyin.</p>
+                            <a asp-controller="Members" asp-action="Index" class="btn btn-success">
+                                Görüntüle
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="row mt-5">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-body text-center p-5">
+                        <i class="bi bi-box-arrow-in-right display-1 text-primary"></i>
+                        <h3 class="mt-3">Giriş Yap</h3>
+                        <p>Hesabınıza giriş yapın ve tüm özelliklerden yararlanın.</p>
+                        <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-lg">
+                            Giriş Yap
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-body text-center p-5">
+                        <i class="bi bi-person-plus display-1 text-success"></i>
+                        <h3 class="mt-3">Kayıt Ol</h3>
+                        <p>Yeni üye olun ve GymSystem'in tüm avantajlarından yararlanın.</p>
+                        <a asp-controller="Account" asp-action="Register" class="btn btn-success btn-lg">
+                            Kayıt Ol
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
+
+<style>
+    .bg-gradient {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .bg-gradient::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        bottom: -50%;
+        left: -50%;
+        background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%

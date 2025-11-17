@@ -49,8 +49,25 @@ public class GymLocationsController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Create(GymLocation gymLocation)
+    public async Task<IActionResult> Create([FromBody] CreateGymLocationDto dto)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var gymLocation = new GymLocation
+        {
+            Name = dto.Name,
+            Address = dto.Address,
+            City = dto.City,
+            PhoneNumber = dto.PhoneNumber,
+            Email = dto.Email,
+            Description = dto.Description,
+            IsActive = true,
+            CreatedAt = DateTime.Now
+        };
+
         var response = await _gymLocationService.CreateAsync(gymLocation);
         
         if (!response.IsSuccessful)
@@ -63,12 +80,33 @@ public class GymLocationsController : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin,GymOwner")]
-    public async Task<IActionResult> Update(int id, GymLocation gymLocation)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateGymLocationDto dto)
     {
-        if (id != gymLocation.Id)
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        if (id != dto.Id)
         {
             return BadRequest(new { ErrorMessage = "GymLocation ID mismatch", ErrorCode = "VALIDATION_001" });
         }
+
+        var existingResponse = await _gymLocationService.GetByIdAsync(id);
+        if (!existingResponse.IsSuccessful || existingResponse.Data == null)
+        {
+            return NotFound(new { ErrorMessage = $"GymLocation with ID {id} not found", ErrorCode = "NOT_FOUND_001" });
+        }
+
+        var gymLocation = existingResponse.Data;
+        gymLocation.Name = dto.Name;
+        gymLocation.Address = dto.Address;
+        gymLocation.City = dto.City;
+        gymLocation.PhoneNumber = dto.PhoneNumber;
+        gymLocation.Email = dto.Email;
+        gymLocation.Description = dto.Description;
+        gymLocation.IsActive = dto.IsActive;
+        gymLocation.UpdatedAt = DateTime.Now;
 
         var response = await _gymLocationService.UpdateAsync(id, gymLocation);
         
@@ -93,4 +131,27 @@ public class GymLocationsController : ControllerBase
 
         return NoContent();
     }
+}
+
+// DTOs
+public class CreateGymLocationDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string? PhoneNumber { get; set; }
+    public string? Email { get; set; }
+    public string? Description { get; set; }
+}
+
+public class UpdateGymLocationDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string? PhoneNumber { get; set; }
+    public string? Email { get; set; }
+    public string? Description { get; set; }
+    public bool IsActive { get; set; }
 }

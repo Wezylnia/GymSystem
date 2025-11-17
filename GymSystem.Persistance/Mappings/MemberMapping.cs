@@ -26,6 +26,12 @@ public class MemberMapping : IEntityTypeConfiguration<Member>
         entity.Property(e => e.MembershipStartDate).HasColumnType("timestamp without time zone");
         entity.Property(e => e.MembershipEndDate).HasColumnType("timestamp without time zone");
 
+        // Aktif salon üyeliği ilişkisi
+        entity.HasOne(m => m.CurrentGymLocation)
+            .WithMany()
+            .HasForeignKey(m => m.CurrentGymLocationId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         entity.ToTable("members");
     }
 }

@@ -1,0 +1,228 @@
+﻿@model GymSystem.Mvc.Models.CreateMembershipRequestViewModel
+
+@{
+    ViewData["Title"] = "Yeni Üyelik Talebi";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-plus-circle"></i> Yeni Üyelik Talebi Oluştur
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Bilgi:</strong> Talebiniz oluşturulduktan sonra salon yöneticisi veya admin tarafından incelenecek ve onaylanacaktır.
+                    </div>
+
+                    <form asp-action="Create" method="post" id="membershipForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="MemberId" />
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="mb-4">
+                            <label asp-for="GymLocationId" class="form-label fw-bold">
+                                Spor Salonu Seçiniz *
+                            </label>
+                            <select asp-for="GymLocationId" class="form-select" id="gymSelect" required>
+                                <option value="">-- Salon Seçiniz --</option>
+                                @foreach (var gym in Model.AvailableGyms)
+                                {
+                                    <option value="@gym.Id" 
+                                            data-one-month="@gym.OneMonthPrice" 
+                                            data-three-months="@gym.ThreeMonthsPrice" 
+                                            data-six-months="@gym.SixMonthsPrice">
+                                        @gym.Name - @gym.City
+                                    </option>
+                                }
+                            </select>
+                            <span asp-validation-for="GymLocationId" class="text-danger"></span>
+                            
+                            <div id="gymInfo" class="mt-2 p-3 bg-light rounded" style="display:none;">
+                                <h6 class="fw-bold">Salon Bilgileri:</h6>
+                                <p class="mb-1" id="gymAddress"></p>
+                                <p class="mb-0 text-muted" id="gymDescription"></p>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Duration" class="form-label fw-bold">
+                                Üyelik Süresi *
+                            </label>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="card pricing-card" onclick="selectDuration(1, this)">
+                                        <div class="card-body text-center">
+                                            <input type="radio" name="Duration" value="1" id="duration1" class="d-none" required />
+                                            <h5 class="card-title">1 Ay</h5>
+                                            <p class="price-text" id="price1">500 TL</p>
+                                            <p class="text-muted small">Aylık ödeme</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card pricing-card" onclick="selectDuration(3, this)">
+                                        <div class="card-body text-center">
+                                            <input type="radio" name="Duration" value="3" id="duration3" class="d-none" />
+                                            <h5 class="card-title">3 Ay</h5>
+                                            <p class="price-text" id="price3">1,350 TL</p>
+                                            <p class="text-muted small">450 TL/ay <span class="badge bg-success">%10 İndirim</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card pricing-card" onclick="selectDuration(6, this)">
+                                        <div class="card-body text-center">
+                                            <input type="radio" name="Duration" value="6" id="duration6" class="d-none" />
+                                            <h5 class="card-title">6 Ay</h5>
+                                            <p class="price-text" id="price6">2,400 TL</p>
+                                            <p class="text-muted small">400 TL/ay <span class="badge bg-success">%20 İndirim</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <span asp-validation-for="Duration" class="text-danger"></span>
+                            <input type="hidden" asp-for="Price" id="priceInput" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Notes" class="form-label fw-bold">
+                                Notlarınız <span class="text-muted fw-normal">(Opsiyonel)</span>
+                            </label>
+                            <textarea asp-for="Notes" class="form-control" rows="4" 
+                                      placeholder="Varsa özel durumunuzu veya sorularınızı buraya yazabilirsiniz..."></textarea>
+                            <span asp-validation-for="Notes" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Geri
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" disabled>
+                                <i class="bi bi-send"></i> Talep Gönder
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .pricing-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #dee2e6;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .pricing-card.selected {
+            border-color: #0d6efd;
+            background-color: #e7f1ff;
+        }
+
+        .price-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0d6efd;
+            margin: 0;
+        }
+    </style>
+}
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        const gymPrices = @Html.Raw(Json.Serialize(Model.AvailableGyms.Select(g => new { 
+            id = g.Id, 
+            name = g.Name,
+            address = g.Address,
+            description = g.Description,
+            oneMonth = g.OneMonthPrice, 
+            threeMonths = g.ThreeMonthsPrice, 
+            sixMonths = g.SixMonthsPrice 
+        })));
+
+        let selectedGymId = null;
+        let selectedDuration = null;
+
+        document.getElementById('gymSelect').addEventListener('change', function() {
+            selectedGymId = parseInt(this.value);
+            if (selectedGymId) {
+                const gym = gymPrices.find(g => g.id === selectedGymId);
+                if (gym) {
+                    // Salon bilgilerini göster
+                    document.getElementById('gymInfo').style.display = 'block';
+                    document.getElementById('gymAddress').textContent = gym.address;
+                    document.getElementById('gymDescription').textContent = gym.description || 'Açıklama bulunmuyor';
+
+                    // Fiyatları güncelle
+                    document.getElementById('price1').textContent = gym.oneMonth.toFixed(2) + ' TL';
+                    document.getElementById('price3').textContent = gym.threeMonths.toFixed(2) + ' TL';
+                    document.getElementById('price6').textContent = gym.sixMonths.toFixed(2) + ' TL';
+                    
+                    updatePrice();
+                    checkFormValid();
+                }
+            } else {
+                document.getElementById('gymInfo').style.display = 'none';
+            }
+        });
+
+        function selectDuration(months, element) {
+            // Tüm card'ları seçimi kaldır
+            document.querySelectorAll('.pricing-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Seçilen card'ı işaretle
+            element.classList.add('selected');
+
+            // Radio button'ı seç
+            document.getElementById('duration' + months).checked = true;
+            selectedDuration = months;
+            
+            updatePrice();
+            checkFormValid();
+        }
+
+        function updatePrice() {
+            if (!selectedGymId || !selectedDuration) return;
+
+            const gym = gymPrices.find(g => g.id === selectedGymId);
+            if (!gym) return;
+
+            let price = 0;
+            switch(selectedDuration) {
+                case 1:
+                    price = gym.oneMonth;
+                    break;
+                case 3:
+                    price = gym.threeMonths;
+                    break;
+                case 6:
+                    price = gym.sixMonths;
+                    break;
+            }
+
+            document.getElementById('priceInput').value = price;
+        }
+
+        function checkFormValid() {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = !(selectedGymId && selectedDuration);
+        }
+    </script>
+}

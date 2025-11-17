@@ -8,6 +8,8 @@ using GymSystem.Application.Services.Members;
 using GymSystem.Application.Services.Reports;
 using GymSystem.Application.Services.Services;
 using GymSystem.Application.Services.Trainers;
+using GymSystem.Application.Services.AI;
+using GymSystem.Application.Services.Membership;
 
 // Common services
 using GymSystem.Common.Helpers;
@@ -36,6 +38,13 @@ builder.Services.AddCors(options =>
 // Infrastructure servisleri ekle (Database, Persistence, Identity)
 builder.Services.AddInfrastructureServices(builder.Configuration, "appsettings.json");
 
+// HttpClient for Gemini API
+builder.Services.AddHttpClient("GeminiApi", client =>
+{
+    client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 // Common Helpers - MANUEL KAYIT
 Console.WriteLine("[ServiceRegistration] Registering common helpers...");
 
@@ -62,6 +71,16 @@ Console.WriteLine("[ServiceRegistration] ✓ IServiceService -> ServiceService")
 
 builder.Services.AddScoped<ITrainerService, TrainerService>();
 Console.WriteLine("[ServiceRegistration] ✓ ITrainerService -> TrainerService");
+
+// AI Services
+builder.Services.AddScoped<IGeminiApiService, GeminiApiService>();
+Console.WriteLine("[ServiceRegistration] ✓ IGeminiApiService -> GeminiApiService");
+
+builder.Services.AddScoped<IAIWorkoutPlanService, AIWorkoutPlanService>();
+Console.WriteLine("[ServiceRegistration] ✓ IAIWorkoutPlanService -> AIWorkoutPlanService");
+
+builder.Services.AddScoped<IMembershipRequestService, MembershipRequestService>();
+Console.WriteLine("[ServiceRegistration] ✓ IMembershipRequestService -> MembershipRequestService");
 
 Console.WriteLine("[ServiceRegistration] All application services registered!");
 

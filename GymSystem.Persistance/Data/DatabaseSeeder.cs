@@ -73,9 +73,45 @@ public static class DatabaseSeeder
     {
         var memberDate = new DateTime(2024, 10, 1, 0, 0, 0, DateTimeKind.Unspecified);
         modelBuilder.Entity<Member>().HasData(
-            new Member { Id = 1, FirstName = "Ayşe", LastName = "Şahin", Email = "ayse.sahin@example.com", PhoneNumber = "05554444444", MembershipStartDate = memberDate, MembershipEndDate = memberDate.AddYears(1), IsActive = true, CreatedAt = memberDate },
-            new Member { Id = 2, FirstName = "Can", LastName = "Öztürk", Email = "can.ozturk@example.com", PhoneNumber = "05555555555", MembershipStartDate = memberDate.AddMonths(1), MembershipEndDate = memberDate.AddMonths(13), IsActive = true, CreatedAt = memberDate.AddMonths(1) },
-            new Member { Id = 3, FirstName = "Zeynep", LastName = "Arslan", Email = "zeynep.arslan@example.com", PhoneNumber = "05556666666", MembershipStartDate = memberDate.AddMonths(-1), MembershipEndDate = memberDate.AddMonths(11), IsActive = true, CreatedAt = memberDate.AddMonths(-1) }
+            new Member
+            {
+                Id = 1,
+                FirstName = "Ayşe",
+                LastName = "Şahin",
+                Email = "ayse.sahin@example.com",
+                PhoneNumber = "05554444444",
+                MembershipStartDate = DateTime.Now.AddMonths(-1),  // Bir ay önce başlamış
+                MembershipEndDate = DateTime.Now.AddMonths(1),  // Bir ay sonra bitecek
+                CurrentGymLocationId = 1,  // FitZone Merkez Şube'ye üye
+                IsActive = true,
+                CreatedAt = memberDate
+            },
+            new Member
+            {
+                Id = 2,
+                FirstName = "Can",
+                LastName = "Öztürk",
+                Email = "can.ozturk@example.com",
+                PhoneNumber = "05555555555",
+                MembershipStartDate = memberDate.AddMonths(1),
+                MembershipEndDate = memberDate.AddMonths(13),
+                CurrentGymLocationId = 2,  // FitZone Serdivan Şube'ye üye
+                IsActive = true,
+                CreatedAt = memberDate.AddMonths(1)
+            },
+            new Member
+            {
+                Id = 3,
+                FirstName = "Zeynep",
+                LastName = "Arslan",
+                Email = "zeynep.arslan@example.com",
+                PhoneNumber = "05556666666",
+                MembershipStartDate = memberDate.AddMonths(-1),
+                MembershipEndDate = memberDate.AddMonths(11),
+                CurrentGymLocationId = 1,  // FitZone Merkez Şube'ye üye
+                IsActive = true,
+                CreatedAt = memberDate.AddMonths(-1)
+            }
         );
     }
 

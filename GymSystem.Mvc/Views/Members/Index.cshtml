@@ -5,7 +5,9 @@
 }
 
 <div class="container mt-4">
-    <h1 class="mb-4">Üye Listesi</h1>
+    <h1 class="mb-4">
+        <i class="bi bi-people"></i> Üye Listesi
+    </h1>
 
     @if (TempData["SuccessMessage"] != null)
     {
@@ -35,13 +37,14 @@
                 <thead class="table-dark">
                     <tr>
                         <th>ID</th>
-                        <th>Ad</th>
-                        <th>Soyad</th>
+                        <th>Ad Soyad</th>
                         <th>Email</th>
                         <th>Telefon</th>
-                        <th>Üyelik Başlangıç</th>
-                        <th>Üyelik Bitiş</th>
-                        <th>Durum</th>
+                        <th>Salon Üyeliği</th>
+                        <th>Üyelik Durumu</th>
+                        <th>Başlangıç</th>
+                        <th>Bitiş</th>
+                        <th>Kalan</th>
                         <th>Kayıt Tarihi</th>
                     </tr>
                 </thead>
@@ -50,27 +53,100 @@
                     {
                         <tr>
                             <td>@member.Id</td>
-                            <td>@member.FirstName</td>
-                            <td>@member.LastName</td>
-                            <td>@member.Email</td>
-                            <td>@(member.PhoneNumber ?? "-")</td>
-                            <td>@member.MembershipStartDate.ToString("dd.MM.yyyy")</td>
-                            <td>@(member.MembershipEndDate?.ToString("dd.MM.yyyy") ?? "-")</td>
                             <td>
-                                @if (member.IsActive)
+                                <strong>@member.FirstName @member.LastName</strong>
+                            </td>
+                            <td>
+                                <small>@member.Email</small>
+                            </td>
+                            <td>@(member.PhoneNumber ?? "-")</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(member.CurrentGymLocationName))
                                 {
-                                    <span class="badge bg-success">Aktif</span>
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-building"></i> @member.CurrentGymLocationName
+                                    </span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-danger">Pasif</span>
+                                    <span class="text-muted">Salon üyeliği yok</span>
                                 }
                             </td>
-                            <td>@member.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>
+                                @if (member.HasActiveMembership)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> Aktif
+                                    </span>
+                                }
+                                else if (member.MembershipEndDate.HasValue)
+                                {
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-x-circle"></i> Süresi Dolmuş
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-dash-circle"></i> Üyelik Yok
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                @if (member.MembershipStartDate != DateTime.MinValue)
+                                {
+                                    @member.MembershipStartDate.ToString("dd.MM.yyyy")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (member.MembershipEndDate.HasValue)
+                                {
+                                    @member.MembershipEndDate.Value.ToString("dd.MM.yyyy")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (member.DaysRemaining.HasValue)
+                                {
+                                    if (member.DaysRemaining.Value > 30)
+                                    {
+                                        <span class="badge bg-success">@member.DaysRemaining gün</span>
+                                    }
+                                    else if (member.DaysRemaining.Value > 7)
+                                    {
+                                        <span class="badge bg-warning">@member.DaysRemaining gün</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">@member.DaysRemaining gün</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                <small>@member.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small>
+                            </td>
                         </tr>
                     }
                 </tbody>
             </table>
+        </div>
+        
+        <div class="alert alert-info mt-3" role="alert">
+            <i class="bi bi-info-circle"></i> 
+            <strong>Toplam:</strong> @Model.Count üye | 
+            <strong>Aktif Üyelik:</strong> @Model.Count(m => m.HasActiveMembership) | 
+            <strong>Üyeliği Yok:</strong> @Model.Count(m => !m.MembershipEndDate.HasValue)
         </div>
     }
     else

@@ -1,4 +1,5 @@
-﻿using GymSystem.Common.ServiceRegistration;
+﻿using GymSystem.Common.Models;
+using GymSystem.Common.ServiceRegistration;
 using GymSystem.Common.Services;
 using GymSystem.Domain.Entities;
 
@@ -10,4 +11,8 @@ namespace GymSystem.Application.Abstractions.Services;
 /// </summary>
 public interface IMemberService : IGenericCrudService<Member>, IApplicationService
 {
+    /// <summary>
+    /// Tüm member'ları GymLocation bilgisi ile birlikte getirir
+    /// </summary>
+    Task<ServiceResponse<IEnumerable<Member>>> GetAllMembersWithGymLocationAsync();
 }

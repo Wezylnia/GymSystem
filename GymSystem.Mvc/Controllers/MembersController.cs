@@ -29,12 +29,34 @@ public class MembersController : Controller
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                var members = JsonSerializer.Deserialize<List<MemberViewModel>>(content, new JsonSerializerOptions
+                
+                // API'den gelen response'u deserialize et
+                var options = new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
-                });
+                };
+                
+                var apiMembers = JsonSerializer.Deserialize<List<ApiMemberDto>>(content, options) 
+                    ?? new List<ApiMemberDto>();
 
-                return View(members ?? new List<MemberViewModel>());
+                // ViewModel'e map et
+                var members = apiMembers.Select(m => new MemberViewModel
+                {
+                    Id = m.Id,
+                    FirstName = m.FirstName,
+                    LastName = m.LastName,
+                    Email = m.Email,
+                    PhoneNumber = m.PhoneNumber,
+                    MembershipStartDate = m.MembershipStartDate,
+                    MembershipEndDate = m.MembershipEndDate,
+                    CurrentGymLocationId = m.CurrentGymLocationId,
+                    CurrentGymLocationName = m.CurrentGymLocation?.Name, // API'den gelen navigation property
+                    IsActive = m.IsActive,
+                    CreatedAt = m.CreatedAt,
+                    UpdatedAt = m.UpdatedAt
+                }).ToList();
+
+                return View(members);
             }
             else
             {
@@ -98,4 +120,29 @@ public class MembersController : Controller
             return View(model);
         }
     }
+}
+
+// API'den dönen Member DTO
+public class ApiMemberDto
+{
+    public int Id { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? PhoneNumber { get; set; }
+    public DateTime MembershipStartDate { get; set; }
+    public DateTime? MembershipEndDate { get; set; }
+    public int? CurrentGymLocationId { get; set; }
+    public ApiGymLocationDto? CurrentGymLocation { get; set; } // Navigation property
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+}
+
+public class ApiGymLocationDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
 }
