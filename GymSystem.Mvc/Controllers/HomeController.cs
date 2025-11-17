@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
-using WebProgProjeMvc.Models;
+using GymSystem.Mvc.Models;
 
-namespace WebProgProjeMvc.Controllers {
+namespace GymSystem.Mvc.Controllers {
     public class HomeController : Controller {
         private readonly ILogger<HomeController> _logger;
 

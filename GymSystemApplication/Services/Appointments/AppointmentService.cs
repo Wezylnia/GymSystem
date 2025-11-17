@@ -1,7 +1,7 @@
 ﻿using GymSystem.Application.Abstractions.Services;
-using GymSystem.Application.Factory.Managers;
-using GymSystem.Application.Services.Generic;
+using GymSystem.Common.Factory.Managers;
 using GymSystem.Common.Models;
+using GymSystem.Common.Services;
 using GymSystem.Domain.Entities;
 using Microsoft.Extensions.Logging;
 
@@ -337,7 +337,7 @@ public class AppointmentService : GenericCrudService<Appointment>, IAppointmentS
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Üye randevuları getirilirken hata oluştu");
+            _logger.LogError(ex, "Üye randevıları getirilirken hata oluştu");
             var errorInfo = new ErrorInfo(
                 "Randevular getirilemedi",
                 "APPOINTMENT_018",

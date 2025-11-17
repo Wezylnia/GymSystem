@@ -1,10 +1,9 @@
-﻿using GymSystem.Application.Abstractions.Services;
-using GymSystem.Application.Factory.Managers;
+﻿using GymSystem.Common.Factory.Managers;
 using GymSystem.Common.Helpers;
 using GymSystem.Common.Models;
 using Microsoft.Extensions.Logging;
 
-namespace GymSystem.Application.Services.Generic;
+namespace GymSystem.Common.Services;
 
 /// <summary>
 /// Generic CRUD service implementation

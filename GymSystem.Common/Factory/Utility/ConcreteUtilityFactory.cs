@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace GymSystem.Application.Factory.Utility;
+namespace GymSystem.Common.Factory.Utility;
 
 public class ConcreteUtilityFactory<T> : UtilityFactory<T>
 {

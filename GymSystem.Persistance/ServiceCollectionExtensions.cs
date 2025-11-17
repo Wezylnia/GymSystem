@@ -1,6 +1,8 @@
-﻿using GymSystem.Domain.Entities;
+﻿using GymSystem.Common.Factory.Repository;
+using GymSystem.Domain.Entities;
 using GymSystem.Persistance.Contexts;
 using GymSystem.Persistance.Database;
+using GymSystem.Persistance.Factory;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -20,6 +22,9 @@ public static class ServiceCollectionExtensions
         {
             options.ConfigureDatabase("GymDbContext", configuration["Data:Gym:MigrationsAssembly"], settingsFileName);
         });
+
+        // Repository Factory'yi kaydet
+        serviceCollection.AddScoped<IRepositoryFactory, ConcreteRepositoryFactory>();
 
         // ASP.NET Core Identity
         serviceCollection.AddIdentity<AppUser, IdentityRole<int>>(options =>

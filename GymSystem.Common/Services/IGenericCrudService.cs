@@ -1,6 +1,6 @@
 ﻿using GymSystem.Common.Models;
 
-namespace GymSystem.Application.Abstractions.Services;
+namespace GymSystem.Common.Services;
 
 /// <summary>
 /// Generic CRUD operations interface

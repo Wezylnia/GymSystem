@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace GymSystem.Application.Factory.Utility;
+namespace GymSystem.Common.Factory.Utility;
 
 public abstract class UtilityFactory<T>
 {

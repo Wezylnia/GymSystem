@@ -1,6 +1,6 @@
 ﻿using GymSystem.Application.Abstractions.Services;
-using GymSystem.Application.Factory.Managers;
-using GymSystem.Application.Services.Generic;
+using GymSystem.Common.Factory.Managers;
+using GymSystem.Common.Services;
 using GymSystem.Domain.Entities;
 
 namespace GymSystem.Application.Services.Services;

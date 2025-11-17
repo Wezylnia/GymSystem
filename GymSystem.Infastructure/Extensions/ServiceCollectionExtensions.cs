@@ -1,7 +1,10 @@
-﻿using GymSystem.Persistance;
+﻿using GymSystem.Common.Factory.Managers;
+using GymSystem.Common.Factory.Utility;
+using GymSystem.Common.ServiceRegistration;
+using GymSystem.Common.Services;
+using GymSystem.Persistance;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
 
 namespace GymSystem.Infastructure.Extensions;
 
@@ -12,44 +15,28 @@ public static class ServiceCollectionExtensions
         IConfiguration configuration,
         string settingsFileName = "appsettings.json")
     {
-        // 1. Persistence layer'ı kaydet
+        // 1. Persistence layer'ı kaydet (DbContext + Identity)
         services.AddPersistenceInfrastructure(configuration, settingsFileName);
 
-        // 2. Application assembly'yi yükle
-        var applicationAssembly = Assembly.Load("GymSystem.Application");
+        // 2. Generic Factory'leri kaydet (open generic types)
+        services.AddScoped(typeof(UtilityFactory<>), typeof(ConcreteUtilityFactory<>));
+        services.AddScoped(typeof(BaseFactory<>), typeof(BaseConcreteFactory<>));
 
-        // 3. Generic Factory'leri manuel kaydet (open generic types - abstract class)
-        // LifomatikCore pattern: abstract class olarak register ediyoruz
-        var utilityFactoryBase = applicationAssembly.GetType("GymSystem.Application.Factory.Utility.UtilityFactory`1");
-        var utilityFactoryImpl = applicationAssembly.GetType("GymSystem.Application.Factory.Utility.ConcreteUtilityFactory`1");
-        var baseFactoryBase = applicationAssembly.GetType("GymSystem.Application.Factory.Managers.BaseFactory`1");
-        var baseFactoryImpl = applicationAssembly.GetType("GymSystem.Application.Factory.Managers.BaseConcreteFactory`1");
+        // 3. Generic CRUD Service'i kaydet (open generic type)
+        services.AddScoped(typeof(IGenericCrudService<>), typeof(GenericCrudService<>));
 
-        if (utilityFactoryBase != null && utilityFactoryImpl != null)
+        // 4. Common assembly'deki non-generic servisleri otomatik kaydet
+        services.AddAutoRegisteredServices(typeof(IApplicationService).Assembly);
+
+        // 5. Application assembly'deki non-generic servisleri otomatik kaydet
+        var applicationAssemblyName = "GymSystem.Application";
+        var applicationAssembly = AppDomain.CurrentDomain.GetAssemblies()
+            .FirstOrDefault(a => a.GetName().Name == applicationAssemblyName);
+
+        if (applicationAssembly != null)
         {
-            services.AddScoped(utilityFactoryBase, utilityFactoryImpl);
+            services.AddAutoRegisteredServices(applicationAssembly);
         }
-
-        if (baseFactoryBase != null && baseFactoryImpl != null)
-        {
-            services.AddScoped(baseFactoryBase, baseFactoryImpl);
-        }
-
-        // 4. Generic CRUD Service'i manuel kaydet (open generic type)
-        var genericCrudServiceInterface = applicationAssembly.GetType("GymSystem.Application.Abstractions.Services.IGenericCrudService`1");
-        var genericCrudServiceImpl = applicationAssembly.GetType("GymSystem.Application.Services.Generic.GenericCrudService`1");
-
-        if (genericCrudServiceInterface != null && genericCrudServiceImpl != null)
-        {
-            services.AddScoped(genericCrudServiceInterface, genericCrudServiceImpl);
-        }
-
-        // 5. Common assembly'deki NON-GENERIC servisleri otomatik kaydet
-        var commonAssembly = Assembly.Load("GymSystem.Common");
-        services.AddAutoRegisteredServices(commonAssembly);
-
-        // 6. Application assembly'deki NON-GENERIC servisleri otomatik kaydet
-        services.AddAutoRegisteredServices(applicationAssembly);
 
         return services;
     }

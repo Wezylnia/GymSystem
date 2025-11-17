@@ -1,7 +1,7 @@
-﻿using GymSystem.Application.Factory.Repository;
-using GymSystem.Application.Factory.Utility;
+﻿using GymSystem.Common.Factory.Repository;
+using GymSystem.Common.Factory.Utility;
 
-namespace GymSystem.Application.Factory.Managers;
+namespace GymSystem.Common.Factory.Managers;
 
 public abstract class BaseFactory<T>
 {
