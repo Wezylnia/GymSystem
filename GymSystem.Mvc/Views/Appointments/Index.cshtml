@@ -84,19 +84,19 @@
                                 }
                             </td>
                             <td>
-                                @if (appointment.Status == "Pending")
+                                @if (appointment.Status == "Pending" && (User.IsInRole("Admin") || User.IsInRole("GymOwner")))
                                 {
                                     <form asp-action="Confirm" asp-route-id="@appointment.Id" method="post" class="d-inline">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn btn-sm btn-success" title="Onayla">
-                                            <i class="bi bi-check-circle"></i>
+                                            <i class="bi bi-check-circle"></i> Onayla
                                         </button>
                                     </form>
                                 }
                                 @if (appointment.Status == "Pending" || appointment.Status == "Confirmed")
                                 {
                                     <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#cancelModal@(appointment.Id)" title="İptal Et">
-                                        <i class="bi bi-x-circle"></i>
+                                        <i class="bi bi-x-circle"></i> İptal
                                     </button>
                                 }
                             </td>

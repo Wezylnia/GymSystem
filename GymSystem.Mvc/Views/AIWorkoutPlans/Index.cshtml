@@ -11,9 +11,12 @@
                 <h2>
                     <i class="fas fa-robot"></i> AI Planlarım
                 </h2>
-                <a asp-action="Create" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Yeni Plan Oluştur
-                </a>
+                @if (User.IsInRole("Member"))
+                {
+                    <a asp-action="Create" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Yeni Plan Oluştur
+                    </a>
+                }
             </div>
 
             @if (TempData["SuccessMessage"] != null)
@@ -43,7 +46,10 @@
             {
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i> Henüz AI tarafından oluşturulmuş bir planınız yok.
-                    <a asp-action="Create" class="alert-link">Hemen oluşturun!</a>
+                    @if (User.IsInRole("Member"))
+                    {
+                        <a asp-action="Create" class="alert-link">Hemen oluşturun!</a>
+                    }
                 </div>
             }
             else
@@ -93,35 +99,41 @@
                                         <a asp-action="Details" asp-route-id="@plan.Id" class="btn btn-outline-primary btn-sm">
                                             <i class="fas fa-eye"></i> Detayları Gör
                                         </a>
-                                        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal@(plan.Id)">
-                                            <i class="fas fa-trash"></i> Sil
-                                        </button>
+                                        @if (User.IsInRole("Member") || User.IsInRole("Admin"))
+                                        {
+                                            <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal@(plan.Id)">
+                                                <i class="fas fa-trash"></i> Sil
+                                            </button>
+                                        }
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Delete Modal -->
-                        <div class="modal fade" id="deleteModal@(plan.Id)" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Planı Sil</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        Bu planı silmek istediğinizden emin misiniz?
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                                        <form asp-action="Delete" asp-route-id="@plan.Id" method="post" style="display:inline;">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-danger">Sil</button>
-                                        </form>
+                        <!-- Delete Modal - Sadece yetkili kullanıcılar için -->
+                        @if (User.IsInRole("Member") || User.IsInRole("Admin"))
+                        {
+                            <div class="modal fade" id="deleteModal@(plan.Id)" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Planı Sil</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Bu planı silmek istediğinizden emin misiniz?
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                                            <form asp-action="Delete" asp-route-id="@plan.Id" method="post" style="display:inline;">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-danger">Sil</button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        }
                     }
                 </div>
             }

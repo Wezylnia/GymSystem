@@ -1,5 +1,6 @@
 ﻿using GymSystem.Application.Abstractions.Services;
 using GymSystem.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymSystem.Api.Controllers;
@@ -27,7 +28,27 @@ public class AppointmentsController : ControllerBase
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
         }
 
-        return Ok(response.Data);
+        // Entity'den DTO'ya dönüştür (Status enum'u string'e çevir)
+        var dtos = response.Data?.Select(a => new
+        {
+            a.Id,
+            a.MemberId,
+            a.TrainerId,
+            a.ServiceId,
+            a.AppointmentDate,
+            a.DurationMinutes,
+            a.Price,
+            Status = a.Status.ToString(), // Enum'u string'e çevir
+            a.Notes,
+            a.IsActive,
+            a.CreatedAt,
+            MemberName = a.Member != null ? $"{a.Member.FirstName} {a.Member.LastName}" : null,
+            TrainerName = a.Trainer != null ? $"{a.Trainer.FirstName} {a.Trainer.LastName}" : null,
+            ServiceName = a.Service?.Name,
+            GymLocationName = a.Service?.GymLocation?.Name
+        });
+
+        return Ok(dtos);
     }
 
     [HttpGet("{id}")]
@@ -40,23 +61,83 @@ public class AppointmentsController : ControllerBase
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
         }
 
-        return Ok(response.Data);
+        if (response.Data == null)
+        {
+            return NotFound(new { error = "Randevu bulunamadı" });
+        }
+
+        // Entity'den DTO'ya dönüştür
+        var dto = new
+        {
+            response.Data.Id,
+            response.Data.MemberId,
+            response.Data.TrainerId,
+            response.Data.ServiceId,
+            response.Data.AppointmentDate,
+            response.Data.DurationMinutes,
+            response.Data.Price,
+            Status = response.Data.Status.ToString(), // Enum'u string'e çevir
+            response.Data.Notes,
+            response.Data.IsActive,
+            response.Data.CreatedAt,
+            MemberName = response.Data.Member != null ? $"{response.Data.Member.FirstName} {response.Data.Member.LastName}" : null,
+            TrainerName = response.Data.Trainer != null ? $"{response.Data.Trainer.FirstName} {response.Data.Trainer.LastName}" : null,
+            ServiceName = response.Data.Service?.Name,
+            GymLocationName = response.Data.Service?.GymLocation?.Name
+        };
+
+        return Ok(dto);
     }
 
     /// <summary>
     /// Randevu oluştur (tüm kontroller ile)
     /// </summary>
     [HttpPost]
-    public async Task<IActionResult> Create(Appointment appointment)
+    public async Task<IActionResult> Create([FromBody] CreateAppointmentRequest request)
     {
+        if (request == null)
+        {
+            return BadRequest(new { error = "Geçersiz istek" });
+        }
+
+        // Entity oluştur (navigation property'ler olmadan)
+        var appointment = new Appointment
+        {
+            MemberId = request.MemberId,
+            TrainerId = request.TrainerId,
+            ServiceId = request.ServiceId,
+            AppointmentDate = request.AppointmentDate,
+            DurationMinutes = request.DurationMinutes,
+            Price = request.Price,
+            Notes = request.Notes
+        };
+
         var response = await _appointmentService.BookAppointmentAsync(appointment);
         
         if (!response.IsSuccessful)
         {
-            return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
+            return StatusCode(response.Error?.StatusCode ?? 500, new { 
+                error = response.Error?.ErrorMessage ?? "Randevu oluşturulamadı",
+                errorCode = response.Error?.ErrorCode 
+            });
         }
 
-        return CreatedAtAction(nameof(Get), new { id = response.Data!.Id }, response.Data);
+        // Entity'den DTO'ya dönüştür
+        var dto = new
+        {
+            response.Data!.Id,
+            response.Data.MemberId,
+            response.Data.TrainerId,
+            response.Data.ServiceId,
+            response.Data.AppointmentDate,
+            response.Data.DurationMinutes,
+            response.Data.Price,
+            response.Data.Status,
+            response.Data.Notes,
+            response.Data.CreatedAt
+        };
+
+        return CreatedAtAction(nameof(Get), new { id = response.Data!.Id }, dto);
     }
 
     [HttpPut("{id}")]
@@ -91,9 +172,10 @@ public class AppointmentsController : ControllerBase
     }
 
     /// <summary>
-    /// Randevu onayla (Admin/Trainer için)
+    /// Randevu onayla (Sadece Admin ve GymOwner)
     /// </summary>
     [HttpPut("{id}/confirm")]
+    [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> Confirm(int id)
     {
         var response = await _appointmentService.ConfirmAppointmentAsync(id);
@@ -103,7 +185,11 @@ public class AppointmentsController : ControllerBase
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
         }
 
-        return Ok(response.Data);
+        return Ok(new { 
+            id = response.Data?.Id,
+            status = response.Data?.Status.ToString(),
+            message = "Randevu onaylandı" 
+        });
     }
 
     /// <summary>
@@ -135,7 +221,27 @@ public class AppointmentsController : ControllerBase
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
         }
 
-        return Ok(response.Data);
+        // Entity'den DTO'ya dönüştür (Status enum'u string'e çevir)
+        var dtos = response.Data?.Select(a => new
+        {
+            a.Id,
+            a.MemberId,
+            a.TrainerId,
+            a.ServiceId,
+            a.AppointmentDate,
+            a.DurationMinutes,
+            a.Price,
+            Status = a.Status.ToString(),
+            a.Notes,
+            a.IsActive,
+            a.CreatedAt,
+            MemberName = a.Member != null ? $"{a.Member.FirstName} {a.Member.LastName}" : null,
+            TrainerName = a.Trainer != null ? $"{a.Trainer.FirstName} {a.Trainer.LastName}" : null,
+            ServiceName = a.Service?.Name,
+            GymLocationName = a.Service?.GymLocation?.Name
+        });
+
+        return Ok(dtos);
     }
 
     /// <summary>
@@ -151,7 +257,27 @@ public class AppointmentsController : ControllerBase
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
         }
 
-        return Ok(response.Data);
+        // Entity'den DTO'ya dönüştür (Status enum'u string'e çevir)
+        var dtos = response.Data?.Select(a => new
+        {
+            a.Id,
+            a.MemberId,
+            a.TrainerId,
+            a.ServiceId,
+            a.AppointmentDate,
+            a.DurationMinutes,
+            a.Price,
+            Status = a.Status.ToString(),
+            a.Notes,
+            a.IsActive,
+            a.CreatedAt,
+            MemberName = a.Member != null ? $"{a.Member.FirstName} {a.Member.LastName}" : null,
+            TrainerName = a.Trainer != null ? $"{a.Trainer.FirstName} {a.Trainer.LastName}" : null,
+            ServiceName = a.Service?.Name,
+            GymLocationName = a.Service?.GymLocation?.Name
+        });
+
+        return Ok(dtos);
     }
 
     /// <summary>
@@ -192,3 +318,14 @@ public class AppointmentsController : ControllerBase
         return Ok(response.Data);
     }
 }
+
+// Request DTOs
+public record CreateAppointmentRequest(
+    int MemberId,
+    int TrainerId,
+    int ServiceId,
+    DateTime AppointmentDate,
+    int DurationMinutes,
+    decimal Price,
+    string? Notes
+);

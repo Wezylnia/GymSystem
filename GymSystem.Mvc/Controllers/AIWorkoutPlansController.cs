@@ -24,30 +24,61 @@ public class AIWorkoutPlansController : Controller
         try
         {
             var client = _httpClientFactory.CreateClient("GymApi");
-            var memberId = GetCurrentMemberId();
-
-            if (memberId == null)
+            
+            // Member ise sadece kendi planlarını getir
+            if (User.IsInRole("Member"))
             {
-                ViewBag.ErrorMessage = "Member bilgisi bulunamadı.";
-                return View(new List<AIWorkoutPlanViewModel>());
-            }
+                var memberId = GetCurrentMemberId();
 
-            var response = await client.GetAsync($"/api/aiworkoutplans/member/{memberId}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                var plans = JsonSerializer.Deserialize<List<AIWorkoutPlanViewModel>>(content, new JsonSerializerOptions
+                if (memberId == null)
                 {
-                    PropertyNameCaseInsensitive = true
-                }) ?? new List<AIWorkoutPlanViewModel>();
+                    ViewBag.ErrorMessage = "Member bilgisi bulunamadı.";
+                    return View(new List<AIWorkoutPlanViewModel>());
+                }
 
-                return View(plans);
+                var response = await client.GetAsync($"/api/aiworkoutplans/member/{memberId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var plans = JsonSerializer.Deserialize<List<AIWorkoutPlanViewModel>>(content, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    }) ?? new List<AIWorkoutPlanViewModel>();
+
+                    return View(plans);
+                }
+                else
+                {
+                    ViewBag.ErrorMessage = "Planlar yüklenirken bir hata oluştu.";
+                    return View(new List<AIWorkoutPlanViewModel>());
+                }
+            }
+            // Admin veya GymOwner ise tüm planları getir
+            else if (User.IsInRole("Admin") || User.IsInRole("GymOwner"))
+            {
+                var response = await client.GetAsync("/api/aiworkoutplans");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var plans = JsonSerializer.Deserialize<List<AIWorkoutPlanViewModel>>(content, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    }) ?? new List<AIWorkoutPlanViewModel>();
+
+                    return View(plans);
+                }
+                else
+                {
+                    ViewBag.ErrorMessage = "Planlar yüklenirken bir hata oluştu.";
+                    return View(new List<AIWorkoutPlanViewModel>());
+                }
             }
             else
             {
-                ViewBag.ErrorMessage = "Planlar yüklenirken bir hata oluştu.";
-                return View(new List<AIWorkoutPlanViewModel>());
+                // Diğer roller için erişim engellendi
+                return RedirectToAction("AccessDenied", "Account");
             }
         }
         catch (Exception ex)
@@ -58,6 +89,7 @@ public class AIWorkoutPlansController : Controller
         }
     }
 
+    [Authorize(Roles = "Member")] // Sadece Member oluşturabilir
     public IActionResult Create()
     {
         var model = new CreateAIWorkoutPlanViewModel
@@ -83,6 +115,7 @@ public class AIWorkoutPlansController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Member")] // Sadece Member oluşturabilir
     public async Task<IActionResult> Create(CreateAIWorkoutPlanViewModel model, IFormFile? photo)
     {
         if (!ModelState.IsValid)
@@ -227,6 +260,7 @@ public class AIWorkoutPlansController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Member,Admin")] // Sadece Member ve Admin silebilir
     public async Task<IActionResult> Delete(int id)
     {
         try

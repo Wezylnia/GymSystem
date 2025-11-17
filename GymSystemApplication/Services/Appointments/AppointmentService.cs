@@ -4,15 +4,48 @@ using GymSystem.Common.Helpers;
 using GymSystem.Common.Models;
 using GymSystem.Common.Services;
 using GymSystem.Domain.Entities;
+using GymSystem.Persistance.Contexts;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace GymSystem.Application.Services.Appointments;
 
 public class AppointmentService : GenericCrudService<Appointment>, IAppointmentService
 {
-    public AppointmentService(BaseFactory<GenericCrudService<Appointment>> baseFactory)
+    private readonly GymDbContext _context;
+
+    public AppointmentService(BaseFactory<GenericCrudService<Appointment>> baseFactory, GymDbContext context)
         : base(baseFactory)
     {
+        _context = context;
+    }
+
+    // GenericCrudService GetAllAsync override - Include ekle
+    public override async Task<ServiceResponse<IEnumerable<Appointment>>> GetAllAsync()
+    {
+        try
+        {
+            var appointments = await _context.Set<Appointment>()
+                .Where(a => a.IsActive)
+                .Include(a => a.Member)
+                .Include(a => a.Trainer)
+                .Include(a => a.Service)
+                    .ThenInclude(s => s.GymLocation)
+                .OrderByDescending(a => a.AppointmentDate)
+                .ToListAsync();
+
+            return _responseHelper.SetSuccess<IEnumerable<Appointment>>(appointments);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Tüm randevular getirilirken hata oluştu");
+            var errorInfo = new ErrorInfo(
+                "Randevular getirilemedi",
+                "APPOINTMENT_GETALL_ERROR",
+                ex.StackTrace,
+                500);
+            return _responseHelper.SetError<IEnumerable<Appointment>>(null, errorInfo);
+        }
     }
 
     public async Task<ServiceResponse<bool>> CheckTrainerAvailabilityAsync(int trainerId, DateTime appointmentDate, int durationMinutes)
@@ -57,14 +90,14 @@ public class AppointmentService : GenericCrudService<Appointment>, IAppointmentS
                 a.DayOfWeek == dayOfWeek &&
                 a.IsActive &&
                 a.StartTime <= appointmentTime &&
-                a.EndTime >= appointmentEndTimeSpan
+                a.EndTime >= appointmentEndTimeSpan  // Değişiklik: EndTime randevu bitiş saatinden büyük veya eşit olmalı
             );
 
             if (availability == null)
             {
                 return _responseHelper.SetError<bool>(
                     false,
-                    "Antrenör seçilen gün ve saatte müsait değil.",
+                    $"Antrenör {dayOfWeek} günü {appointmentTime:hh\\:mm} - {appointmentEndTimeSpan:hh\\:mm} saatleri arasında müsait değil.",
                     400,
                     "APPOINTMENT_002");
             }
@@ -328,17 +361,20 @@ public class AppointmentService : GenericCrudService<Appointment>, IAppointmentS
     {
         try
         {
-            var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Appointment>();
-            var appointments = await repository.GetListAsync(a =>
-                a.MemberId == memberId &&
-                a.IsActive
-            );
+            var appointments = await _context.Set<Appointment>()
+                .Where(a => a.MemberId == memberId && a.IsActive)
+                .Include(a => a.Member)
+                .Include(a => a.Trainer)
+                .Include(a => a.Service)
+                    .ThenInclude(s => s.GymLocation)
+                .OrderByDescending(a => a.AppointmentDate)
+                .ToListAsync();
 
             return _responseHelper.SetSuccess<IEnumerable<Appointment>>(appointments);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Üye randevıları getirilirken hata oluştu");
+            _logger.LogError(ex, "Üye randevuları getirilirken hata oluştu");
             var errorInfo = new ErrorInfo(
                 "Randevular getirilemedi",
                 "APPOINTMENT_018",
@@ -352,11 +388,14 @@ public class AppointmentService : GenericCrudService<Appointment>, IAppointmentS
     {
         try
         {
-            var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Appointment>();
-            var appointments = await repository.GetListAsync(a =>
-                a.TrainerId == trainerId &&
-                a.IsActive
-            );
+            var appointments = await _context.Set<Appointment>()
+                .Where(a => a.TrainerId == trainerId && a.IsActive)
+                .Include(a => a.Member)
+                .Include(a => a.Trainer)
+                .Include(a => a.Service)
+                    .ThenInclude(s => s.GymLocation)
+                .OrderByDescending(a => a.AppointmentDate)
+                .ToListAsync();
 
             return _responseHelper.SetSuccess<IEnumerable<Appointment>>(appointments);
         }
