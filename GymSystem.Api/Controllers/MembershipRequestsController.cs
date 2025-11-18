@@ -12,293 +12,165 @@ public class MembershipRequestsController : ControllerBase
     private readonly IMembershipRequestService _membershipRequestService;
     private readonly ILogger<MembershipRequestsController> _logger;
 
-    public MembershipRequestsController(
-        IMembershipRequestService membershipRequestService,
-        ILogger<MembershipRequestsController> logger)
+    public MembershipRequestsController(IMembershipRequestService membershipRequestService, ILogger<MembershipRequestsController> logger)
     {
         _membershipRequestService = membershipRequestService;
         _logger = logger;
     }
 
-    /// <summary>
-    /// Yeni üyelik talebi oluşturur
-    /// </summary>
     [HttpPost("create")]
     [Authorize(Roles = "Member")]
     public async Task<IActionResult> CreateRequest([FromBody] CreateMembershipRequestDto request)
     {
-        try
-        {
-            if (request.MemberId <= 0)
-            {
-                return BadRequest(new { error = "Geçersiz member ID." });
-            }
+        if (request.MemberId <= 0)
+            return BadRequest(new { error = "Geçersiz member ID" });
 
-            if (request.GymLocationId <= 0)
-            {
-                return BadRequest(new { error = "Geçersiz gym location ID." });
-            }
+        if (request.GymLocationId <= 0)
+            return BadRequest(new { error = "Geçersiz gym location ID" });
 
-            var membershipRequest = await _membershipRequestService.CreateRequestAsync(
-                request.MemberId,
-                request.GymLocationId,
-                request.Duration,
-                request.Price,
-                request.Notes
-            );
+        var response = await _membershipRequestService.CreateRequestAsync(request.MemberId, request.GymLocationId, request.Duration, request.Price, request.Notes);
 
-            return Ok(membershipRequest);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Üyelik talebi oluşturulurken hata");
-            return StatusCode(500, new { error = "Talep oluşturulurken bir hata oluştu." });
-        }
+        if (!response.IsSuccessful)
+            return StatusCode(response.Error?.StatusCode ?? 500, new { error = response.Error?.ErrorMessage ?? "Talep oluşturulamadı" });
+
+        return Ok(response.Data);
     }
 
-    /// <summary>
-    /// Belirli bir üyenin tüm taleplerini getirir
-    /// </summary>
     [HttpGet("member/{memberId}")]
     [Authorize(Roles = "Member,Admin,GymOwner")]
     public async Task<IActionResult> GetMemberRequests(int memberId)
     {
-        try
-        {
-            if (memberId <= 0)
-            {
-                return BadRequest(new { error = "Geçersiz member ID." });
-            }
+        if (memberId <= 0)
+            return BadRequest(new { error = "Geçersiz member ID" });
 
-            var requests = await _membershipRequestService.GetMemberRequestsAsync(memberId);
-            return Ok(requests);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Üye talepleri getirilirken hata. Member ID: {MemberId}", memberId);
-            return StatusCode(500, new { error = "Talepler getirilirken bir hata oluştu." });
-        }
+        var response = await _membershipRequestService.GetMemberRequestsAsync(memberId);
+
+        if (!response.IsSuccessful)
+            return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
+
+        return Ok(response.Data);
     }
 
-    /// <summary>
-    /// Belirli bir salonun tüm taleplerini getirir
-    /// </summary>
     [HttpGet("gym/{gymLocationId}")]
     [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> GetGymLocationRequests(int gymLocationId)
     {
-        try
-        {
-            if (gymLocationId <= 0)
-            {
-                return BadRequest(new { error = "Geçersiz gym location ID." });
-            }
+        if (gymLocationId <= 0)
+            return BadRequest(new { error = "Geçersiz gym location ID" });
 
-            var requests = await _membershipRequestService.GetGymLocationRequestsAsync(gymLocationId);
-            return Ok(requests);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Salon talepleri getirilirken hata. Gym ID: {GymId}", gymLocationId);
-            return StatusCode(500, new { error = "Talepler getirilirken bir hata oluştu." });
-        }
+        var response = await _membershipRequestService.GetGymLocationRequestsAsync(gymLocationId);
+
+        if (!response.IsSuccessful)
+            return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
+
+        return Ok(response.Data);
     }
 
-    /// <summary>
-    /// Tüm talepleri getirir (Admin)
-    /// </summary>
     [HttpGet]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAllRequests()
     {
-        try
-        {
-            var requests = await _membershipRequestService.GetAllRequestsAsync();
-            return Ok(requests);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Tüm talepler getirilirken hata");
-            return StatusCode(500, new { error = "Talepler getirilirken bir hata oluştu." });
-        }
+        var response = await _membershipRequestService.GetAllRequestsAsync();
+
+        if (!response.IsSuccessful)
+            return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
+
+        return Ok(response.Data);
     }
 
-    /// <summary>
-    /// Bekleyen talepleri getirir
-    /// </summary>
     [HttpGet("pending")]
     [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> GetPendingRequests()
     {
-        try
-        {
-            var requests = await _membershipRequestService.GetPendingRequestsAsync();
-            return Ok(requests);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Bekleyen talepler getirilirken hata");
-            return StatusCode(500, new { error = "Talepler getirilirken bir hata oluştu." });
-        }
+        var response = await _membershipRequestService.GetPendingRequestsAsync();
+
+        if (!response.IsSuccessful)
+            return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
+
+        return Ok(response.Data);
     }
 
-    /// <summary>
-    /// Talep detayını getirir
-    /// </summary>
     [HttpGet("{id}")]
     [Authorize(Roles = "Admin,GymOwner,Member")]
     public async Task<IActionResult> GetRequestById(int id)
     {
-        try
-        {
-            if (id <= 0)
-            {
-                return BadRequest(new { error = "Geçersiz talep ID." });
-            }
+        if (id <= 0)
+            return BadRequest(new { error = "Geçersiz talep ID" });
 
-            var request = await _membershipRequestService.GetRequestByIdAsync(id);
-            if (request == null)
-            {
-                return NotFound(new { error = "Talep bulunamadı." });
-            }
+        var response = await _membershipRequestService.GetRequestByIdAsync(id);
 
-            return Ok(request);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Talep getirilirken hata. Request ID: {RequestId}", id);
-            return StatusCode(500, new { error = "Talep getirilirken bir hata oluştu." });
-        }
+        if (!response.IsSuccessful)
+            return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
+
+        if (response.Data == null)
+            return NotFound(new { error = "Talep bulunamadı" });
+
+        return Ok(response.Data);
     }
 
-    /// <summary>
-    /// Talebi onaylar
-    /// </summary>
     [HttpPost("{id}/approve")]
     [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> ApproveRequest(int id, [FromBody] ApproveRejectDto dto)
     {
-        try
-        {
-            if (id <= 0)
-            {
-                return BadRequest(new { error = "Geçersiz talep ID." });
-            }
+        if (id <= 0)
+            return BadRequest(new { error = "Geçersiz talep ID" });
 
-            if (dto.UserId <= 0)
-            {
-                return BadRequest(new { error = "Geçersiz kullanıcı ID." });
-            }
+        if (dto.UserId <= 0)
+            return BadRequest(new { error = "Geçersiz kullanıcı ID" });
 
-            var result = await _membershipRequestService.ApproveRequestAsync(id, dto.UserId, dto.AdminNotes);
-            if (!result)
-            {
-                return NotFound(new { error = "Talep bulunamadı." });
-            }
+        var response = await _membershipRequestService.ApproveRequestAsync(id, dto.UserId, dto.AdminNotes);
 
-            return Ok(new { message = "Talep onaylandı." });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Talep onaylanırken hata. Request ID: {RequestId}", id);
-            return StatusCode(500, new { error = "Talep onaylanırken bir hata oluştu." });
-        }
+        if (!response.IsSuccessful)
+            return StatusCode(response.Error?.StatusCode ?? 500, new { error = response.Error?.ErrorMessage ?? "Talep onaylanamadı" });
+
+        return Ok(new { message = "Talep onaylandı" });
     }
 
-    /// <summary>
-    /// Talebi reddeder
-    /// </summary>
     [HttpPost("{id}/reject")]
     [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> RejectRequest(int id, [FromBody] ApproveRejectDto dto)
     {
-        try
-        {
-            if (id <= 0)
-            {
-                return BadRequest(new { error = "Geçersiz talep ID." });
-            }
+        if (id <= 0)
+            return BadRequest(new { error = "Geçersiz talep ID" });
 
-            if (dto.UserId <= 0)
-            {
-                return BadRequest(new { error = "Geçersiz kullanıcı ID." });
-            }
+        if (dto.UserId <= 0)
+            return BadRequest(new { error = "Geçersiz kullanıcı ID" });
 
-            var result = await _membershipRequestService.RejectRequestAsync(id, dto.UserId, dto.AdminNotes);
-            if (!result)
-            {
-                return NotFound(new { error = "Talep bulunamadı." });
-            }
+        var response = await _membershipRequestService.RejectRequestAsync(id, dto.UserId, dto.AdminNotes);
 
-            return Ok(new { message = "Talep reddedildi." });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Talep reddedilirken hata. Request ID: {RequestId}", id);
-            return StatusCode(500, new { error = "Talep reddedilirken bir hata oluştu." });
-        }
+        if (!response.IsSuccessful)
+            return StatusCode(response.Error?.StatusCode ?? 500, new { error = response.Error?.ErrorMessage ?? "Talep reddedilemedi" });
+
+        return Ok(new { message = "Talep reddedildi" });
     }
 
-    /// <summary>
-    /// Talebi siler (Sadece Member kendi talebini silebilir)
-    /// </summary>
     [HttpDelete("{id}")]
     [Authorize(Roles = "Member,Admin")]
     public async Task<IActionResult> DeleteRequest(int id)
     {
-        try
-        {
-            if (id <= 0)
-            {
-                return BadRequest(new { error = "Geçersiz talep ID." });
-            }
+        if (id <= 0)
+            return BadRequest(new { error = "Geçersiz talep ID" });
 
-            var result = await _membershipRequestService.DeleteRequestAsync(id);
-            if (!result)
-            {
-                return NotFound(new { error = "Talep bulunamadı." });
-            }
+        var response = await _membershipRequestService.DeleteRequestAsync(id);
 
-            return Ok(new { message = "Talep silindi." });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Talep silinirken hata. Request ID: {RequestId}", id);
-            return StatusCode(500, new { error = "Talep silinirken bir hata oluştu." });
-        }
+        if (!response.IsSuccessful)
+            return StatusCode(response.Error?.StatusCode ?? 500, new { error = response.Error?.ErrorMessage ?? "Talep silinemedi" });
+
+        return Ok(new { message = "Talep silindi" });
     }
 }
 
-// Request DTOs
-public record CreateMembershipRequestDto(
-    int MemberId,
-    int GymLocationId,
-    MembershipDuration Duration,
-    decimal Price,
-    string? Notes
-);
+public class CreateMembershipRequestDto
+{
+    public int MemberId { get; set; }
+    public int GymLocationId { get; set; }
+    public MembershipDuration Duration { get; set; }
+    public decimal Price { get; set; }
+    public string? Notes { get; set; }
+}
 
-public record ApproveRejectDto(
-    int UserId,
-    string? AdminNotes
-);
+public class ApproveRejectDto
+{
+    public int UserId { get; set; }
+    public string? AdminNotes { get; set; }
+}

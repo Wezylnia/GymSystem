@@ -8,17 +8,12 @@ using Microsoft.Extensions.Logging;
 
 namespace GymSystem.Application.Services.Reports;
 
-/// <summary>
-/// Raporlama servisi - LINQ optimized
-/// Diğer servislerden veri alıp LINQ ile analiz eder
-/// </summary>
 public class ReportService : IReportService {
     private readonly BaseFactory<ReportService> _baseFactory;
     private readonly IAppointmentService _appointmentService;
     private readonly ITrainerService _trainerService;
     private readonly IServiceService _serviceService;
     private readonly IMembershipRequestService _membershipRequestService;
-    private readonly IMemberService _memberService;
     private readonly IGymLocationService _gymLocationService;
     private readonly IServiceResponseHelper _responseHelper;
     private readonly ILogger<ReportService> _logger;
@@ -29,7 +24,6 @@ public class ReportService : IReportService {
         ITrainerService trainerService,
         IServiceService serviceService,
         IMembershipRequestService membershipRequestService,
-        IMemberService memberService,
         IGymLocationService gymLocationService,
         ILogger<ReportService> logger) {
         _baseFactory = baseFactory;
@@ -37,7 +31,6 @@ public class ReportService : IReportService {
         _trainerService = trainerService;
         _serviceService = serviceService;
         _membershipRequestService = membershipRequestService;
-        _memberService = memberService;
         _gymLocationService = gymLocationService;
         _responseHelper = baseFactory.CreateUtilityFactory().CreateServiceResponseHelper();
         _logger = logger;
@@ -46,8 +39,8 @@ public class ReportService : IReportService {
     public async Task<ServiceResponse<object>> GetTrainersBySpecialtyAsync(string specialty) {
         try {
             var servicesResponse = await _serviceService.GetAllAsync();
-            if (!servicesResponse.IsSuccessful)
-                return _responseHelper.SetError<object>(null, "Servisler alınamadı", 500, "REPORT_001");
+            if (!servicesResponse.IsSuccessful || servicesResponse.Data == null)
+                return _responseHelper.SetError<object>(null, "Hizmetler alınamadı", 500, "REPORT_001");
 
             var matchingService = servicesResponse.Data?.Where(s => s.Name.Contains(specialty, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
 
@@ -121,16 +114,16 @@ public class ReportService : IReportService {
             if (!appointmentsResponse.IsSuccessful || !servicesResponse.IsSuccessful)
                 return _responseHelper.SetError<object>(null, "Veriler alınamadı", 500, "REPORT_008");
 
-            var appointments = appointmentsResponse.Data?.Where(a => a.IsActive).ToList() ?? new List<GymSystem.Application.Abstractions.Contract.Appointment.AppointmentDto>();
-            var services = servicesResponse.Data?.ToList() ?? new List<Service>();
+            var appointments = appointmentsResponse.Data?.Where(a => a.IsActive && a.Status == AppointmentStatus.Confirmed.ToString()).ToList() ?? new List<GymSystem.Application.Abstractions.Contract.Appointment.AppointmentDto>();
+            var services = servicesResponse.Data ?? new List<GymSystem.Application.Abstractions.Contract.Service.ServiceDto>();
 
-            var popularServices = appointments.GroupBy(a => a.ServiceId).Select(g => new { ServiceId = g.Key, AppointmentCount = g.Count(), TotalRevenue = g.Sum(a => a.Price) }).OrderByDescending(s => s.AppointmentCount).Take(top).Join(services, stat => stat.ServiceId, service => service.Id, (stat, service) => new { ServiceId = service.Id, ServiceName = service.Name, stat.AppointmentCount, stat.TotalRevenue, AveragePrice = service.Price }).ToList();
+            var popularServices = appointments.GroupBy(a => a.ServiceId).Select(g => new { ServiceId = g.Key, Count = g.Count() }).OrderByDescending(x => x.Count).Take(top).Join(services, ps => ps.ServiceId, s => s.Id, (ps, s) => new { s.Id, s.Name, s.Description, s.Price, s.DurationMinutes, AppointmentCount = ps.Count, s.GymLocationName }).ToList();
 
-            return _responseHelper.SetSuccess<object>(new { services = popularServices, count = popularServices.Count });
+            return _responseHelper.SetSuccess<object>(new { Services = popularServices, Count = popularServices.Count });
         }
         catch (Exception ex) {
             _logger.LogError(ex, "Popüler hizmetler getirilirken hata oluştu");
-            return _responseHelper.SetError<object>(null, new ErrorInfo(ex.Message, "REPORT_009", ex.StackTrace, 500));
+            return _responseHelper.SetError<object>(null, new ErrorInfo(ex.Message, "REPORT_008", ex.StackTrace, 500));
         }
     }
 
@@ -157,18 +150,21 @@ public class ReportService : IReportService {
             var trainersResponse = await _trainerService.GetAllAsync();
 
             if (!appointmentsResponse.IsSuccessful || !trainersResponse.IsSuccessful)
-                return _responseHelper.SetError<object>(null, "Veriler alınamadı", 500, "REPORT_012");
+                return _responseHelper.SetError<object>(null, "Veriler alınamadı", 500, "REPORT_011");
 
-            var appointments = appointmentsResponse.Data?.Where(a => a.IsActive).ToList() ?? new List<GymSystem.Application.Abstractions.Contract.Appointment.AppointmentDto>();
-            var trainers = trainersResponse.Data?.ToList() ?? new List<Trainer>();
+            var appointments = appointmentsResponse.Data?.Where(a => a.IsActive && a.Status == AppointmentStatus.Confirmed.ToString()).ToList() ?? new List<GymSystem.Application.Abstractions.Contract.Appointment.AppointmentDto>();
+            var trainers = trainersResponse.Data ?? new List<GymSystem.Application.Abstractions.Contract.Trainer.TrainerDto>();
 
-            var workloadQuery = appointments.Where(a => !trainerId.HasValue || a.TrainerId == trainerId.Value).GroupBy(a => a.TrainerId).Select(g => new { TrainerId = g.Key, TotalAppointments = g.Count(), PendingAppointments = g.Count(a => a.Status == AppointmentStatus.Pending.ToString()), ConfirmedAppointments = g.Count(a => a.Status == AppointmentStatus.Confirmed.ToString()), CompletedAppointments = g.Count(a => a.Status == AppointmentStatus.Completed.ToString()), TotalHours = g.Sum(a => a.DurationMinutes) / 60.0, TotalRevenue = g.Sum(a => a.Price) }).Join(trainers, stat => stat.TrainerId, trainer => trainer.Id, (stat, trainer) => new { stat.TrainerId, TrainerName = $"{trainer.FirstName} {trainer.LastName}", stat.TotalAppointments, stat.PendingAppointments, stat.ConfirmedAppointments, stat.CompletedAppointments, stat.TotalHours, stat.TotalRevenue }).OrderByDescending(s => s.TotalAppointments).ToList();
+            if (trainerId.HasValue)
+                appointments = appointments.Where(a => a.TrainerId == trainerId.Value).ToList();
 
-            return _responseHelper.SetSuccess<object>(new { workload = workloadQuery, count = workloadQuery.Count });
+            var workload = appointments.GroupBy(a => a.TrainerId).Select(g => { var trainer = trainers.FirstOrDefault(t => t.Id == g.Key); return new { TrainerId = g.Key, TrainerName = trainer != null ? $"{trainer.FirstName} {trainer.LastName}" : "Unknown", TotalAppointments = g.Count(), TotalHours = g.Sum(a => a.DurationMinutes) / 60.0, TotalRevenue = g.Sum(a => a.Price) }; }).OrderByDescending(x => x.TotalAppointments).ToList();
+
+            return _responseHelper.SetSuccess<object>(new { Workload = workload, TotalTrainers = workload.Count });
         }
         catch (Exception ex) {
-            _logger.LogError(ex, "Antrenör iş yükü raporu getirilirken hata oluştu");
-            return _responseHelper.SetError<object>(null, new ErrorInfo(ex.Message, "REPORT_013", ex.StackTrace, 500));
+            _logger.LogError(ex, "Antrenör iş yükü getirilirken hata oluştu");
+            return _responseHelper.SetError<object>(null, new ErrorInfo(ex.Message, "REPORT_011", ex.StackTrace, 500));
         }
     }
 
@@ -183,11 +179,8 @@ public class ReportService : IReportService {
             var lastMonth = now.AddMonths(-1);
 
             var membersTask = memberRepository.QueryNoTracking().Where(m => m.IsActive && (!gymLocationId.HasValue || m.CurrentGymLocationId == gymLocationId.Value)).Select(m => new { m.Id, m.MembershipEndDate }).ToListAsync();
-
             var trainersTask = trainerRepository.QueryNoTracking().Where(t => t.IsActive && (!gymLocationId.HasValue || t.GymLocationId == gymLocationId.Value)).CountAsync();
-
             var requestsTask = requestRepository.QueryNoTracking().Where(mr => mr.IsActive && (!gymLocationId.HasValue || mr.GymLocationId == gymLocationId.Value)).ToListAsync();
-
             var appointmentsTask = appointmentRepository.QueryNoTracking().Where(a => a.IsActive).ToListAsync();
 
             await Task.WhenAll(membersTask, trainersTask, requestsTask, appointmentsTask);
@@ -201,11 +194,8 @@ public class ReportService : IReportService {
             var activeMembers = members.Count(m => m.MembershipEndDate.HasValue && m.MembershipEndDate.Value > now);
             var pendingRequests = requests.Count(r => r.Status == MembershipRequestStatus.Pending);
             var thisMonthRequests = requests.Count(r => r.CreatedAt.Year == now.Year && r.CreatedAt.Month == now.Month);
-
             var thisMonthRevenue = appointments.Where(a => a.AppointmentDate.Year == now.Year && a.AppointmentDate.Month == now.Month && a.Status == AppointmentStatus.Confirmed).Sum(a => a.Price);
-
             var lastMonthRevenue = appointments.Where(a => a.AppointmentDate.Year == lastMonth.Year && a.AppointmentDate.Month == lastMonth.Month && a.Status == AppointmentStatus.Confirmed).Sum(a => a.Price);
-
             var revenueGrowth = lastMonthRevenue > 0 ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0;
 
             return _responseHelper.SetSuccess<object>(new { TotalMembers = totalMembers, ActiveMembers = activeMembers, TotalTrainers = trainersCount, TotalAppointments = appointments.Count, PendingMembershipRequests = pendingRequests, ThisMonthRevenue = thisMonthRevenue, LastMonthRevenue = lastMonthRevenue, RevenueGrowth = Math.Round(revenueGrowth, 2), ThisMonthRequests = thisMonthRequests });
@@ -218,12 +208,17 @@ public class ReportService : IReportService {
 
     public async Task<ServiceResponse<object>> GetMembershipStatisticsAsync(int? gymLocationId = null) {
         try {
-            var requests = await _membershipRequestService.GetAllRequestsAsync();
+            var requestsResponse = await _membershipRequestService.GetAllRequestsAsync();
+
+            if (!requestsResponse.IsSuccessful || requestsResponse.Data == null)
+                return _responseHelper.SetError<object>(null, "Talepler alınamadı", 500, "REPORT_015");
+
+            var requests = requestsResponse.Data;
 
             if (gymLocationId.HasValue)
                 requests = requests.Where(mr => mr.GymLocationId == gymLocationId.Value).ToList();
 
-            var stats = new { Total = requests.Count, Pending = requests.Count(r => r.Status == MembershipRequestStatus.Pending), Approved = requests.Count(r => r.Status == MembershipRequestStatus.Approved), Rejected = requests.Count(r => r.Status == MembershipRequestStatus.Rejected), ByDuration = requests.GroupBy(r => r.Duration).Select(g => new { Duration = g.Key.ToString(), Count = g.Count(), TotalRevenue = g.Where(r => r.Status == MembershipRequestStatus.Approved).Sum(r => r.Price) }).ToList() };
+            var stats = new { Total = requests.Count, Pending = requests.Count(r => r.Status == "Pending"), Approved = requests.Count(r => r.Status == "Approved"), Rejected = requests.Count(r => r.Status == "Rejected"), ByDuration = requests.GroupBy(r => r.Duration).Select(g => new { Duration = g.Key.ToString(), Count = g.Count(), TotalRevenue = g.Where(r => r.Status == "Approved").Sum(r => r.Price) }).ToList() };
 
             return _responseHelper.SetSuccess<object>(stats);
         }
@@ -243,7 +238,7 @@ public class ReportService : IReportService {
                 return _responseHelper.SetError<object>(null, "Veriler alınamadı", 500, "REPORT_016");
 
             var appointments = appointmentsResponse.Data?.Where(a => a.IsActive && a.Status == AppointmentStatus.Confirmed.ToString()).ToList() ?? new List<GymSystem.Application.Abstractions.Contract.Appointment.AppointmentDto>();
-            var trainers = trainersResponse.Data?.ToList() ?? new List<Trainer>();
+            var trainers = trainersResponse.Data ?? new List<GymSystem.Application.Abstractions.Contract.Trainer.TrainerDto>();
             var gymLocations = gymLocationsResponse.Data ?? new List<GymSystem.Application.Abstractions.Contract.GymLocation.GymLocationDto>();
 
             var revenueByGym = appointments.Join(trainers, a => a.TrainerId, t => t.Id, (a, t) => new { Appointment = a, Trainer = t }).GroupBy(x => x.Trainer.GymLocationId).Select(g => new { GymLocationId = g.Key, TotalRevenue = g.Sum(x => x.Appointment.Price), AppointmentCount = g.Count() }).Join(gymLocations, r => r.GymLocationId, g => g.Id, (r, g) => new { GymLocationId = g.Id, GymLocationName = g.Name, r.TotalRevenue, r.AppointmentCount }).OrderByDescending(x => x.TotalRevenue).ToList();
@@ -265,7 +260,7 @@ public class ReportService : IReportService {
                 return _responseHelper.SetError<object>(null, "Veriler alınamadı", 500, "REPORT_017");
 
             var appointments = appointmentsResponse.Data?.Where(a => a.IsActive && a.Status == AppointmentStatus.Confirmed.ToString()).ToList() ?? new List<GymSystem.Application.Abstractions.Contract.Appointment.AppointmentDto>();
-            var trainers = trainersResponse.Data?.ToList() ?? new List<Trainer>();
+            var trainers = trainersResponse.Data ?? new List<GymSystem.Application.Abstractions.Contract.Trainer.TrainerDto>();
 
             if (gymLocationId.HasValue) {
                 var gymTrainerIds = trainers.Where(t => t.GymLocationId == gymLocationId.Value).Select(t => t.Id).ToHashSet();
@@ -273,7 +268,6 @@ public class ReportService : IReportService {
             }
 
             var sixMonthsAgo = DateTime.Now.AddMonths(-6);
-
             var trend = appointments.Where(a => a.AppointmentDate >= sixMonthsAgo).GroupBy(a => new { a.AppointmentDate.Year, a.AppointmentDate.Month }).Select(g => new { Month = $"{g.Key.Month:00}/{g.Key.Year}", Year = g.Key.Year, MonthNumber = g.Key.Month, Revenue = g.Sum(a => a.Price), AppointmentCount = g.Count() }).OrderBy(x => x.Year).ThenBy(x => x.MonthNumber).ToList();
 
             return _responseHelper.SetSuccess<object>(new { Trend = trend, Months = trend.Count });
@@ -286,14 +280,18 @@ public class ReportService : IReportService {
 
     public async Task<ServiceResponse<object>> GetMemberGrowthTrendAsync(int? gymLocationId = null) {
         try {
-            var requests = await _membershipRequestService.GetAllRequestsAsync();
+            var requestsResponse = await _membershipRequestService.GetAllRequestsAsync();
+
+            if (!requestsResponse.IsSuccessful || requestsResponse.Data == null)
+                return _responseHelper.SetError<object>(null, "Talepler alınamadı", 500, "REPORT_018");
+
+            var requests = requestsResponse.Data;
 
             if (gymLocationId.HasValue)
                 requests = requests.Where(mr => mr.GymLocationId == gymLocationId.Value).ToList();
 
             var sixMonthsAgo = DateTime.Now.AddMonths(-6);
-
-            var trend = requests.Where(r => r.Status == MembershipRequestStatus.Approved && r.ApprovedAt.HasValue && r.ApprovedAt >= sixMonthsAgo).GroupBy(r => new { r.ApprovedAt!.Value.Year, r.ApprovedAt.Value.Month }).Select(g => new { Month = $"{g.Key.Month:00}/{g.Key.Year}", Year = g.Key.Year, MonthNumber = g.Key.Month, NewMembers = g.Count(), TotalRevenue = g.Sum(r => r.Price) }).OrderBy(x => x.Year).ThenBy(x => x.MonthNumber).ToList();
+            var trend = requests.Where(r => r.Status == "Approved" && r.ApprovedAt.HasValue && r.ApprovedAt >= sixMonthsAgo).GroupBy(r => new { r.ApprovedAt!.Value.Year, r.ApprovedAt.Value.Month }).Select(g => new { Month = $"{g.Key.Month:00}/{g.Key.Year}", Year = g.Key.Year, MonthNumber = g.Key.Month, NewMembers = g.Count(), TotalRevenue = g.Sum(r => r.Price) }).OrderBy(x => x.Year).ThenBy(x => x.MonthNumber).ToList();
 
             return _responseHelper.SetSuccess<object>(new { Trend = trend, Months = trend.Count });
         }

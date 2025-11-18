@@ -1,52 +1,22 @@
-﻿using GymSystem.Domain.Entities;
+﻿using GymSystem.Application.Abstractions.Contract.MembershipRequest;
+using GymSystem.Common.Models;
+using GymSystem.Common.ServiceRegistration;
+using GymSystem.Domain.Entities;
 
 namespace GymSystem.Application.Abstractions.Services;
 
-public interface IMembershipRequestService
+/// <summary>
+/// Membership request service interface - DTO + ServiceResponse pattern
+/// </summary>
+public interface IMembershipRequestService : IApplicationService
 {
-    /// <summary>
-    /// Yeni üyelik talebi oluşturur
-    /// </summary>
-    Task<MembershipRequest> CreateRequestAsync(int memberId, int gymLocationId, MembershipDuration duration, 
-        decimal price, string? notes = null);
-
-    /// <summary>
-    /// Belirli bir üyenin tüm taleplerini getirir
-    /// </summary>
-    Task<List<MembershipRequest>> GetMemberRequestsAsync(int memberId);
-
-    /// <summary>
-    /// Belirli bir salonun tüm taleplerini getirir
-    /// </summary>
-    Task<List<MembershipRequest>> GetGymLocationRequestsAsync(int gymLocationId);
-
-    /// <summary>
-    /// ID'ye göre talebi getirir
-    /// </summary>
-    Task<MembershipRequest?> GetRequestByIdAsync(int id);
-
-    /// <summary>
-    /// Tüm talepleri getirir (Admin için)
-    /// </summary>
-    Task<List<MembershipRequest>> GetAllRequestsAsync();
-
-    /// <summary>
-    /// Bekleyen talepleri getirir
-    /// </summary>
-    Task<List<MembershipRequest>> GetPendingRequestsAsync();
-
-    /// <summary>
-    /// Talebi onaylar
-    /// </summary>
-    Task<bool> ApproveRequestAsync(int id, int approvedByUserId, string? adminNotes = null);
-
-    /// <summary>
-    /// Talebi reddeder
-    /// </summary>
-    Task<bool> RejectRequestAsync(int id, int rejectedByUserId, string? adminNotes = null);
-
-    /// <summary>
-    /// Talebi siler (Sadece Pending durumunda)
-    /// </summary>
-    Task<bool> DeleteRequestAsync(int id);
+    Task<ServiceResponse<MembershipRequestDto>> CreateRequestAsync(int memberId, int gymLocationId, MembershipDuration duration, decimal price, string? notes = null);
+    Task<ServiceResponse<List<MembershipRequestDto>>> GetMemberRequestsAsync(int memberId);
+    Task<ServiceResponse<List<MembershipRequestDto>>> GetGymLocationRequestsAsync(int gymLocationId);
+    Task<ServiceResponse<MembershipRequestDto?>> GetRequestByIdAsync(int id);
+    Task<ServiceResponse<List<MembershipRequestDto>>> GetAllRequestsAsync();
+    Task<ServiceResponse<List<MembershipRequestDto>>> GetPendingRequestsAsync();
+    Task<ServiceResponse<bool>> ApproveRequestAsync(int id, int approvedByUserId, string? adminNotes = null);
+    Task<ServiceResponse<bool>> RejectRequestAsync(int id, int rejectedByUserId, string? adminNotes = null);
+    Task<ServiceResponse<bool>> DeleteRequestAsync(int id);
 }

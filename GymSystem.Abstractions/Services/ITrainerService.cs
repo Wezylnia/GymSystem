@@ -1,13 +1,17 @@
-﻿using GymSystem.Common.Models;
+﻿using GymSystem.Application.Abstractions.Contract.Trainer;
+using GymSystem.Common.Models;
 using GymSystem.Common.ServiceRegistration;
-using GymSystem.Domain.Entities;
 
 namespace GymSystem.Application.Abstractions.Services;
 
-public interface ITrainerService : IApplicationService {
-    Task<ServiceResponse<List<Trainer>>> GetAllAsync();
-    Task<ServiceResponse<Trainer?>> GetByIdAsync(int id);
-    Task<ServiceResponse<Trainer>> CreateAsync(Trainer entity);
-    Task<ServiceResponse<Trainer>> UpdateAsync(int id, Trainer entity);
+/// <summary>
+/// Trainer service interface - DTO kullanımı ile
+/// </summary>
+public interface ITrainerService : IApplicationService
+{
+    Task<ServiceResponse<List<TrainerDto>>> GetAllAsync();
+    Task<ServiceResponse<TrainerDto?>> GetByIdAsync(int id);
+    Task<ServiceResponse<TrainerDto>> CreateAsync(TrainerDto dto);
+    Task<ServiceResponse<TrainerDto>> UpdateAsync(int id, TrainerDto dto);
     Task<ServiceResponse<bool>> DeleteAsync(int id);
 }

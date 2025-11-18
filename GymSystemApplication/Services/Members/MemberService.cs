@@ -1,4 +1,6 @@
-﻿using GymSystem.Application.Abstractions.Services;
+﻿using AutoMapper;
+using GymSystem.Application.Abstractions.Contract.Member;
+using GymSystem.Application.Abstractions.Services;
 using GymSystem.Common.Factory.Managers;
 using GymSystem.Common.Helpers;
 using GymSystem.Common.Models;
@@ -12,75 +14,90 @@ public class MemberService : IMemberService {
     private readonly BaseFactory<MemberService> _baseFactory;
     private readonly IServiceResponseHelper _responseHelper;
     private readonly ILogger<MemberService> _logger;
+    private readonly IMapper _mapper;
 
     public MemberService(BaseFactory<MemberService> baseFactory) {
         _baseFactory = baseFactory;
         _responseHelper = baseFactory.CreateUtilityFactory().CreateServiceResponseHelper();
         _logger = baseFactory.CreateUtilityFactory().CreateLogger();
+        _mapper = baseFactory.CreateUtilityFactory().CreateMapper();
     }
 
-    public async Task<ServiceResponse<List<Member>>> GetAllAsync() {
+    public async Task<ServiceResponse<List<MemberDto>>> GetAllAsync() {
         try {
             var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Member>();
             var members = await repository.QueryNoTracking().Include(m => m.CurrentGymLocation).Where(m => m.IsActive).OrderByDescending(m => m.CreatedAt).ToListAsync();
-            return _responseHelper.SetSuccess(members);
+
+            var dtos = _mapper.Map<List<MemberDto>>(members);
+            return _responseHelper.SetSuccess(dtos);
         }
         catch (Exception ex) {
             _logger.LogError(ex, "Member'lar getirilirken hata oluştu");
-            return _responseHelper.SetError<List<Member>>(null, new ErrorInfo("Member'lar getirilemedi", "MEMBER_GETALL_ERROR", ex.StackTrace, 500));
+            return _responseHelper.SetError<List<MemberDto>>(null, new ErrorInfo("Member'lar getirilemedi", "MEMBER_GETALL_ERROR", ex.StackTrace, 500));
         }
     }
 
-    public async Task<ServiceResponse<Member?>> GetByIdAsync(int id) {
+    public async Task<ServiceResponse<MemberDto?>> GetByIdAsync(int id) {
         try {
             var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Member>();
             var member = await repository.QueryNoTracking().Include(m => m.CurrentGymLocation).Where(m => m.Id == id && m.IsActive).FirstOrDefaultAsync();
 
             if (member == null)
-                return _responseHelper.SetError<Member?>(null, "Member bulunamadı", 404, "MEMBER_NOTFOUND");
+                return _responseHelper.SetError<MemberDto?>(null, "Member bulunamadı", 404, "MEMBER_NOTFOUND");
 
-            return _responseHelper.SetSuccess<Member?>(member);
+            var dto = _mapper.Map<MemberDto>(member);
+            return _responseHelper.SetSuccess<MemberDto?>(dto);
         }
         catch (Exception ex) {
             _logger.LogError(ex, "Member getirilirken hata oluştu. ID: {Id}", id);
-            return _responseHelper.SetError<Member?>(null, new ErrorInfo("Member getirilemedi", "MEMBER_GET_ERROR", ex.StackTrace, 500));
+            return _responseHelper.SetError<MemberDto?>(null, new ErrorInfo("Member getirilemedi", "MEMBER_GET_ERROR", ex.StackTrace, 500));
         }
     }
 
-    public async Task<ServiceResponse<Member>> CreateAsync(Member entity) {
+    public async Task<ServiceResponse<MemberDto>> CreateAsync(MemberDto dto) {
         try {
-            entity.CreatedAt = DateTimeHelper.Now;
-            entity.IsActive = true;
+            var member = _mapper.Map<Member>(dto, opts => opts.AfterMap((src, dest) => {
+                dest.CreatedAt = DateTimeHelper.Now;
+                dest.IsActive = true;
+            }));
 
             var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Member>();
-            await repository.AddAsync(entity);
+            await repository.AddAsync(member);
             await repository.SaveChangesAsync();
 
-            return _responseHelper.SetSuccess(entity, "Member oluşturuldu");
+            _logger.LogInformation("Member oluşturuldu. ID: {Id}, İsim: {FirstName} {LastName}", member.Id, member.FirstName, member.LastName);
+
+            var responseDto = _mapper.Map<MemberDto>(member);
+            return _responseHelper.SetSuccess(responseDto, "Member oluşturuldu");
         }
         catch (Exception ex) {
             _logger.LogError(ex, "Member oluşturulurken hata oluştu");
-            return _responseHelper.SetError<Member>(null, new ErrorInfo("Member oluşturulamadı", "MEMBER_CREATE_ERROR", ex.StackTrace, 500));
+            return _responseHelper.SetError<MemberDto>(null, new ErrorInfo("Member oluşturulamadı", "MEMBER_CREATE_ERROR", ex.StackTrace, 500));
         }
     }
 
-    public async Task<ServiceResponse<Member>> UpdateAsync(int id, Member entity) {
+    public async Task<ServiceResponse<MemberDto>> UpdateAsync(int id, MemberDto dto) {
         try {
             var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Member>();
-            var existingMember = await repository.Query().Where(m => m.Id == id && m.IsActive).FirstOrDefaultAsync();
+            var member = await repository.Query().Where(m => m.Id == id && m.IsActive).FirstOrDefaultAsync();
 
-            if (existingMember == null)
-                return _responseHelper.SetError<Member>(null, "Member bulunamadı", 404, "MEMBER_NOTFOUND");
+            if (member == null)
+                return _responseHelper.SetError<MemberDto>(null, "Member bulunamadı", 404, "MEMBER_NOTFOUND");
 
-            entity.UpdatedAt = DateTimeHelper.Now;
-            await repository.UpdateAsync(entity);
+            _mapper.Map(dto, member);
+            member.UpdatedAt = DateTimeHelper.Now;
+
+            await repository.UpdateAsync(member);
             await repository.SaveChangesAsync();
 
-            return _responseHelper.SetSuccess(entity, "Member güncellendi");
+            _logger.LogInformation("Member güncellendi. ID: {Id}, İsim: {FirstName} {LastName}", member.Id, member.FirstName, member.LastName);
+
+            var responseDto = _mapper.Map<MemberDto>(member);
+            return _responseHelper.SetSuccess(responseDto, "Member güncellendi");
         }
         catch (Exception ex) {
             _logger.LogError(ex, "Member güncellenirken hata oluştu. ID: {Id}", id);
-            return _responseHelper.SetError<Member>(null, new ErrorInfo("Member güncellenemedi", "MEMBER_UPDATE_ERROR", ex.StackTrace, 500));
+            return _responseHelper.SetError<MemberDto>(null, new ErrorInfo("Member güncellenemedi", "MEMBER_UPDATE_ERROR", ex.StackTrace, 500));
         }
     }
 
@@ -98,6 +115,7 @@ public class MemberService : IMemberService {
             await repository.UpdateAsync(member);
             await repository.SaveChangesAsync();
 
+            _logger.LogInformation("Member silindi. ID: {Id}, İsim: {FirstName} {LastName}", id, member.FirstName, member.LastName);
             return _responseHelper.SetSuccess(true, "Member silindi");
         }
         catch (Exception ex) {
@@ -106,19 +124,17 @@ public class MemberService : IMemberService {
         }
     }
 
-    protected virtual IQueryable<Member> ApplyIncludes(IQueryable<Member> query) {
-        return query.Include(m => m.CurrentGymLocation);
-    }
-
-    public async Task<ServiceResponse<IEnumerable<Member>>> GetAllMembersWithGymLocationAsync() {
+    public async Task<ServiceResponse<List<MemberDto>>> GetAllMembersWithGymLocationAsync() {
         try {
             var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Member>();
             var members = await repository.QueryNoTracking().Include(m => m.CurrentGymLocation).Where(m => m.IsActive).OrderByDescending(m => m.CreatedAt).ToListAsync();
-            return _responseHelper.SetSuccess<IEnumerable<Member>>(members);
+
+            var dtos = _mapper.Map<List<MemberDto>>(members);
+            return _responseHelper.SetSuccess(dtos);
         }
         catch (Exception ex) {
             _logger.LogError(ex, "Member'lar GymLocation ile birlikte alınırken hata oluştu");
-            return _responseHelper.SetError<IEnumerable<Member>>(null, new ErrorInfo("Member'lar alınırken bir hata oluştu", "MEMBER_ERROR_001", ex.StackTrace, 500));
+            return _responseHelper.SetError<List<MemberDto>>(null, new ErrorInfo("Member'lar alınırken bir hata oluştu", "MEMBER_ERROR_001", ex.StackTrace, 500));
         }
     }
 }
