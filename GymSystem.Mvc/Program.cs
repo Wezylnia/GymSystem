@@ -12,6 +12,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+// Register ApiHelper
+builder.Services.AddScoped<GymSystem.Mvc.Helpers.ApiHelper>();
+
+// AutoMapper Configuration
+builder.Services.AddAutoMapper(typeof(GymSystem.Mvc.Mappings.MvcMappingProfile).Assembly);
+
 // Data Protection for cookie sharing (MVC ve API arasında)
 builder.Services.AddDataProtection()
     .SetApplicationName("GymSystem")

@@ -1,118 +1,84 @@
-﻿using GymSystem.Mvc.Models;
+﻿using AutoMapper;
+using GymSystem.Mvc.Helpers;
+using GymSystem.Mvc.Models;
+using GymSystem.Mvc.Models.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Text;
-using System.Text.Json;
 
 namespace GymSystem.Mvc.Controllers;
 
 [Authorize(Policy = "AdminOrGymOwner")]
-public class TrainersController : Controller
-{
-    private readonly IHttpClientFactory _httpClientFactory;
+public class TrainersController : Controller {
+    private readonly ApiHelper _apiHelper;
+    private readonly IMapper _mapper;
     private readonly ILogger<TrainersController> _logger;
 
-    public TrainersController(IHttpClientFactory httpClientFactory, ILogger<TrainersController> logger)
-    {
-        _httpClientFactory = httpClientFactory;
+    public TrainersController(ApiHelper apiHelper, IMapper mapper, ILogger<TrainersController> logger) {
+        _apiHelper = apiHelper;
+        _mapper = mapper;
         _logger = logger;
     }
 
-    public async Task<IActionResult> Index()
-    {
-        try
-        {
-            var client = _httpClientFactory.CreateClient("GymApi");
-            var response = await client.GetAsync("/api/trainers");
+    public async Task<IActionResult> Index() {
+        try {
+            var apiTrainers = await _apiHelper.GetListAsync<ApiTrainerDto>(ApiEndpoints.Trainers);
 
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                var trainers = JsonSerializer.Deserialize<List<TrainerViewModel>>(content, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                }) ?? new List<TrainerViewModel>();
+            // AutoMapper ile ViewModel'e map et
+            var trainers = _mapper.Map<List<TrainerViewModel>>(apiTrainers);
 
-                // GymOwner ise sadece kendi salonunun antrenörlerini göster
-                if (User.IsInRole("GymOwner"))
-                {
-                    var gymLocationId = User.FindFirst("GymLocationId")?.Value;
-                    if (int.TryParse(gymLocationId, out var locationId))
-                    {
-                        trainers = trainers.Where(t => t.GymLocationId == locationId).ToList();
-                    }
+            // GymOwner ise sadece kendi salonunun antrenörlerini göster
+            if (User.IsInRole("GymOwner")) {
+                var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+                if (int.TryParse(gymLocationId, out var locationId)) {
+                    trainers = trainers.Where(t => t.GymLocationId == locationId).ToList();
                 }
+            }
 
-                return View(trainers);
-            }
-            else
-            {
-                ViewBag.ErrorMessage = "Antrenörler yüklenirken bir hata oluştu.";
-                return View(new List<TrainerViewModel>());
-            }
+            return View(trainers);
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Antrenörler listesi alınırken hata oluştu");
             ViewBag.ErrorMessage = "Bir hata oluştu: " + ex.Message;
             return View(new List<TrainerViewModel>());
         }
     }
 
-    public async Task<IActionResult> Create()
-    {
+    public async Task<IActionResult> Create() {
         await LoadGymLocations();
         return View();
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(TrainerViewModel model)
-    {
+    public async Task<IActionResult> Create(TrainerViewModel model) {
         // GymOwner için salon otomatik set
-        if (User.IsInRole("GymOwner"))
-        {
+        if (User.IsInRole("GymOwner")) {
             var gymLocationId = User.FindFirst("GymLocationId")?.Value;
-            if (int.TryParse(gymLocationId, out var locationId))
-            {
+            if (int.TryParse(gymLocationId, out var locationId)) {
                 model.GymLocationId = locationId;
             }
         }
 
-        if (!ModelState.IsValid)
-        {
+        if (!ModelState.IsValid) {
             await LoadGymLocations();
             return View(model);
         }
 
-        try
-        {
-            var client = _httpClientFactory.CreateClient("GymApi");
-            
-            var json = JsonSerializer.Serialize(model);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-            
-            var response = await client.PostAsync("/api/trainers", content);
+        try {
+            var (success, errorMessage) = await _apiHelper.PostAsync(ApiEndpoints.Trainers, model);
 
-            if (response.IsSuccessStatusCode)
-            {
+            if (success) {
                 TempData["SuccessMessage"] = "Antrenör başarıyla eklendi!";
                 return RedirectToAction(nameof(Index));
             }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("Antrenör eklenirken hata oluştu. Status Code: {StatusCode}, Error: {Error}", 
-                    response.StatusCode, errorContent);
-                
-                ModelState.AddModelError("", "Antrenör eklenirken bir hata oluştu.");
+            else {
+                ModelState.AddModelError("", $"Antrenör eklenirken bir hata oluştu. {errorMessage}");
                 await LoadGymLocations();
                 return View(model);
             }
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Antrenör eklenirken hata oluştu");
             ModelState.AddModelError("", "Bir hata oluştu: " + ex.Message);
             await LoadGymLocations();
@@ -120,42 +86,28 @@ public class TrainersController : Controller
         }
     }
 
-    public async Task<IActionResult> Edit(int id)
-    {
-        try
-        {
-            var client = _httpClientFactory.CreateClient("GymApi");
-            var response = await client.GetAsync($"/api/trainers/{id}");
+    public async Task<IActionResult> Edit(int id) {
+        try {
+            var trainer = await _apiHelper.GetAsync<ApiTrainerDto>(ApiEndpoints.TrainerById(id));
 
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                var trainer = JsonSerializer.Deserialize<TrainerViewModel>(content, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                // GymOwner yetki kontrolü
-                if (User.IsInRole("GymOwner"))
-                {
-                    var gymLocationId = User.FindFirst("GymLocationId")?.Value;
-                    if (trainer != null && int.TryParse(gymLocationId, out var locationId) && trainer.GymLocationId != locationId)
-                    {
-                        return RedirectToAction("AccessDenied", "Account");
-                    }
-                }
-
-                await LoadGymLocations();
-                return View(trainer);
-            }
-            else
-            {
+            if (trainer == null) {
                 TempData["ErrorMessage"] = "Antrenör bulunamadı.";
                 return RedirectToAction(nameof(Index));
             }
+
+            // GymOwner yetki kontrolü
+            if (User.IsInRole("GymOwner")) {
+                var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+                if (int.TryParse(gymLocationId, out var locationId) && trainer.GymLocationId != locationId) {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+
+            var viewModel = _mapper.Map<TrainerViewModel>(trainer);
+            await LoadGymLocations();
+            return View(viewModel);
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Antrenör detayı alınırken hata oluştu");
             TempData["ErrorMessage"] = "Bir hata oluştu: " + ex.Message;
             return RedirectToAction(nameof(Index));
@@ -164,56 +116,38 @@ public class TrainersController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, TrainerViewModel model)
-    {
-        if (id != model.Id)
-        {
+    public async Task<IActionResult> Edit(int id, TrainerViewModel model) {
+        if (id != model.Id) {
             return BadRequest();
         }
 
         // GymOwner yetki kontrolü
-        if (User.IsInRole("GymOwner"))
-        {
+        if (User.IsInRole("GymOwner")) {
             var gymLocationId = User.FindFirst("GymLocationId")?.Value;
-            if (int.TryParse(gymLocationId, out var locationId) && model.GymLocationId != locationId)
-            {
+            if (int.TryParse(gymLocationId, out var locationId) && model.GymLocationId != locationId) {
                 return RedirectToAction("AccessDenied", "Account");
             }
         }
 
-        if (!ModelState.IsValid)
-        {
+        if (!ModelState.IsValid) {
             await LoadGymLocations();
             return View(model);
         }
 
-        try
-        {
-            var client = _httpClientFactory.CreateClient("GymApi");
-            
-            var json = JsonSerializer.Serialize(model);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-            
-            var response = await client.PutAsync($"/api/trainers/{id}", content);
+        try {
+            var (success, errorMessage) = await _apiHelper.PutAsync(ApiEndpoints.TrainerById(id), model);
 
-            if (response.IsSuccessStatusCode)
-            {
+            if (success) {
                 TempData["SuccessMessage"] = "Antrenör başarıyla güncellendi!";
                 return RedirectToAction(nameof(Index));
             }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("Antrenör güncellenirken hata oluştu. Status Code: {StatusCode}, Error: {Error}", 
-                    response.StatusCode, errorContent);
-                
-                ModelState.AddModelError("", "Antrenör güncellenirken bir hata oluştu.");
+            else {
+                ModelState.AddModelError("", $"Antrenör güncellenirken bir hata oluştu. {errorMessage}");
                 await LoadGymLocations();
                 return View(model);
             }
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Antrenör güncellenirken hata oluştu");
             ModelState.AddModelError("", "Bir hata oluştu: " + ex.Message);
             await LoadGymLocations();
@@ -223,24 +157,18 @@ public class TrainersController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(int id)
-    {
-        try
-        {
-            var client = _httpClientFactory.CreateClient("GymApi");
-            var response = await client.DeleteAsync($"/api/trainers/{id}");
+    public async Task<IActionResult> Delete(int id) {
+        try {
+            var (success, errorMessage) = await _apiHelper.DeleteAsync(ApiEndpoints.TrainerById(id));
 
-            if (response.IsSuccessStatusCode)
-            {
+            if (success) {
                 TempData["SuccessMessage"] = "Antrenör başarıyla silindi!";
             }
-            else
-            {
-                TempData["ErrorMessage"] = "Antrenör silinirken bir hata oluştu.";
+            else {
+                TempData["ErrorMessage"] = $"Antrenör silinirken bir hata oluştu. {errorMessage}";
             }
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Antrenör silinirken hata oluştu");
             TempData["ErrorMessage"] = "Bir hata oluştu: " + ex.Message;
         }
@@ -248,40 +176,21 @@ public class TrainersController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    private async Task LoadGymLocations()
-    {
-        try
-        {
-            var client = _httpClientFactory.CreateClient("GymApi");
-            var response = await client.GetAsync("/api/gymlocations");
+    private async Task LoadGymLocations() {
+        try {
+            var gyms = await _apiHelper.GetListAsync<GymLocationViewModel>(ApiEndpoints.GymLocations);
 
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                var gyms = JsonSerializer.Deserialize<List<GymLocationViewModel>>(content, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                }) ?? new List<GymLocationViewModel>();
-
-                // GymOwner ise sadece kendi salonunu göster
-                if (User.IsInRole("GymOwner"))
-                {
-                    var gymLocationId = User.FindFirst("GymLocationId")?.Value;
-                    if (int.TryParse(gymLocationId, out var locationId))
-                    {
-                        gyms = gyms.Where(g => g.Id == locationId).ToList();
-                    }
+            // GymOwner ise sadece kendi salonunu göster
+            if (User.IsInRole("GymOwner")) {
+                var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+                if (int.TryParse(gymLocationId, out var locationId)) {
+                    gyms = gyms.Where(g => g.Id == locationId).ToList();
                 }
+            }
 
-                ViewBag.GymLocations = new SelectList(gyms, "Id", "Name");
-            }
-            else
-            {
-                ViewBag.GymLocations = new SelectList(Enumerable.Empty<SelectListItem>());
-            }
+            ViewBag.GymLocations = new SelectList(gyms, "Id", "Name");
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Spor salonları yüklenirken hata oluştu");
             ViewBag.GymLocations = new SelectList(Enumerable.Empty<SelectListItem>());
         }

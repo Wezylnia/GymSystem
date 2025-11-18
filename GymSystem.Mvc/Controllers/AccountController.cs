@@ -7,8 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GymSystem.Mvc.Controllers;
 
-public class AccountController : Controller
-{
+public class AccountController : Controller {
     private readonly SignInManager<AppUser> _signInManager;
     private readonly UserManager<AppUser> _userManager;
     private readonly ILogger<AccountController> _logger;
@@ -16,8 +15,7 @@ public class AccountController : Controller
     public AccountController(
         SignInManager<AppUser> signInManager,
         UserManager<AppUser> userManager,
-        ILogger<AccountController> logger)
-    {
+        ILogger<AccountController> logger) {
         _signInManager = signInManager;
         _userManager = userManager;
         _logger = logger;
@@ -25,8 +23,7 @@ public class AccountController : Controller
 
     [HttpGet]
     [AllowAnonymous]
-    public IActionResult Login(string? returnUrl = null)
-    {
+    public IActionResult Login(string? returnUrl = null) {
         ViewData["ReturnUrl"] = returnUrl;
         return View();
     }
@@ -34,67 +31,40 @@ public class AccountController : Controller
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
-    {
+    public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null) {
         ViewData["ReturnUrl"] = returnUrl;
 
         if (!ModelState.IsValid)
-        {
             return View(model);
-        }
 
         var user = await _userManager.FindByEmailAsync(model.Email);
-        
-        if (user == null)
-        {
+
+        if (user == null) {
             ModelState.AddModelError(string.Empty, "Email veya şifre hatalı.");
             return View(model);
         }
 
-        if (!user.IsActive)
-        {
+        if (!user.IsActive) {
             ModelState.AddModelError(string.Empty, "Hesabınız aktif değil. Lütfen yönetici ile iletişime geçin.");
             return View(model);
         }
 
-        var result = await _signInManager.PasswordSignInAsync(user.UserName!, model.Password, model.RememberMe, lockoutOnFailure: false);
+        var result = await _signInManager.PasswordSignInAsync(
+            user.UserName!,
+            model.Password,
+            model.RememberMe,
+            lockoutOnFailure: false);
 
-        if (result.Succeeded)
-        {
-            _logger.LogInformation("User {Email} logged in.", model.Email);
-            
-            // Role'e göre yönlendirme
-            var roles = await _userManager.GetRolesAsync(user);
-            
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            {
-                return Redirect(returnUrl);
-            }
-            
-            // Default yönlendirmeler
-            if (roles.Contains("Admin"))
-            {
-                return RedirectToAction("Index", "Home");
-            }
-            else if (roles.Contains("GymOwner"))
-            {
-                return RedirectToAction("Index", "GymLocations");
-            }
-            else if (roles.Contains("Member"))
-            {
-                return RedirectToAction("Index", "Appointments");
-            }
-            
-            return RedirectToAction("Index", "Home");
+        if (result.Succeeded) {
+            _logger.LogInformation("User {Email} logged in successfully", model.Email);
+            return await RedirectAfterLogin(user, returnUrl);
         }
 
-        if (result.IsLockedOut)
-        {
-            _logger.LogWarning("User {Email} account locked out.", model.Email);
+        if (result.IsLockedOut) {
+            _logger.LogWarning("User {Email} account locked out", model.Email);
             ModelState.AddModelError(string.Empty, "Hesabınız kilitlendi. Lütfen daha sonra tekrar deneyin.");
         }
-        else
-        {
+        else {
             ModelState.AddModelError(string.Empty, "Email veya şifre hatalı.");
         }
 
@@ -103,23 +73,18 @@ public class AccountController : Controller
 
     [HttpGet]
     [AllowAnonymous]
-    public IActionResult Register()
-    {
+    public IActionResult Register() {
         return View();
     }
 
     [HttpPost]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Register(RegisterViewModel model)
-    {
+    public async Task<IActionResult> Register(RegisterViewModel model) {
         if (!ModelState.IsValid)
-        {
             return View(model);
-        }
 
-        var user = new AppUser
-        {
+        var user = new AppUser {
             UserName = model.Email,
             Email = model.Email,
             FirstName = model.FirstName,
@@ -132,25 +97,20 @@ public class AccountController : Controller
 
         var result = await _userManager.CreateAsync(user, model.Password);
 
-        if (result.Succeeded)
-        {
+        if (result.Succeeded) {
             // Yeni kullanıcıları Member rolüne ekle
             await _userManager.AddToRoleAsync(user, "Member");
-            
-            // Member tablosuna kaydet ve MemberId'yi al
-            // (Şimdilik basit tutalım - gerçek projede Member entity'si oluşturulmalı)
-            
-            _logger.LogInformation("User {Email} created a new account.", model.Email);
+
+            _logger.LogInformation("User {Email} created a new account", model.Email);
 
             // Auto login
             await _signInManager.SignInAsync(user, isPersistent: false);
-            
+
             TempData["SuccessMessage"] = "Kayıt başarılı! Hoş geldiniz.";
             return RedirectToAction("Index", "Home");
         }
 
-        foreach (var error in result.Errors)
-        {
+        foreach (var error in result.Errors) {
             ModelState.AddModelError(string.Empty, error.Description);
         }
 
@@ -159,16 +119,38 @@ public class AccountController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Logout()
-    {
+    public async Task<IActionResult> Logout() {
         await _signInManager.SignOutAsync();
-        _logger.LogInformation("User logged out.");
+        _logger.LogInformation("User logged out");
         return RedirectToAction("Index", "Home");
     }
 
     [HttpGet]
-    public IActionResult AccessDenied()
-    {
+    public IActionResult AccessDenied() {
         return View();
     }
+
+    #region Helpers
+
+    private async Task<IActionResult> RedirectAfterLogin(AppUser user, string? returnUrl) {
+        // Return URL öncelikli
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            return Redirect(returnUrl);
+
+        // Role'e göre yönlendirme
+        var roles = await _userManager.GetRolesAsync(user);
+
+        if (roles.Contains("Admin"))
+            return RedirectToAction("Index", "Home");
+
+        if (roles.Contains("GymOwner"))
+            return RedirectToAction("Index", "GymLocations");
+
+        if (roles.Contains("Member"))
+            return RedirectToAction("Index", "Appointments");
+
+        return RedirectToAction("Index", "Home");
+    }
+
+    #endregion
 }
