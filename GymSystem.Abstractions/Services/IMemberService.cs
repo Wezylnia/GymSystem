@@ -1,18 +1,14 @@
 ﻿using GymSystem.Common.Models;
 using GymSystem.Common.ServiceRegistration;
-using GymSystem.Common.Services;
 using GymSystem.Domain.Entities;
 
 namespace GymSystem.Application.Abstractions.Services;
 
-/// <summary>
-/// Member service interface - Generic CRUD + IApplicationService
-/// IApplicationService ile otomatik registration'a dahil olur
-/// </summary>
-public interface IMemberService : IGenericCrudService<Member>, IApplicationService
-{
-    /// <summary>
-    /// Tüm member'ları GymLocation bilgisi ile birlikte getirir
-    /// </summary>
+public interface IMemberService : IApplicationService {
+    Task<ServiceResponse<List<Member>>> GetAllAsync();
+    Task<ServiceResponse<Member?>> GetByIdAsync(int id);
+    Task<ServiceResponse<Member>> CreateAsync(Member entity);
+    Task<ServiceResponse<Member>> UpdateAsync(int id, Member entity);
+    Task<ServiceResponse<bool>> DeleteAsync(int id);
     Task<ServiceResponse<IEnumerable<Member>>> GetAllMembersWithGymLocationAsync();
 }

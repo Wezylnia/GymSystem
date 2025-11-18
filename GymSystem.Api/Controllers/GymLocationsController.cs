@@ -1,6 +1,5 @@
-﻿using GymSystem.Application.Abstractions.Services;
-using GymSystem.Common.Helpers;
-using GymSystem.Domain.Entities;
+﻿using GymSystem.Application.Abstractions.Contract.GymLocation;
+using GymSystem.Application.Abstractions.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,9 +26,7 @@ public class GymLocationsController : ControllerBase
         var response = await _gymLocationService.GetAllAsync();
         
         if (!response.IsSuccessful)
-        {
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
-        }
 
         return Ok(response.Data);
     }
@@ -41,80 +38,43 @@ public class GymLocationsController : ControllerBase
         var response = await _gymLocationService.GetByIdAsync(id);
         
         if (!response.IsSuccessful)
-        {
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
-        }
+
+        if (response.Data == null)
+            return NotFound(new { error = "Spor salonu bulunamadı" });
 
         return Ok(response.Data);
     }
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Create([FromBody] CreateGymLocationDto dto)
+    public async Task<IActionResult> Create([FromBody] GymLocationDto dto)
     {
         if (!ModelState.IsValid)
-        {
             return BadRequest(ModelState);
-        }
 
-        var gymLocation = new GymLocation
-        {
-            Name = dto.Name,
-            Address = dto.Address,
-            City = dto.City,
-            PhoneNumber = dto.PhoneNumber,
-            Email = dto.Email,
-            Description = dto.Description,
-            IsActive = true,
-            CreatedAt = DateTimeHelper.Now
-        };
-
-        var response = await _gymLocationService.CreateAsync(gymLocation);
+        var response = await _gymLocationService.CreateAsync(dto);
         
         if (!response.IsSuccessful)
-        {
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
-        }
 
         return CreatedAtAction(nameof(Get), new { id = response.Data!.Id }, response.Data);
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin,GymOwner")]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateGymLocationDto dto)
+    public async Task<IActionResult> Update(int id, [FromBody] GymLocationDto dto)
     {
         if (!ModelState.IsValid)
-        {
             return BadRequest(ModelState);
-        }
 
         if (id != dto.Id)
-        {
             return BadRequest(new { ErrorMessage = "GymLocation ID mismatch", ErrorCode = "VALIDATION_001" });
-        }
 
-        var existingResponse = await _gymLocationService.GetByIdAsync(id);
-        if (!existingResponse.IsSuccessful || existingResponse.Data == null)
-        {
-            return NotFound(new { ErrorMessage = $"GymLocation with ID {id} not found", ErrorCode = "NOT_FOUND_001" });
-        }
-
-        var gymLocation = existingResponse.Data;
-        gymLocation.Name = dto.Name;
-        gymLocation.Address = dto.Address;
-        gymLocation.City = dto.City;
-        gymLocation.PhoneNumber = dto.PhoneNumber;
-        gymLocation.Email = dto.Email;
-        gymLocation.Description = dto.Description;
-        gymLocation.IsActive = dto.IsActive;
-        gymLocation.UpdatedAt = DateTimeHelper.Now;
-
-        var response = await _gymLocationService.UpdateAsync(id, gymLocation);
+        var response = await _gymLocationService.UpdateAsync(id, dto);
         
         if (!response.IsSuccessful)
-        {
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
-        }
 
         return NoContent();
     }
@@ -126,33 +86,8 @@ public class GymLocationsController : ControllerBase
         var response = await _gymLocationService.DeleteAsync(id);
         
         if (!response.IsSuccessful)
-        {
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
-        }
 
         return NoContent();
     }
-}
-
-// DTOs
-public class CreateGymLocationDto
-{
-    public string Name { get; set; } = string.Empty;
-    public string Address { get; set; } = string.Empty;
-    public string City { get; set; } = string.Empty;
-    public string? PhoneNumber { get; set; }
-    public string? Email { get; set; }
-    public string? Description { get; set; }
-}
-
-public class UpdateGymLocationDto
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Address { get; set; } = string.Empty;
-    public string City { get; set; } = string.Empty;
-    public string? PhoneNumber { get; set; }
-    public string? Email { get; set; }
-    public string? Description { get; set; }
-    public bool IsActive { get; set; }
 }

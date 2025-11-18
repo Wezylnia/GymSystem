@@ -16,6 +16,22 @@ public class Repository<T> : IRepository<T> where T : class
         _dbSet = context.Set<T>();
     }
 
+    /// <summary>
+    /// IQueryable döndürür - LINQ chain için (tracking enabled)
+    /// </summary>
+    public IQueryable<T> Query()
+    {
+        return _dbSet.AsQueryable();
+    }
+
+    /// <summary>
+    /// IQueryable döndürür - Read-only queries için (no tracking, better performance)
+    /// </summary>
+    public IQueryable<T> QueryNoTracking()
+    {
+        return _dbSet.AsNoTracking();
+    }
+
     public async Task<T?> GetByIdAsync(int id)
     {
         return await _dbSet.FindAsync(id);

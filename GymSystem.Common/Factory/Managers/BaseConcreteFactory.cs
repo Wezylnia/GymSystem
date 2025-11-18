@@ -5,8 +5,11 @@ namespace GymSystem.Common.Factory.Managers;
 
 public class BaseConcreteFactory<T> : BaseFactory<T>
 {
-    public BaseConcreteFactory(UtilityFactory<T> utilityFactory, IRepositoryFactory repositoryFactory)
-        : base(utilityFactory, repositoryFactory)
+    public BaseConcreteFactory(
+        UtilityFactory<T> utilityFactory, 
+        IRepositoryFactory repositoryFactory,
+        IServiceProvider serviceProvider)
+        : base(utilityFactory, repositoryFactory, serviceProvider)
     {
     }
 

@@ -1,6 +1,5 @@
 ﻿using GymSystem.Common.Factory.Managers;
 using GymSystem.Common.Factory.Utility;
-using GymSystem.Common.Services;
 using GymSystem.Persistance;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,7 +21,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped(typeof(BaseFactory<>), typeof(BaseConcreteFactory<>));
 
         // 3. Generic CRUD Service'i kaydet (open generic type)
-        services.AddScoped(typeof(IGenericCrudService<>), typeof(GenericCrudService<>));
+        //services.AddScoped(typeof(IGenericCrudService<>), typeof(GenericCrudService<>));
 
         // NOT: Application servisleri API/MVC Program.cs'de manuel olarak kaydedilecek
         // Circular dependency nedeniyle burada kaydedemiyoruz

@@ -3,15 +3,14 @@
 namespace GymSystem.Common.Services;
 
 /// <summary>
-/// Generic CRUD operations interface
-/// Tüm entity'ler için temel CRUD işlemlerini sağlar
-/// NOT: IApplicationService'den TÜREMEZ çünkü generic - manuel registration gerekir
+/// Generic CRUD operations interface - DTO kullanımı ile
+/// TDto: Data Transfer Object
 /// </summary>
-public interface IGenericCrudService<T> where T : class
+public interface IGenericCrudService<TDto> where TDto : class
 {
-    Task<ServiceResponse<IEnumerable<T>>> GetAllAsync();
-    Task<ServiceResponse<T>> GetByIdAsync(int id);
-    Task<ServiceResponse<T>> CreateAsync(T entity);
-    Task<ServiceResponse<T>> UpdateAsync(int id, T entity);
+    Task<ServiceResponse<List<TDto>>> GetAllAsync();
+    Task<ServiceResponse<TDto?>> GetByIdAsync(int id);
+    Task<ServiceResponse<TDto>> CreateAsync(TDto dto);
+    Task<ServiceResponse<TDto>> UpdateAsync(int id, TDto dto);
     Task<ServiceResponse<bool>> DeleteAsync(int id);
 }

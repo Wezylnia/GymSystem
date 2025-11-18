@@ -1,52 +1,22 @@
-﻿using GymSystem.Common.Models;
+﻿using GymSystem.Application.Abstractions.Contract.Appointment;
+using GymSystem.Common.Models;
 using GymSystem.Common.ServiceRegistration;
-using GymSystem.Common.Services;
-using GymSystem.Domain.Entities;
 
 namespace GymSystem.Application.Abstractions.Services;
 
-/// <summary>
-/// Randevu servisi - Generic CRUD + Custom business logic
-/// </summary>
-public interface IAppointmentService : IGenericCrudService<Appointment>, IApplicationService
+public interface IAppointmentService : IApplicationService
 {
-    /// <summary>
-    /// Belirli bir tarih ve saatte antrenörün müsait olup olmadığını kontrol eder
-    /// </summary>
+    Task<ServiceResponse<List<AppointmentDto>>> GetAllAsync();
+    Task<ServiceResponse<AppointmentDto?>> GetByIdAsync(int id);
+    Task<ServiceResponse<AppointmentDto>> CreateAsync(AppointmentDto dto);
+    Task<ServiceResponse<AppointmentDto>> UpdateAsync(int id, AppointmentDto dto);
+    Task<ServiceResponse<bool>> DeleteAsync(int id);    
     Task<ServiceResponse<bool>> CheckTrainerAvailabilityAsync(int trainerId, DateTime appointmentDate, int durationMinutes);
-    
-    /// <summary>
-    /// Üyenin belirli bir tarihte randevusu var mı kontrol eder
-    /// </summary>
     Task<ServiceResponse<bool>> CheckMemberAvailabilityAsync(int memberId, DateTime appointmentDate, int durationMinutes);
-    
-    /// <summary>
-    /// Randevu oluşturur (tüm kontroller ile)
-    /// </summary>
-    Task<ServiceResponse<Appointment>> BookAppointmentAsync(Appointment appointment);
-    
-    /// <summary>
-    /// Randevu onaylar (Admin/Trainer)
-    /// </summary>
-    Task<ServiceResponse<Appointment>> ConfirmAppointmentAsync(int appointmentId);
-    
-    /// <summary>
-    /// Randevu iptal eder
-    /// </summary>
+    Task<ServiceResponse<AppointmentDto>> BookAppointmentAsync(AppointmentDto dto);
+    Task<ServiceResponse<AppointmentDto>> ConfirmAppointmentAsync(int appointmentId);
     Task<ServiceResponse<bool>> CancelAppointmentAsync(int appointmentId, string? reason);
-    
-    /// <summary>
-    /// Belirli bir üyenin tüm randevularını getirir
-    /// </summary>
-    Task<ServiceResponse<IEnumerable<Appointment>>> GetMemberAppointmentsAsync(int memberId);
-    
-    /// <summary>
-    /// Belirli bir antrenörün tüm randevularını getirir
-    /// </summary>
-    Task<ServiceResponse<IEnumerable<Appointment>>> GetTrainerAppointmentsAsync(int trainerId);
-    
-    /// <summary>
-    /// Belirli bir tarihte uygun antrenörleri getirir
-    /// </summary>
-    Task<ServiceResponse<IEnumerable<int>>> GetAvailableTrainersAsync(int serviceId, DateTime appointmentDate, int durationMinutes);
+    Task<ServiceResponse<List<AppointmentDto>>> GetMemberAppointmentsAsync(int memberId);
+    Task<ServiceResponse<List<AppointmentDto>>> GetTrainerAppointmentsAsync(int trainerId);
+    Task<ServiceResponse<List<int>>> GetAvailableTrainersAsync(int serviceId, DateTime appointmentDate, int durationMinutes);
 }

@@ -1,4 +1,5 @@
-﻿using GymSystem.Common.Helpers;
+﻿using AutoMapper;
+using GymSystem.Common.Helpers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -27,5 +28,9 @@ public class ConcreteUtilityFactory<T> : UtilityFactory<T>
     public override IServiceResponseHelper CreateServiceResponseHelper()
     {
         return _serviceProvider.GetRequiredService<IServiceResponseHelper>();
+    }
+
+    public override IMapper CreateMapper() {
+        return _serviceProvider.GetRequiredService<IMapper>();
     }
 }

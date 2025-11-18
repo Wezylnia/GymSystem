@@ -1,9 +1,10 @@
-﻿using GymSystem.Application.Abstractions.Services;
+﻿using GymSystem.Application.Abstractions.Contract.AI;
+using GymSystem.Application.Abstractions.Services.IGemini;
+using GymSystem.Common.Factory.Managers;
+using GymSystem.Common.Helpers;
+using GymSystem.Common.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
@@ -11,71 +12,67 @@ namespace GymSystem.Application.Services.AI;
 
 public class GeminiApiService : IGeminiApiService
 {
-    private readonly HttpClient _httpClient;
+    private readonly BaseFactory<GeminiApiService> _baseFactory;
+    private readonly IServiceResponseHelper _responseHelper;
     private readonly ILogger<GeminiApiService> _logger;
+    private readonly HttpClient _httpClient;
     private readonly string _apiKey;
     private const string API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
-    public GeminiApiService(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<GeminiApiService> logger)
+    public GeminiApiService(BaseFactory<GeminiApiService> baseFactory, IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
+        _baseFactory = baseFactory;
+        _responseHelper = baseFactory.CreateUtilityFactory().CreateServiceResponseHelper();
+        _logger = baseFactory.CreateUtilityFactory().CreateLogger();
         _httpClient = httpClientFactory.CreateClient("GeminiApi");
-        _logger = logger;
         _apiKey = configuration["AI:Gemini:ApiKey"] ?? throw new ArgumentNullException("Gemini API Key not configured");
     }
 
-    public async Task<string> GenerateWorkoutPlanAsync(decimal height, decimal weight, string? bodyType, string goal, string? photoBase64 = null)
+    public async Task<ServiceResponse<string>> GenerateWorkoutPlanAsync(AIWorkoutPlanDto request)
     {
         try
         {
-            var prompt = BuildWorkoutPrompt(height, weight, bodyType, goal);
+            var prompt = BuildWorkoutPrompt(request.Height, request.Weight, request.BodyType, request.Goal);
 
-            if (!string.IsNullOrEmpty(photoBase64))
-            {
-                return await GenerateWithVisionAsync(prompt, photoBase64);
-            }
-            else
-            {
-                return await GenerateTextAsync(prompt);
-            }
+            if (!string.IsNullOrEmpty(request.PhotoBase64))
+                return await GenerateWithVisionAsync(prompt, request.PhotoBase64);
+            
+            return await GenerateTextAsync(prompt);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Workout planı oluşturulurken hata oluştu");
-            throw;
+            return _responseHelper.SetError<string>(null, new ErrorInfo("Workout planı oluşturulamadı", "GEMINI_WORKOUT_001", ex.StackTrace, 500));
         }
     }
 
-    public async Task<string> GenerateDietPlanAsync(decimal height, decimal weight, string? bodyType, string goal, string? photoBase64 = null)
+    public async Task<ServiceResponse<string>> GenerateDietPlanAsync(AIWorkoutPlanDto request)
     {
         try
         {
-            var prompt = BuildDietPrompt(height, weight, bodyType, goal);
+            var prompt = BuildDietPrompt(request.Height, request.Weight, request.BodyType, request.Goal);
 
-            if (!string.IsNullOrEmpty(photoBase64))
-            {
-                return await GenerateWithVisionAsync(prompt, photoBase64);
-            }
-            else
-            {
-                return await GenerateTextAsync(prompt);
-            }
+            if (!string.IsNullOrEmpty(request.PhotoBase64))
+                return await GenerateWithVisionAsync(prompt, request.PhotoBase64);
+            
+            return await GenerateTextAsync(prompt);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Diet planı oluşturulurken hata oluştu");
-            throw;
+            return _responseHelper.SetError<string>(null, new ErrorInfo("Diet planı oluşturulamadı", "GEMINI_DIET_001", ex.StackTrace, 500));
         }
     }
 
-    public async Task<string> AnalyzeBodyPhotoAsync(string photoBase64, decimal height, decimal weight, string goal)
+    public async Task<ServiceResponse<string>> AnalyzeBodyPhotoAsync(AIWorkoutPlanDto request)
     {
         try
         {
             var prompt = $@"Bu fotoğraftaki kişinin fiziksel durumunu analiz et.
 Kişi Bilgileri:
-- Boy: {height} cm
-- Kilo: {weight} kg
-- Hedef: {goal}
+- Boy: {request.Height} cm
+- Kilo: {request.Weight} kg
+- Hedef: {request.Goal}
 
 Lütfen şu bilgileri ver:
 1. Vücut tipi analizi (ectomorph/mesomorph/endomorph)
@@ -85,165 +82,105 @@ Lütfen şu bilgileri ver:
 
 Türkçe olarak detaylı bir analiz yap.";
 
-            return await GenerateWithVisionAsync(prompt, photoBase64);
+            if (string.IsNullOrEmpty(request.PhotoBase64))
+                return _responseHelper.SetError<string>(null, "Fotoğraf analizi için fotoğraf gereklidir", 400, "GEMINI_ANALYSIS_002");
+
+            return await GenerateWithVisionAsync(prompt, request.PhotoBase64);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Fotoğraf analizi sırasında hata oluştu");
-            throw;
+            return _responseHelper.SetError<string>(null, new ErrorInfo("Fotoğraf analizi yapılamadı", "GEMINI_ANALYSIS_001", ex.StackTrace, 500));
         }
     }
 
-    private async Task<string> GenerateTextAsync(string prompt)
+    private async Task<ServiceResponse<string>> GenerateTextAsync(string prompt)
     {
-        // Gemini 2.0 Flash modelini kullan - API key header'da
         var url = $"{API_BASE_URL}/models/gemini-2.0-flash-exp:generateContent";
 
         var requestBody = new
         {
-            contents = new[]
-            {
-                new
-                {
-                    parts = new[]
-                    {
-                        new { text = prompt }
-                    }
-                }
-            },
-            generationConfig = new
-            {
-                temperature = 0.4,  // Daha tutarlı yanıtlar için düşürüldü
-                topK = 20,
-                topP = 0.8,
-                maxOutputTokens = 2048  // Daha kısa yanıtlar için azaltıldı
-            }
+            contents = new[] { new { parts = new[] { new { text = prompt } } } },
+            generationConfig = new { temperature = 0.4, topK = 20, topP = 0.8, maxOutputTokens = 2048 }
         };
 
         try
         {
             _logger.LogInformation("Gemini API'ye istek gönderiliyor: {Url}", url);
             
-            // HttpRequestMessage ile custom header ekle
             var request = new HttpRequestMessage(HttpMethod.Post, url);
             request.Headers.Add("x-goog-api-key", _apiKey);
-            request.Content = new StringContent(
-                JsonSerializer.Serialize(requestBody),
-                Encoding.UTF8,
-                "application/json"
-            );
+            request.Content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
 
             var response = await _httpClient.SendAsync(request);
-            
             var result = await response.Content.ReadAsStringAsync();
-            _logger.LogInformation("Gemini API yanıtı: {StatusCode}, İçerik uzunluğu: {Length}", 
-                response.StatusCode, result.Length);
+            
+            _logger.LogInformation("Gemini API yanıtı: {StatusCode}, İçerik uzunluğu: {Length}", response.StatusCode, result.Length);
 
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError("Gemini API hatası: {Status} - {Content}", response.StatusCode, result);
-                throw new HttpRequestException($"Gemini API hatası: {response.StatusCode} - {result}");
+                return _responseHelper.SetError<string>(null, $"Gemini API hatası: {response.StatusCode}", (int)response.StatusCode, "GEMINI_API_ERROR");
             }
 
             var jsonDoc = JsonDocument.Parse(result);
+            var text = jsonDoc.RootElement.GetProperty("candidates")[0].GetProperty("content").GetProperty("parts")[0].GetProperty("text").GetString();
 
-            var text = jsonDoc.RootElement
-                .GetProperty("candidates")[0]
-                .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
-                .GetString();
+            if (string.IsNullOrWhiteSpace(text))
+                return _responseHelper.SetError<string>(null, "AI'dan boş plan döndü", 500, "GEMINI_EMPTY_RESPONSE");
 
-            return text ?? "Plan oluşturulamadı.";
+            return _responseHelper.SetSuccess<string>(text);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Gemini API çağrısında hata oluştu");
-            throw;
+            return _responseHelper.SetError<string>(null, new ErrorInfo("Gemini API çağrısında hata oluştu", "GEMINI_REQUEST_ERROR", ex.StackTrace, 500));
         }
     }
 
-    private async Task<string> GenerateWithVisionAsync(string prompt, string photoBase64)
+    private async Task<ServiceResponse<string>> GenerateWithVisionAsync(string prompt, string photoBase64)
     {
-        // Gemini 2.0 Flash modelini kullan (vision desteği var)
         var url = $"{API_BASE_URL}/models/gemini-2.0-flash-exp:generateContent";
 
-        // Base64'ten "data:image/...;base64," prefix'ini kaldır
-        var base64Data = photoBase64;
-        if (photoBase64.Contains(","))
-        {
-            base64Data = photoBase64.Split(',')[1];
-        }
+        var base64Data = photoBase64.Contains(",") ? photoBase64.Split(',')[1] : photoBase64;
 
         var requestBody = new
         {
-            contents = new[]
-            {
-                new
-                {
-                    parts = new object[]
-                    {
-                        new { text = prompt },
-                        new
-                        {
-                            inline_data = new
-                            {
-                                mime_type = "image/jpeg",
-                                data = base64Data
-                            }
-                        }
-                    }
-                }
-            },
-            generationConfig = new
-            {
-                temperature = 0.4,  // Daha tutarlı yanıtlar için düşürüldü
-                topK = 20,
-                topP = 0.8,
-                maxOutputTokens = 2048  // Daha kısa yanıtlar için azaltıldı
-            }
+            contents = new[] { new { parts = new object[] { new { text = prompt }, new { inline_data = new { mime_type = "image/jpeg", data = base64Data } } } } },
+            generationConfig = new { temperature = 0.4, topK = 20, topP = 0.8, maxOutputTokens = 2048 }
         };
 
         try
         {
             _logger.LogInformation("Gemini Vision API'ye istek gönderiliyor: {Url}", url);
             
-            // HttpRequestMessage ile custom header ekle
             var request = new HttpRequestMessage(HttpMethod.Post, url);
             request.Headers.Add("x-goog-api-key", _apiKey);
-            request.Content = new StringContent(
-                JsonSerializer.Serialize(requestBody),
-                Encoding.UTF8,
-                "application/json"
-            );
+            request.Content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
 
             var response = await _httpClient.SendAsync(request);
-            
             var result = await response.Content.ReadAsStringAsync();
-            _logger.LogInformation("Gemini Vision API yanıtı: {StatusCode}, İçerik uzunluğu: {Length}", 
-                response.StatusCode, result.Length);
+            
+            _logger.LogInformation("Gemini Vision API yanıtı: {StatusCode}, İçerik uzunluğu: {Length}", response.StatusCode, result.Length);
 
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError("Gemini Vision API hatası: {Status} - {Content}", response.StatusCode, result);
-                throw new HttpRequestException($"Gemini Vision API hatası: {response.StatusCode} - {result}");
+                return _responseHelper.SetError<string>(null, $"Gemini Vision API hatası: {response.StatusCode}", (int)response.StatusCode, "GEMINI_VISION_API_ERROR");
             }
 
             var jsonDoc = JsonDocument.Parse(result);
+            var text = jsonDoc.RootElement.GetProperty("candidates")[0].GetProperty("content").GetProperty("parts")[0].GetProperty("text").GetString();
 
-            var text = jsonDoc.RootElement
-                .GetProperty("candidates")[0]
-                .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
-                .GetString();
+            if (string.IsNullOrWhiteSpace(text))
+                return _responseHelper.SetError<string>(null, "AI'dan boş plan döndü", 500, "GEMINI_VISION_EMPTY_RESPONSE");
 
-            return text ?? "Plan oluşturulamadı.";
+            return _responseHelper.SetSuccess<string>(text);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Gemini Vision API çağrısında hata oluştu");
-            throw;
+            return _responseHelper.SetError<string>(null, new ErrorInfo("Gemini Vision API çağrısında hata oluştu", "GEMINI_VISION_REQUEST_ERROR", ex.StackTrace, 500));
         }
     }
 

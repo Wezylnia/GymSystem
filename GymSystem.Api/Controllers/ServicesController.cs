@@ -9,25 +9,21 @@ namespace GymSystem.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class ServicesController : ControllerBase
-{
+public class ServicesController : ControllerBase {
     private readonly IServiceService _serviceService;
     private readonly ILogger<ServicesController> _logger;
 
-    public ServicesController(IServiceService serviceService, ILogger<ServicesController> logger)
-    {
+    public ServicesController(IServiceService serviceService, ILogger<ServicesController> logger) {
         _serviceService = serviceService;
         _logger = logger;
     }
 
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> GetAll()
-    {
+    public async Task<IActionResult> GetAll() {
         var response = await _serviceService.GetAllAsync();
-        
-        if (!response.IsSuccessful)
-        {
+
+        if (!response.IsSuccessful) {
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
         }
 
@@ -36,12 +32,10 @@ public class ServicesController : ControllerBase
 
     [HttpGet("{id}")]
     [AllowAnonymous]
-    public async Task<IActionResult> Get(int id)
-    {
+    public async Task<IActionResult> Get(int id) {
         var response = await _serviceService.GetByIdAsync(id);
-        
-        if (!response.IsSuccessful)
-        {
+
+        if (!response.IsSuccessful) {
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
         }
 
@@ -50,15 +44,12 @@ public class ServicesController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = "Admin,GymOwner")]
-    public async Task<IActionResult> Create([FromBody] CreateServiceDto dto)
-    {
-        if (!ModelState.IsValid)
-        {
+    public async Task<IActionResult> Create([FromBody] CreateServiceDto dto) {
+        if (!ModelState.IsValid) {
             return BadRequest(ModelState);
         }
 
-        var service = new Service
-        {
+        var service = new Service {
             Name = dto.Name,
             Description = dto.Description,
             DurationMinutes = dto.DurationMinutes,
@@ -69,9 +60,8 @@ public class ServicesController : ControllerBase
         };
 
         var response = await _serviceService.CreateAsync(service);
-        
-        if (!response.IsSuccessful)
-        {
+
+        if (!response.IsSuccessful) {
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
         }
 
@@ -80,21 +70,17 @@ public class ServicesController : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin,GymOwner")]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateServiceDto dto)
-    {
-        if (!ModelState.IsValid)
-        {
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateServiceDto dto) {
+        if (!ModelState.IsValid) {
             return BadRequest(ModelState);
         }
 
-        if (id != dto.Id)
-        {
+        if (id != dto.Id) {
             return BadRequest(new { ErrorMessage = "Service ID mismatch", ErrorCode = "VALIDATION_001" });
         }
 
         var existingResponse = await _serviceService.GetByIdAsync(id);
-        if (!existingResponse.IsSuccessful || existingResponse.Data == null)
-        {
+        if (!existingResponse.IsSuccessful || existingResponse.Data == null) {
             return NotFound(new { ErrorMessage = $"Service with ID {id} not found", ErrorCode = "NOT_FOUND_001" });
         }
 
@@ -108,9 +94,8 @@ public class ServicesController : ControllerBase
         service.UpdatedAt = DateTimeHelper.Now;
 
         var response = await _serviceService.UpdateAsync(id, service);
-        
-        if (!response.IsSuccessful)
-        {
+
+        if (!response.IsSuccessful) {
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
         }
 
@@ -119,12 +104,10 @@ public class ServicesController : ControllerBase
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin,GymOwner")]
-    public async Task<IActionResult> Delete(int id)
-    {
+    public async Task<IActionResult> Delete(int id) {
         var response = await _serviceService.DeleteAsync(id);
-        
-        if (!response.IsSuccessful)
-        {
+
+        if (!response.IsSuccessful) {
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
         }
 
@@ -133,8 +116,7 @@ public class ServicesController : ControllerBase
 }
 
 // DTOs
-public class CreateServiceDto
-{
+public class CreateServiceDto {
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public int DurationMinutes { get; set; }
@@ -142,8 +124,7 @@ public class CreateServiceDto
     public int GymLocationId { get; set; }
 }
 
-public class UpdateServiceDto
-{
+public class UpdateServiceDto {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }

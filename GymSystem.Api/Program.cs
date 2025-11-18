@@ -13,6 +13,8 @@ using GymSystem.Application.Services.Membership;
 
 // Common services
 using GymSystem.Common.Helpers;
+using GymSystem.Application.Abstractions.Services.IAIWorkoutPlan;
+using GymSystem.Application.Abstractions.Services.IGemini;
 
 var builder = WebApplication.CreateBuilder(args);
 

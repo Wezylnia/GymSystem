@@ -1,281 +1,256 @@
-﻿using GymSystem.Application.Abstractions.Services;
+﻿using AutoMapper;
+using GymSystem.Application.Abstractions.Contract.Appointment;
+using GymSystem.Application.Abstractions.Services;
 using GymSystem.Common.Factory.Managers;
 using GymSystem.Common.Helpers;
 using GymSystem.Common.Models;
-using GymSystem.Common.Services;
 using GymSystem.Domain.Entities;
-using GymSystem.Persistance.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace GymSystem.Application.Services.Appointments;
 
-public class AppointmentService : GenericCrudService<Appointment>, IAppointmentService
-{
-    private readonly GymDbContext _context;
+/// <summary>
+/// Randevu servisi - DTO + AutoMapper + ServiceResponse pattern
+/// </summary>
+public class AppointmentService : IAppointmentService {
+    private readonly BaseFactory<AppointmentService> _baseFactory;
+    private readonly IServiceResponseHelper _responseHelper;
+    private readonly ILogger<AppointmentService> _logger;
+    private readonly IMapper _mapper;
 
-    public AppointmentService(BaseFactory<GenericCrudService<Appointment>> baseFactory, GymDbContext context)
-        : base(baseFactory)
-    {
-        _context = context;
+    public AppointmentService(BaseFactory<AppointmentService> baseFactory) {
+        _baseFactory = baseFactory;
+        _responseHelper = baseFactory.CreateUtilityFactory().CreateServiceResponseHelper();
+        _logger = baseFactory.CreateUtilityFactory().CreateLogger();
+        _mapper = baseFactory.CreateUtilityFactory().CreateMapper();
     }
 
-    // GenericCrudService GetAllAsync override - Include ekle
-    public override async Task<ServiceResponse<IEnumerable<Appointment>>> GetAllAsync()
-    {
-        try
-        {
-            var appointments = await _context.Set<Appointment>()
-                .Where(a => a.IsActive)
+    public async Task<ServiceResponse<List<AppointmentDto>>> GetAllAsync() {
+        try {
+            var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Appointment>();
+            var appointments = await repository.QueryNoTracking()
                 .Include(a => a.Member)
                 .Include(a => a.Trainer)
                 .Include(a => a.Service)
-                    .ThenInclude(s => s.GymLocation)
+                    .ThenInclude(s => s!.GymLocation)
+                .Where(a => a.IsActive)
                 .OrderByDescending(a => a.AppointmentDate)
                 .ToListAsync();
 
-            return _responseHelper.SetSuccess<IEnumerable<Appointment>>(appointments);
+            var dtos = _mapper.Map<List<AppointmentDto>>(appointments);
+            return _responseHelper.SetSuccess(dtos);
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Tüm randevular getirilirken hata oluştu");
-            var errorInfo = new ErrorInfo(
-                "Randevular getirilemedi",
-                "APPOINTMENT_GETALL_ERROR",
-                ex.StackTrace,
-                500);
-            return _responseHelper.SetError<IEnumerable<Appointment>>(null, errorInfo);
+            return _responseHelper.SetError<List<AppointmentDto>>(
+                null,
+                new ErrorInfo("Randevular getirilemedi", "APPOINTMENT_GETALL_ERROR", ex.StackTrace, 500));
         }
     }
 
-    public async Task<ServiceResponse<bool>> CheckTrainerAvailabilityAsync(int trainerId, DateTime appointmentDate, int durationMinutes)
-    {
-        try
-        {
+    public async Task<ServiceResponse<AppointmentDto?>> GetByIdAsync(int id) {
+        try {
             var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Appointment>();
-            var appointmentEndTime = appointmentDate.AddMinutes(durationMinutes);
+            var appointment = await repository.QueryNoTracking()
+                .Include(a => a.Member)
+                .Include(a => a.Trainer)
+                .Include(a => a.Service)
+                    .ThenInclude(s => s!.GymLocation)
+                .Where(a => a.Id == id && a.IsActive)
+                .FirstOrDefaultAsync();
 
-            // Antrenörün o saatte başka randevusu var mı?
-            var existingAppointments = await repository.GetListAsync(a =>
-                a.TrainerId == trainerId &&
-                a.IsActive &&
-                a.Status != AppointmentStatus.Cancelled &&
-                (
-                    // Yeni randevu, mevcut randevunun içinde mi?
-                    (appointmentDate >= a.AppointmentDate && appointmentDate < a.AppointmentDate.AddMinutes(a.DurationMinutes)) ||
-                    // Yeni randevunun bitişi, mevcut randevunun içinde mi?
-                    (appointmentEndTime > a.AppointmentDate && appointmentEndTime <= a.AppointmentDate.AddMinutes(a.DurationMinutes)) ||
-                    // Yeni randevu, mevcut randevuyu kapsıyor mu?
-                    (appointmentDate <= a.AppointmentDate && appointmentEndTime >= a.AppointmentDate.AddMinutes(a.DurationMinutes))
-                )
-            );
+            if (appointment == null)
+                return _responseHelper.SetError<AppointmentDto?>(null, "Randevu bulunamadı", 404, "APPOINTMENT_NOTFOUND");
 
-            if (existingAppointments.Any())
-            {
-                return _responseHelper.SetError<bool>(
-                    false,
-                    "Antrenörün seçilen saatte başka bir randevusu var.",
-                    400,
-                    "APPOINTMENT_001");
-            }
-
-            // Antrenörün müsaitlik saatlerini kontrol et
-            var availabilityRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<TrainerAvailability>();
-            var dayOfWeek = appointmentDate.DayOfWeek;
-            var appointmentTime = appointmentDate.TimeOfDay;
-            var appointmentEndTimeSpan = appointmentEndTime.TimeOfDay;
-
-            var availability = await availabilityRepository.GetFirstOrDefaultAsync(a =>
-                a.TrainerId == trainerId &&
-                a.DayOfWeek == dayOfWeek &&
-                a.IsActive &&
-                a.StartTime <= appointmentTime &&
-                a.EndTime >= appointmentEndTimeSpan  // Değişiklik: EndTime randevu bitiş saatinden büyük veya eşit olmalı
-            );
-
-            if (availability == null)
-            {
-                return _responseHelper.SetError<bool>(
-                    false,
-                    $"Antrenör {dayOfWeek} günü {appointmentTime:hh\\:mm} - {appointmentEndTimeSpan:hh\\:mm} saatleri arasında müsait değil.",
-                    400,
-                    "APPOINTMENT_002");
-            }
-
-            return _responseHelper.SetSuccess(true, "Antrenör müsait");
+            var dto = _mapper.Map<AppointmentDto>(appointment);
+            return _responseHelper.SetSuccess<AppointmentDto?>(dto);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Antrenör müsaitliği kontrol edilirken hata oluştu");
-            var errorInfo = new ErrorInfo(
-                "Müsaitlik kontrolü başarısız",
-                "APPOINTMENT_003",
-                ex.StackTrace,
-                500);
-            return _responseHelper.SetError<bool>(false, errorInfo);
+        catch (Exception ex) {
+            _logger.LogError(ex, "Randevu getirilirken hata oluştu. ID: {Id}", id);
+            return _responseHelper.SetError<AppointmentDto?>(null, new ErrorInfo("Randevu getirilemedi", "APPOINTMENT_GET_ERROR", ex.StackTrace, 500));
         }
     }
 
-    public async Task<ServiceResponse<bool>> CheckMemberAvailabilityAsync(int memberId, DateTime appointmentDate, int durationMinutes)
-    {
-        try
-        {
-            var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Appointment>();
-            var appointmentEndTime = appointmentDate.AddMinutes(durationMinutes);
-
-            // Üyenin o saatte başka randevusu var mı?
-            var existingAppointments = await repository.GetListAsync(a =>
-                a.MemberId == memberId &&
-                a.IsActive &&
-                a.Status != AppointmentStatus.Cancelled &&
-                (
-                    (appointmentDate >= a.AppointmentDate && appointmentDate < a.AppointmentDate.AddMinutes(a.DurationMinutes)) ||
-                    (appointmentEndTime > a.AppointmentDate && appointmentEndTime <= a.AppointmentDate.AddMinutes(a.DurationMinutes)) ||
-                    (appointmentDate <= a.AppointmentDate && appointmentEndTime >= a.AppointmentDate.AddMinutes(a.DurationMinutes))
-                )
-            );
-
-            if (existingAppointments.Any())
-            {
-                return _responseHelper.SetError<bool>(
-                    false,
-                    "Bu saatte başka bir randevunuz var.",
-                    400,
-                    "APPOINTMENT_004");
-            }
-
-            return _responseHelper.SetSuccess(true, "Üye müsait");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Üye müsaitliği kontrol edilirken hata oluştu");
-            var errorInfo = new ErrorInfo(
-                "Müsaitlik kontrolü başarısız",
-                "APPOINTMENT_005",
-                ex.StackTrace,
-                500);
-            return _responseHelper.SetError<bool>(false, errorInfo);
-        }
-    }
-
-    public async Task<ServiceResponse<Appointment>> BookAppointmentAsync(Appointment appointment)
-    {
-        try
-        {
-            // 1. Antrenör müsaitlik kontrolü
-            var trainerAvailability = await CheckTrainerAvailabilityAsync(
-                appointment.TrainerId,
-                appointment.AppointmentDate,
-                appointment.DurationMinutes);
-
-            if (!trainerAvailability.IsSuccessful)
-            {
-                return _responseHelper.SetError<Appointment>(
-                    null,
-                    trainerAvailability.Error?.ErrorMessage ?? "Antrenör müsait değil",
-                    400,
-                    trainerAvailability.Error?.ErrorCode ?? "APPOINTMENT_006");
-            }
-
-            // 2. Üye müsaitlik kontrolü
-            var memberAvailability = await CheckMemberAvailabilityAsync(
-                appointment.MemberId,
-                appointment.AppointmentDate,
-                appointment.DurationMinutes);
-
-            if (!memberAvailability.IsSuccessful)
-            {
-                return _responseHelper.SetError<Appointment>(
-                    null,
-                    memberAvailability.Error?.ErrorMessage ?? "Bu saatte başka randevunuz var",
-                    400,
-                    memberAvailability.Error?.ErrorCode ?? "APPOINTMENT_007");
-            }
-
-            // 3. Salon çalışma saatlerini kontrol et
-            var serviceRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<Service>();
-            var service = await serviceRepository.GetByIdAsync(appointment.ServiceId);
-            
-            if (service == null)
-            {
-                return _responseHelper.SetError<Appointment>(
-                    null,
-                    "Hizmet bulunamadı",
-                    404,
-                    "APPOINTMENT_008");
-            }
-
-            var workingHoursRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<WorkingHours>();
-            var dayOfWeek = appointment.AppointmentDate.DayOfWeek;
-            var appointmentTime = appointment.AppointmentDate.TimeOfDay;
-            var appointmentEndTime = appointment.AppointmentDate.AddMinutes(appointment.DurationMinutes).TimeOfDay;
-
-            var workingHours = await workingHoursRepository.GetFirstOrDefaultAsync(w =>
-                w.GymLocationId == service.GymLocationId &&
-                w.DayOfWeek == dayOfWeek &&
-                w.IsActive &&
-                !w.IsClosed &&
-                w.OpenTime <= appointmentTime &&
-                w.CloseTime >= appointmentEndTime
-            );
-
-            if (workingHours == null)
-            {
-                return _responseHelper.SetError<Appointment>(
-                    null,
-                    "Salon seçilen gün ve saatte kapalı",
-                    400,
-                    "APPOINTMENT_009");
-            }
-
-            // 4. Randevuyu oluştur
-            appointment.Status = AppointmentStatus.Pending;
-            appointment.CreatedAt = DateTimeHelper.Now;
-            appointment.IsActive = true;
+    public async Task<ServiceResponse<AppointmentDto>> CreateAsync(AppointmentDto dto) {
+        try {
+            var appointment = _mapper.Map<Appointment>(dto, opts => opts.AfterMap((src, dest) => {
+                dest.Status = AppointmentStatus.Pending;
+                dest.CreatedAt = DateTimeHelper.Now;
+                dest.IsActive = true;
+            }));
 
             var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Appointment>();
             await repository.AddAsync(appointment);
             await repository.SaveChangesAsync();
 
-            _logger.LogInformation("Randevu oluşturuldu. AppointmentId: {AppointmentId}", appointment.Id);
-            return _responseHelper.SetSuccess(appointment, "Randevu başarıyla oluşturuldu. Onay bekliyor.");
+            var responseDto = _mapper.Map<AppointmentDto>(appointment);
+            return _responseHelper.SetSuccess(responseDto, "Randevu oluşturuldu");
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Randevu oluşturulurken hata oluştu");
-            var errorInfo = new ErrorInfo(
-                "Randevu oluşturulamadı",
-                "APPOINTMENT_010",
-                ex.StackTrace,
-                500);
-            return _responseHelper.SetError<Appointment>(null, errorInfo);
+            return _responseHelper.SetError<AppointmentDto>(null, new ErrorInfo("Randevu oluşturulamadı", "APPOINTMENT_CREATE_ERROR", ex.StackTrace, 500));
         }
     }
 
-    public async Task<ServiceResponse<Appointment>> ConfirmAppointmentAsync(int appointmentId)
-    {
-        try
-        {
+    public async Task<ServiceResponse<AppointmentDto>> UpdateAsync(int id, AppointmentDto dto) {
+        try {
             var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Appointment>();
-            var appointment = await repository.GetByIdAsync(appointmentId);
+            var appointment = await repository.Query().Where(a => a.Id == id && a.IsActive).FirstOrDefaultAsync();
 
             if (appointment == null)
-            {
-                return _responseHelper.SetError<Appointment>(
-                    null,
-                    "Randevu bulunamadı",
-                    404,
-                    "APPOINTMENT_011");
-            }
+                return _responseHelper.SetError<AppointmentDto>(null, "Randevu bulunamadı", 404, "APPOINTMENT_NOTFOUND");
 
-            if (appointment.Status != AppointmentStatus.Pending)
-            {
-                return _responseHelper.SetError<Appointment>(
-                    null,
-                    "Sadece bekleyen randevular onaylanabilir",
-                    400,
-                    "APPOINTMENT_012");
-            }
+            _mapper.Map(dto, appointment);
+            appointment.UpdatedAt = DateTimeHelper.Now;
+
+            await repository.UpdateAsync(appointment);
+            await repository.SaveChangesAsync();
+
+            var responseDto = _mapper.Map<AppointmentDto>(appointment);
+            return _responseHelper.SetSuccess(responseDto, "Randevu güncellendi");
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Randevu güncellenirken hata oluştu. ID: {Id}", id);
+            return _responseHelper.SetError<AppointmentDto>(null, new ErrorInfo("Randevu güncellenemedi", "APPOINTMENT_UPDATE_ERROR", ex.StackTrace, 500));
+        }
+    }
+
+    public async Task<ServiceResponse<bool>> DeleteAsync(int id) {
+        try {
+            var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Appointment>();
+            var appointment = await repository.Query().Where(a => a.Id == id && a.IsActive).FirstOrDefaultAsync();
+
+            if (appointment == null)
+                return _responseHelper.SetError<bool>(false, "Randevu bulunamadı", 404, "APPOINTMENT_NOTFOUND");
+
+            appointment.IsActive = false;
+            appointment.UpdatedAt = DateTimeHelper.Now;
+
+            await repository.UpdateAsync(appointment);
+            await repository.SaveChangesAsync();
+
+            _logger.LogInformation("Randevu silindi. ID: {Id}", id);
+            return _responseHelper.SetSuccess(true, "Randevu silindi");
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Randevu silinirken hata oluştu. ID: {Id}", id);
+            return _responseHelper.SetError<bool>(false, new ErrorInfo("Randevu silinemedi", "APPOINTMENT_DELETE_ERROR", ex.StackTrace, 500));
+        }
+    }
+
+    public async Task<ServiceResponse<bool>> CheckTrainerAvailabilityAsync(int trainerId, DateTime appointmentDate, int durationMinutes) {
+        try {
+            var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Appointment>();
+            var appointmentEndTime = appointmentDate.AddMinutes(durationMinutes);
+
+            var hasConflict = await repository.QueryNoTracking()
+                .Where(a => a.TrainerId == trainerId && a.IsActive && a.Status != AppointmentStatus.Cancelled &&
+                    ((appointmentDate >= a.AppointmentDate && appointmentDate < a.AppointmentDate.AddMinutes(a.DurationMinutes)) ||
+                    (appointmentEndTime > a.AppointmentDate && appointmentEndTime <= a.AppointmentDate.AddMinutes(a.DurationMinutes)) ||
+                    (appointmentDate <= a.AppointmentDate && appointmentEndTime >= a.AppointmentDate.AddMinutes(a.DurationMinutes))))
+                .AnyAsync();
+
+            if (hasConflict)
+                return _responseHelper.SetError<bool>(false, "Antrenörün seçilen saatte başka bir randevusu var.", 400, "APPOINTMENT_001");
+
+            var availabilityRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<TrainerAvailability>();
+            var dayOfWeek = appointmentDate.DayOfWeek;
+            var appointmentTime = appointmentDate.TimeOfDay;
+            var appointmentEndTimeSpan = appointmentEndTime.TimeOfDay;
+
+            var hasAvailability = await availabilityRepository.QueryNoTracking()
+                .Where(a => a.TrainerId == trainerId && a.DayOfWeek == dayOfWeek && a.IsActive && a.StartTime <= appointmentTime && a.EndTime >= appointmentEndTimeSpan)
+                .AnyAsync();
+
+            if (!hasAvailability)
+                return _responseHelper.SetError<bool>(false, $"Antrenör {dayOfWeek} günü {appointmentTime:hh\\:mm} - {appointmentEndTimeSpan:hh\\:mm} saatleri arasında müsait değil.", 400, "APPOINTMENT_002");
+
+            return _responseHelper.SetSuccess(true, "Antrenör müsait");
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Antrenör müsaitliği kontrol edilirken hata oluştu");
+            return _responseHelper.SetError<bool>(false, new ErrorInfo("Müsaitlik kontrolü başarısız", "APPOINTMENT_003", ex.StackTrace, 500));
+        }
+    }
+
+    public async Task<ServiceResponse<bool>> CheckMemberAvailabilityAsync(int memberId, DateTime appointmentDate, int durationMinutes) {
+        try {
+            var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Appointment>();
+            var appointmentEndTime = appointmentDate.AddMinutes(durationMinutes);
+
+            var hasConflict = await repository.QueryNoTracking()
+                .Where(a => a.MemberId == memberId && a.IsActive && a.Status != AppointmentStatus.Cancelled &&
+                    ((appointmentDate >= a.AppointmentDate && appointmentDate < a.AppointmentDate.AddMinutes(a.DurationMinutes)) ||
+                    (appointmentEndTime > a.AppointmentDate && appointmentEndTime <= a.AppointmentDate.AddMinutes(a.DurationMinutes)) ||
+                    (appointmentDate <= a.AppointmentDate && appointmentEndTime >= a.AppointmentDate.AddMinutes(a.DurationMinutes))))
+                .AnyAsync();
+
+            if (hasConflict)
+                return _responseHelper.SetError<bool>(false, "Bu saatte başka bir randevunuz var.", 400, "APPOINTMENT_004");
+
+            return _responseHelper.SetSuccess(true, "Üye müsait");
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Üye müsaitliği kontrol edilirken hata oluştu");
+            return _responseHelper.SetError<bool>(false, new ErrorInfo("Müsaitlik kontrolü başarısız", "APPOINTMENT_005", ex.StackTrace, 500));
+        }
+    }
+
+    public async Task<ServiceResponse<AppointmentDto>> BookAppointmentAsync(AppointmentDto dto) {
+        try {
+            var trainerAvailability = await CheckTrainerAvailabilityAsync(dto.TrainerId, dto.AppointmentDate, dto.DurationMinutes);
+            if (!trainerAvailability.IsSuccessful)
+                return _responseHelper.SetError<AppointmentDto>(null, trainerAvailability.Error?.ErrorMessage ?? "Antrenör müsait değil", 400, trainerAvailability.Error?.ErrorCode ?? "APPOINTMENT_006");
+
+            var memberAvailability = await CheckMemberAvailabilityAsync(dto.MemberId, dto.AppointmentDate, dto.DurationMinutes);
+            if (!memberAvailability.IsSuccessful)
+                return _responseHelper.SetError<AppointmentDto>(null, memberAvailability.Error?.ErrorMessage ?? "Bu saatte başka randevunuz var", 400, memberAvailability.Error?.ErrorCode ?? "APPOINTMENT_007");
+
+            var serviceRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<Service>();
+            var service = await serviceRepository.QueryNoTracking()
+                .Where(s => s.Id == dto.ServiceId)
+                .Select(s => new { s.Id, s.GymLocationId })
+                .FirstOrDefaultAsync();
+
+            if (service == null)
+                return _responseHelper.SetError<AppointmentDto>(null, "Hizmet bulunamadı", 404, "APPOINTMENT_008");
+
+            var workingHoursRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<WorkingHours>();
+            var dayOfWeek = dto.AppointmentDate.DayOfWeek;
+            var appointmentTime = dto.AppointmentDate.TimeOfDay;
+            var appointmentEndTime = dto.AppointmentDate.AddMinutes(dto.DurationMinutes).TimeOfDay;
+
+            var isOpen = await workingHoursRepository.QueryNoTracking()
+                .Where(w => w.GymLocationId == service.GymLocationId && w.DayOfWeek == dayOfWeek && w.IsActive && !w.IsClosed && w.OpenTime <= appointmentTime && w.CloseTime >= appointmentEndTime)
+                .AnyAsync();
+
+            if (!isOpen)
+                return _responseHelper.SetError<AppointmentDto>(null, "Salon seçilen gün ve saatte kapalı", 400, "APPOINTMENT_009");
+
+            return await CreateAsync(dto);
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Randevu oluşturulurken hata oluştu");
+            return _responseHelper.SetError<AppointmentDto>(null, new ErrorInfo("Randevu oluşturulamadı", "APPOINTMENT_010", ex.StackTrace, 500));
+        }
+    }
+
+    public async Task<ServiceResponse<AppointmentDto>> ConfirmAppointmentAsync(int appointmentId) {
+        try {
+            var appointmentResponse = await GetByIdAsync(appointmentId);
+
+            if (!appointmentResponse.IsSuccessful || appointmentResponse.Data == null)
+                return _responseHelper.SetError<AppointmentDto>(null, "Randevu bulunamadı", 404, "APPOINTMENT_011");
+
+            if (appointmentResponse.Data.Status != AppointmentStatus.Pending.ToString())
+                return _responseHelper.SetError<AppointmentDto>(null, "Sadece bekleyen randevular onaylanabilir", 400, "APPOINTMENT_012");
+
+            var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Appointment>();
+            var appointment = await repository.Query().Where(a => a.Id == appointmentId).FirstOrDefaultAsync();
+
+            if (appointment == null)
+                return _responseHelper.SetError<AppointmentDto>(null, "Randevu bulunamadı", 404, "APPOINTMENT_011");
 
             appointment.Status = AppointmentStatus.Confirmed;
             appointment.UpdatedAt = DateTimeHelper.Now;
@@ -284,60 +259,34 @@ public class AppointmentService : GenericCrudService<Appointment>, IAppointmentS
             await repository.SaveChangesAsync();
 
             _logger.LogInformation("Randevu onaylandı. AppointmentId: {AppointmentId}", appointmentId);
-            return _responseHelper.SetSuccess(appointment, "Randevu onaylandı");
+
+            var responseDto = _mapper.Map<AppointmentDto>(appointment);
+            return _responseHelper.SetSuccess(responseDto, "Randevu onaylandı");
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Randevu onaylanırken hata oluştu");
-            var errorInfo = new ErrorInfo(
-                "Randevu onaylanamadı",
-                "APPOINTMENT_013",
-                ex.StackTrace,
-                500);
-            return _responseHelper.SetError<Appointment>(null, errorInfo);
+            return _responseHelper.SetError<AppointmentDto>(null, new ErrorInfo("Randevu onaylanamadı", "APPOINTMENT_013", ex.StackTrace, 500));
         }
     }
 
-    public async Task<ServiceResponse<bool>> CancelAppointmentAsync(int appointmentId, string? reason)
-    {
-        try
-        {
+    public async Task<ServiceResponse<bool>> CancelAppointmentAsync(int appointmentId, string? reason) {
+        try {
             var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Appointment>();
-            var appointment = await repository.GetByIdAsync(appointmentId);
+            var appointment = await repository.Query().Where(a => a.Id == appointmentId && a.IsActive).FirstOrDefaultAsync();
 
             if (appointment == null)
-            {
-                return _responseHelper.SetError<bool>(
-                    false,
-                    "Randevu bulunamadı",
-                    404,
-                    "APPOINTMENT_014");
-            }
+                return _responseHelper.SetError<bool>(false, "Randevu bulunamadı", 404, "APPOINTMENT_014");
 
             if (appointment.Status == AppointmentStatus.Cancelled)
-            {
-                return _responseHelper.SetError<bool>(
-                    false,
-                    "Randevu zaten iptal edilmiş",
-                    400,
-                    "APPOINTMENT_015");
-            }
+                return _responseHelper.SetError<bool>(false, "Randevu zaten iptal edilmiş", 400, "APPOINTMENT_015");
 
             if (appointment.Status == AppointmentStatus.Completed)
-            {
-                return _responseHelper.SetError<bool>(
-                    false,
-                    "Tamamlanmış randevular iptal edilemez",
-                    400,
-                    "APPOINTMENT_016");
-            }
+                return _responseHelper.SetError<bool>(false, "Tamamlanmış randevular iptal edilemez", 400, "APPOINTMENT_016");
 
             appointment.Status = AppointmentStatus.Cancelled;
             appointment.UpdatedAt = DateTimeHelper.Now;
             if (!string.IsNullOrEmpty(reason))
-            {
                 appointment.Notes = $"İptal Nedeni: {reason}";
-            }
 
             await repository.UpdateAsync(appointment);
             await repository.SaveChangesAsync();
@@ -345,107 +294,77 @@ public class AppointmentService : GenericCrudService<Appointment>, IAppointmentS
             _logger.LogInformation("Randevu iptal edildi. AppointmentId: {AppointmentId}", appointmentId);
             return _responseHelper.SetSuccess(true, "Randevu iptal edildi");
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Randevu iptal edilirken hata oluştu");
-            var errorInfo = new ErrorInfo(
-                "Randevu iptal edilemedi",
-                "APPOINTMENT_017",
-                ex.StackTrace,
-                500);
-            return _responseHelper.SetError<bool>(false, errorInfo);
+            return _responseHelper.SetError<bool>(false, new ErrorInfo("Randevu iptal edilemedi", "APPOINTMENT_017", ex.StackTrace, 500));
         }
     }
 
-    public async Task<ServiceResponse<IEnumerable<Appointment>>> GetMemberAppointmentsAsync(int memberId)
-    {
-        try
-        {
-            var appointments = await _context.Set<Appointment>()
+    public async Task<ServiceResponse<List<AppointmentDto>>> GetMemberAppointmentsAsync(int memberId) {
+        try {
+            var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Appointment>();
+            var appointments = await repository.QueryNoTracking()
+                .Include(a => a.Member)
+                .Include(a => a.Trainer)
+                .Include(a => a.Service)
+                    .ThenInclude(s => s!.GymLocation)
                 .Where(a => a.MemberId == memberId && a.IsActive)
-                .Include(a => a.Member)
-                .Include(a => a.Trainer)
-                .Include(a => a.Service)
-                    .ThenInclude(s => s.GymLocation)
                 .OrderByDescending(a => a.AppointmentDate)
                 .ToListAsync();
 
-            return _responseHelper.SetSuccess<IEnumerable<Appointment>>(appointments);
+            var dtos = _mapper.Map<List<AppointmentDto>>(appointments);
+            return _responseHelper.SetSuccess(dtos);
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Üye randevuları getirilirken hata oluştu");
-            var errorInfo = new ErrorInfo(
-                "Randevular getirilemedi",
-                "APPOINTMENT_018",
-                ex.StackTrace,
-                500);
-            return _responseHelper.SetError<IEnumerable<Appointment>>(null, errorInfo);
+            return _responseHelper.SetError<List<AppointmentDto>>(null, new ErrorInfo("Randevular getirilemedi", "APPOINTMENT_018", ex.StackTrace, 500));
         }
     }
 
-    public async Task<ServiceResponse<IEnumerable<Appointment>>> GetTrainerAppointmentsAsync(int trainerId)
-    {
-        try
-        {
-            var appointments = await _context.Set<Appointment>()
-                .Where(a => a.TrainerId == trainerId && a.IsActive)
+    public async Task<ServiceResponse<List<AppointmentDto>>> GetTrainerAppointmentsAsync(int trainerId) {
+        try {
+            var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<Appointment>();
+            var appointments = await repository.QueryNoTracking()
                 .Include(a => a.Member)
                 .Include(a => a.Trainer)
                 .Include(a => a.Service)
-                    .ThenInclude(s => s.GymLocation)
+                    .ThenInclude(s => s!.GymLocation)
+                .Where(a => a.TrainerId == trainerId && a.IsActive)
                 .OrderByDescending(a => a.AppointmentDate)
                 .ToListAsync();
 
-            return _responseHelper.SetSuccess<IEnumerable<Appointment>>(appointments);
+            var dtos = _mapper.Map<List<AppointmentDto>>(appointments);
+            return _responseHelper.SetSuccess(dtos);
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Antrenör randevuları getirilirken hata oluştu");
-            var errorInfo = new ErrorInfo(
-                "Randevular getirilemedi",
-                "APPOINTMENT_019",
-                ex.StackTrace,
-                500);
-            return _responseHelper.SetError<IEnumerable<Appointment>>(null, errorInfo);
+            return _responseHelper.SetError<List<AppointmentDto>>(null, new ErrorInfo("Randevular getirilemedi", "APPOINTMENT_019", ex.StackTrace, 500));
         }
     }
 
-    public async Task<ServiceResponse<IEnumerable<int>>> GetAvailableTrainersAsync(int serviceId, DateTime appointmentDate, int durationMinutes)
-    {
-        try
-        {
-            // Hizmete sahip antrenörleri bul
+    public async Task<ServiceResponse<List<int>>> GetAvailableTrainersAsync(int serviceId, DateTime appointmentDate, int durationMinutes) {
+        try {
             var specialtyRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<TrainerSpecialty>();
-            var specialties = await specialtyRepository.GetListAsync(ts =>
-                ts.ServiceId == serviceId &&
-                ts.IsActive
-            );
 
-            var trainerIds = specialties.Select(ts => ts.TrainerId).Distinct().ToList();
+            var trainerIds = await specialtyRepository.QueryNoTracking()
+                .Where(ts => ts.ServiceId == serviceId && ts.IsActive)
+                .Select(ts => ts.TrainerId)
+                .Distinct()
+                .ToListAsync();
+
             var availableTrainerIds = new List<int>();
 
-            // Her antrenör için müsaitlik kontrolü
-            foreach (var trainerId in trainerIds)
-            {
+            foreach (var trainerId in trainerIds) {
                 var availability = await CheckTrainerAvailabilityAsync(trainerId, appointmentDate, durationMinutes);
                 if (availability.IsSuccessful && availability.Data == true)
-                {
                     availableTrainerIds.Add(trainerId);
-                }
             }
 
-            return _responseHelper.SetSuccess<IEnumerable<int>>(availableTrainerIds);
+            return _responseHelper.SetSuccess(availableTrainerIds);
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Uygun antrenörler getirilirken hata oluştu");
-            var errorInfo = new ErrorInfo(
-                "Uygun antrenörler getirilemedi",
-                "APPOINTMENT_020",
-                ex.StackTrace,
-                500);
-            return _responseHelper.SetError<IEnumerable<int>>(null, errorInfo);
+            return _responseHelper.SetError<List<int>>(null, new ErrorInfo("Uygun antrenörler getirilemedi", "APPOINTMENT_020", ex.StackTrace, 500));
         }
     }
 }
