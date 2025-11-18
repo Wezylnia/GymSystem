@@ -1,10 +1,12 @@
 ﻿using GymSystem.Application.Abstractions.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GymSystem.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Admin,GymOwner")] // Raporlar sadece Admin ve GymOwner için
 public class ReportsController : ControllerBase
 {
     private readonly IReportService _reportService;
@@ -95,6 +97,7 @@ public class ReportsController : ControllerBase
     /// Aylık gelir raporu (LINQ)
     /// </summary>
     [HttpGet("monthly-revenue")]
+    [Authorize(Roles = "Admin")] // Gelir raporu sadece Admin
     public async Task<IActionResult> GetMonthlyRevenue([FromQuery] int month, [FromQuery] int year)
     {
         var response = await _reportService.GetMonthlyRevenueAsync(month, year);
@@ -108,9 +111,95 @@ public class ReportsController : ControllerBase
     }
 
     /// <summary>
+    /// Salon sahipleri için detaylı dashboard istatistikleri
+    /// </summary>
+    [HttpGet("gym-owner-dashboard")]
+    [Authorize(Roles = "Admin,GymOwner")]
+    public async Task<IActionResult> GetGymOwnerDashboardStats([FromQuery] int? gymLocationId = null)
+    {
+        var response = await _reportService.GetGymOwnerDashboardStatsAsync(gymLocationId);
+        
+        if (!response.IsSuccessful)
+        {
+            return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
+        }
+
+        return Ok(response.Data);
+    }
+
+    /// <summary>
+    /// Üyelik talepleri istatistikleri
+    /// </summary>
+    [HttpGet("membership-statistics")]
+    [Authorize(Roles = "Admin,GymOwner")]
+    public async Task<IActionResult> GetMembershipStatistics([FromQuery] int? gymLocationId = null)
+    {
+        var response = await _reportService.GetMembershipStatisticsAsync(gymLocationId);
+        
+        if (!response.IsSuccessful)
+        {
+            return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
+        }
+
+        return Ok(response.Data);
+    }
+
+    /// <summary>
+    /// Salonlara göre gelir dağılımı (Admin only)
+    /// </summary>
+    [HttpGet("revenue-by-gym")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetRevenueByGymLocation()
+    {
+        var response = await _reportService.GetRevenueByGymLocationAsync();
+        
+        if (!response.IsSuccessful)
+        {
+            return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
+        }
+
+        return Ok(response.Data);
+    }
+
+    /// <summary>
+    /// Son 6 ay gelir trendi
+    /// </summary>
+    [HttpGet("revenue-trend")]
+    [Authorize(Roles = "Admin,GymOwner")]
+    public async Task<IActionResult> GetRevenueTrend([FromQuery] int? gymLocationId = null)
+    {
+        var response = await _reportService.GetRevenueTrendAsync(gymLocationId);
+        
+        if (!response.IsSuccessful)
+        {
+            return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
+        }
+
+        return Ok(response.Data);
+    }
+
+    /// <summary>
+    /// Üye artış trendi (aylık)
+    /// </summary>
+    [HttpGet("member-growth-trend")]
+    [Authorize(Roles = "Admin,GymOwner")]
+    public async Task<IActionResult> GetMemberGrowthTrend([FromQuery] int? gymLocationId = null)
+    {
+        var response = await _reportService.GetMemberGrowthTrendAsync(gymLocationId);
+        
+        if (!response.IsSuccessful)
+        {
+            return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
+        }
+
+        return Ok(response.Data);
+    }
+
+    /// <summary>
     /// Antrenör iş yükü raporu (LINQ)
     /// </summary>
     [HttpGet("trainer-workload")]
+    [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> GetTrainerWorkload([FromQuery] int? trainerId = null)
     {
         var response = await _reportService.GetTrainerWorkloadAsync(trainerId);

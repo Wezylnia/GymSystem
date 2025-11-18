@@ -34,4 +34,29 @@ public interface IReportService : IApplicationService
     /// Antrenör iş yükü raporu
     /// </summary>
     Task<ServiceResponse<object>> GetTrainerWorkloadAsync(int? trainerId = null);
+    
+    /// <summary>
+    /// Salon sahipleri için detaylı istatistikler
+    /// </summary>
+    Task<ServiceResponse<object>> GetGymOwnerDashboardStatsAsync(int? gymLocationId = null);
+    
+    /// <summary>
+    /// Üyelik istatistikleri (onaylanmış, bekleyen, reddedilen)
+    /// </summary>
+    Task<ServiceResponse<object>> GetMembershipStatisticsAsync(int? gymLocationId = null);
+    
+    /// <summary>
+    /// Salonlara göre gelir dağılımı
+    /// </summary>
+    Task<ServiceResponse<object>> GetRevenueByGymLocationAsync();
+    
+    /// <summary>
+    /// Son 6 ay gelir trendi
+    /// </summary>
+    Task<ServiceResponse<object>> GetRevenueTrendAsync(int? gymLocationId = null);
+    
+    /// <summary>
+    /// Üye artış trendi (aylık)
+    /// </summary>
+    Task<ServiceResponse<object>> GetMemberGrowthTrendAsync(int? gymLocationId = null);
 }

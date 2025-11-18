@@ -38,6 +38,29 @@ builder.Services.AddCors(options =>
 // Infrastructure servisleri ekle (Database, Persistence, Identity)
 builder.Services.AddInfrastructureServices(builder.Configuration, "appsettings.json");
 
+// Cookie Authentication için yapılandırma (MVC ile paylaşımlı)
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = "GymSystem.Auth"; // MVC ile aynı cookie name
+    options.Cookie.Domain = null; // Same domain (localhost)
+    options.Cookie.Path = "/";
+    options.ExpireTimeSpan = TimeSpan.FromHours(24);
+    options.SlidingExpiration = true;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+    options.Events.OnRedirectToLogin = context =>
+    {
+        context.Response.StatusCode = 401; // API için redirect yerine 401 döndür
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        context.Response.StatusCode = 403; // API için redirect yerine 403 döndür
+        return Task.CompletedTask;
+    };
+});
+
 // HttpClient for Gemini API
 builder.Services.AddHttpClient("GeminiApi", client =>
 {

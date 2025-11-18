@@ -6,6 +6,7 @@ namespace GymSystem.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize] // Tüm endpoint'ler için default authorization
 public class AIWorkoutPlansController : ControllerBase
 {
     private readonly IAIWorkoutPlanService _aiWorkoutPlanService;
@@ -23,7 +24,7 @@ public class AIWorkoutPlansController : ControllerBase
     /// Yeni workout planı oluşturur
     /// </summary>
     [HttpPost("generate-workout")]
-    [AllowAnonymous] // MVC'den internal çağrı için
+    [Authorize(Roles = "Member")]
     public async Task<IActionResult> GenerateWorkoutPlan([FromBody] GenerateWorkoutPlanRequest request)
     {
         try
@@ -82,7 +83,7 @@ public class AIWorkoutPlansController : ControllerBase
     /// Yeni diet planı oluşturur
     /// </summary>
     [HttpPost("generate-diet")]
-    [AllowAnonymous] // MVC'den internal çağrı için
+    [Authorize(Roles = "Member")]
     public async Task<IActionResult> GenerateDietPlan([FromBody] GenerateDietPlanRequest request)
     {
         try
@@ -141,7 +142,7 @@ public class AIWorkoutPlansController : ControllerBase
     /// Belirli bir üyenin tüm planlarını getirir
     /// </summary>
     [HttpGet("member/{memberId}")]
-    [AllowAnonymous] // MVC'den internal çağrı için
+    [Authorize(Roles = "Member,Admin")]
     public async Task<IActionResult> GetMemberPlans(int memberId)
     {
         try
@@ -184,7 +185,7 @@ public class AIWorkoutPlansController : ControllerBase
     /// Plan detayını getirir
     /// </summary>
     [HttpGet("{id}")]
-    [AllowAnonymous] // MVC'den internal çağrı için
+    [Authorize(Roles = "Member,Admin")]
     public async Task<IActionResult> GetPlanById(int id)
     {
         try
@@ -231,7 +232,7 @@ public class AIWorkoutPlansController : ControllerBase
     /// Planı siler (soft delete)
     /// </summary>
     [HttpDelete("{id}")]
-    [AllowAnonymous] // MVC'den internal çağrı için
+    [Authorize(Roles = "Member,Admin")]
     public async Task<IActionResult> DeletePlan(int id)
     {
         try

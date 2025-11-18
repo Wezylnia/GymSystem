@@ -7,8 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace GymSystem.Application.Services.AI;
 
-public class AIWorkoutPlanService : IAIWorkoutPlanService
-{
+public class AIWorkoutPlanService : IAIWorkoutPlanService {
     private readonly GymDbContext _context;
     private readonly IGeminiApiService _geminiApiService;
     private readonly ILogger<AIWorkoutPlanService> _logger;
@@ -16,43 +15,35 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService
     public AIWorkoutPlanService(
         GymDbContext context,
         IGeminiApiService geminiApiService,
-        ILogger<AIWorkoutPlanService> logger)
-    {
+        ILogger<AIWorkoutPlanService> logger) {
         _context = context;
         _geminiApiService = geminiApiService;
         _logger = logger;
     }
 
-    public async Task<AIWorkoutPlan> GenerateWorkoutPlanAsync(int memberId, decimal height, decimal weight, 
-        string? bodyType, string goal, string? photoBase64 = null)
-    {
+    public async Task<AIWorkoutPlan> GenerateWorkoutPlanAsync(int memberId, decimal height, decimal weight,
+        string? bodyType, string goal, string? photoBase64 = null) {
         // Member kontrolü
         var member = await _context.Set<Member>().FindAsync(memberId);
-        if (member == null)
-        {
+        if (member == null) {
             throw new ArgumentException($"Member ID {memberId} bulunamadı.");
         }
-
         string aiPlan;
-        try
-        {
+        try {
             // AI'dan plan al
             aiPlan = await _geminiApiService.GenerateWorkoutPlanAsync(height, weight, bodyType, goal, photoBase64);
-            
-            if (string.IsNullOrWhiteSpace(aiPlan))
-            {
+
+            if (string.IsNullOrWhiteSpace(aiPlan)) {
                 throw new InvalidOperationException("AI'dan boş plan döndü.");
             }
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Gemini API'den plan alınırken hata. Member ID: {MemberId}", memberId);
             throw new InvalidOperationException("AI planı oluşturulamadı. Lütfen daha sonra tekrar deneyin.", ex);
         }
 
         // Database'e kaydet
-        var workoutPlan = new AIWorkoutPlan
-        {
+        var workoutPlan = new AIWorkoutPlan {
             MemberId = memberId,
             PlanType = "Workout",
             Height = height,
@@ -68,42 +59,36 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService
         _context.Set<AIWorkoutPlan>().Add(workoutPlan);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Workout planı oluşturuldu. Member ID: {MemberId}, Plan ID: {PlanId}", 
+        _logger.LogInformation("Workout planı oluşturuldu. Member ID: {MemberId}, Plan ID: {PlanId}",
             memberId, workoutPlan.Id);
 
         return workoutPlan;
     }
 
-    public async Task<AIWorkoutPlan> GenerateDietPlanAsync(int memberId, decimal height, decimal weight, 
-        string? bodyType, string goal, string? photoBase64 = null)
-    {
+    public async Task<AIWorkoutPlan> GenerateDietPlanAsync(int memberId, decimal height, decimal weight,
+        string? bodyType, string goal, string? photoBase64 = null) {
         // Member kontrolü
         var member = await _context.Set<Member>().FindAsync(memberId);
-        if (member == null)
-        {
+        if (member == null) {
             throw new ArgumentException($"Member ID {memberId} bulunamadı.");
         }
 
         string aiPlan;
-        try
-        {
+        try {
             // AI'dan plan al
             aiPlan = await _geminiApiService.GenerateDietPlanAsync(height, weight, bodyType, goal, photoBase64);
-            
-            if (string.IsNullOrWhiteSpace(aiPlan))
-            {
+
+            if (string.IsNullOrWhiteSpace(aiPlan)) {
                 throw new InvalidOperationException("AI'dan boş plan döndü.");
             }
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Gemini API'den plan alınırken hata. Member ID: {MemberId}", memberId);
             throw new InvalidOperationException("AI planı oluşturulamadı. Lütfen daha sonra tekrar deneyin.", ex);
         }
 
         // Database'e kaydet
-        var dietPlan = new AIWorkoutPlan
-        {
+        var dietPlan = new AIWorkoutPlan {
             MemberId = memberId,
             PlanType = "Diet",
             Height = height,
@@ -119,14 +104,13 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService
         _context.Set<AIWorkoutPlan>().Add(dietPlan);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Diet planı oluşturuldu. Member ID: {MemberId}, Plan ID: {PlanId}", 
+        _logger.LogInformation("Diet planı oluşturuldu. Member ID: {MemberId}, Plan ID: {PlanId}",
             memberId, dietPlan.Id);
 
         return dietPlan;
     }
 
-    public async Task<List<AIWorkoutPlan>> GetMemberPlansAsync(int memberId)
-    {
+    public async Task<List<AIWorkoutPlan>> GetMemberPlansAsync(int memberId) {
         return await _context.Set<AIWorkoutPlan>()
             .Where(p => p.MemberId == memberId && p.IsActive)
             .Include(p => p.Member)
@@ -134,20 +118,16 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService
             .ToListAsync();
     }
 
-    public async Task<AIWorkoutPlan?> GetPlanByIdAsync(int id)
-    {
+    public async Task<AIWorkoutPlan?> GetPlanByIdAsync(int id) {
         return await _context.Set<AIWorkoutPlan>()
             .Include(p => p.Member)
             .FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
     }
 
-    public async Task<bool> DeletePlanAsync(int id)
-    {
-        try
-        {
+    public async Task<bool> DeletePlanAsync(int id) {
+        try {
             var plan = await _context.Set<AIWorkoutPlan>().FindAsync(id);
-            if (plan == null)
-            {
+            if (plan == null) {
                 return false;
             }
 
@@ -158,15 +138,13 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService
             _logger.LogInformation("AI Plan silindi. Plan ID: {PlanId}", id);
             return true;
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Plan silinirken hata oluştu. Plan ID: {PlanId}", id);
             return false;
         }
     }
 
-    public async Task<List<AIWorkoutPlan>> GetAllPlansAsync()
-    {
+    public async Task<List<AIWorkoutPlan>> GetAllPlansAsync() {
         return await _context.Set<AIWorkoutPlan>()
             .Where(p => p.IsActive)
             .Include(p => p.Member)

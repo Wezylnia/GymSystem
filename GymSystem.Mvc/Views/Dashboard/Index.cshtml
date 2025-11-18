@@ -1,0 +1,375 @@
+﻿@model GymSystem.Mvc.Models.DashboardViewModel
+
+@{
+    ViewData["Title"] = "İstatistikler ve Raporlar";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3">
+                <i class="bi bi-graph-up-arrow"></i> İstatistikler ve Raporlar
+            </h2>
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-primary shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Toplam Üye</h6>
+                            <h2 class="mb-0 text-primary">@Model.Stats.TotalMembers</h2>
+                            <small class="text-success">@Model.Stats.ActiveMembers aktif</small>
+                        </div>
+                        <div class="text-primary">
+                            <i class="bi bi-people-fill" style="font-size: 3rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-success shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Bu Ay Gelir</h6>
+                            <h2 class="mb-0 text-success">₺@Model.Stats.ThisMonthRevenue.ToString("N0")</h2>
+                            <small class="@(Model.Stats.RevenueGrowth >= 0 ? "text-success" : "text-danger")">
+                                <i class="bi bi-arrow-@(Model.Stats.RevenueGrowth >= 0 ? "up" : "down")"></i>
+                                %@Math.Abs(Model.Stats.RevenueGrowth).ToString("N1")
+                            </small>
+                        </div>
+                        <div class="text-success">
+                            <i class="bi bi-cash-stack" style="font-size: 3rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-warning shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Bekleyen Talepler</h6>
+                            <h2 class="mb-0 text-warning">@Model.Stats.PendingMembershipRequests</h2>
+                            <small class="text-muted">Bu ay: @Model.Stats.ThisMonthRequests</small>
+                        </div>
+                        <div class="text-warning">
+                            <i class="bi bi-clock-history" style="font-size: 3rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-info shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-2">Antrenör Sayısı</h6>
+                            <h2 class="mb-0 text-info">@Model.Stats.TotalTrainers</h2>
+                            <small class="text-muted">Toplam randevu: @Model.Stats.TotalAppointments</small>
+                        </div>
+                        <div class="text-info">
+                            <i class="bi bi-person-badge" style="font-size: 3rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> Son 6 Ay Gelir Trendi</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueTrendChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Üyelik Talepleri</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="membershipRequestsChart"></canvas>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Toplam: <strong>@Model.MembershipStats.Total</strong> talep
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Üye Artış Trendi</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="memberGrowthChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart-line"></i> Üyelik Süresine Göre Dağılım</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="membershipDurationChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trainer Workload Table -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="bi bi-table"></i> Antrenör İş Yükü</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.TrainerWorkload.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Antrenör</th>
+                                        <th class="text-center">Toplam Randevu</th>
+                                        <th class="text-center">Bekleyen</th>
+                                        <th class="text-center">Onaylı</th>
+                                        <th class="text-center">Tamamlanan</th>
+                                        <th class="text-end">Toplam Saat</th>
+                                        <th class="text-end">Toplam Gelir</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var trainer in Model.TrainerWorkload)
+                                    {
+                                        <tr>
+                                            <td><strong>@trainer.TrainerName</strong></td>
+                                            <td class="text-center">
+                                                <span class="badge bg-primary">@trainer.TotalAppointments</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-warning">@trainer.PendingAppointments</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-info">@trainer.ConfirmedAppointments</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-success">@trainer.CompletedAppointments</span>
+                                            </td>
+                                            <td class="text-end">@trainer.TotalHours.ToString("N1") saat</td>
+                                            <td class="text-end"><strong>₺@trainer.TotalRevenue.ToString("N0")</strong></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center mb-0">Henüz antrenör verisi bulunmuyor.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Revenue Trend Chart
+        const revenueTrendCtx = document.getElementById('revenueTrendChart');
+        const revenueTrendData = @Html.Raw(Json.Serialize(Model.RevenueTrend));
+        
+        new Chart(revenueTrendCtx, {
+            type: 'line',
+            data: {
+                labels: revenueTrendData.map(d => d.month),
+                datasets: [{
+                    label: 'Gelir (₺)',
+                    data: revenueTrendData.map(d => d.revenue),
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(context.parsed.y);
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₺' + value.toLocaleString('tr-TR');
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Membership Requests Pie Chart
+        const membershipRequestsCtx = document.getElementById('membershipRequestsChart');
+        const membershipStats = @Html.Raw(Json.Serialize(Model.MembershipStats));
+        
+        new Chart(membershipRequestsCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Onaylanan', 'Bekleyen', 'Reddedilen'],
+                datasets: [{
+                    data: [membershipStats.approved, membershipStats.pending, membershipStats.rejected],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(255, 99, 132, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgb(75, 192, 192)',
+                        'rgb(255, 206, 86)',
+                        'rgb(255, 99, 132)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Member Growth Chart
+        const memberGrowthCtx = document.getElementById('memberGrowthChart');
+        const memberGrowthData = @Html.Raw(Json.Serialize(Model.MemberGrowthTrend));
+        
+        new Chart(memberGrowthCtx, {
+            type: 'bar',
+            data: {
+                labels: memberGrowthData.map(d => d.month),
+                datasets: [{
+                    label: 'Yeni Üyeler',
+                    data: memberGrowthData.map(d => d.newMembers),
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgb(54, 162, 235)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+
+        // Membership Duration Chart
+        const membershipDurationCtx = document.getElementById('membershipDurationChart');
+        const durationData = @Html.Raw(Json.Serialize(Model.MembershipStats.ByDuration));
+        
+        new Chart(membershipDurationCtx, {
+            type: 'bar',
+            data: {
+                labels: durationData.map(d => d.duration === 'OneMonth' ? '1 Ay' : d.duration === 'ThreeMonths' ? '3 Ay' : '6 Ay'),
+                datasets: [{
+                    label: 'Talep Sayısı',
+                    data: durationData.map(d => d.count),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(255, 206, 86, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(54, 162, 235)',
+                        'rgb(255, 206, 86)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+}

@@ -12,17 +12,26 @@ public class ReportService : IReportService
     private readonly IAppointmentService _appointmentService;
     private readonly ITrainerService _trainerService;
     private readonly IServiceService _serviceService;
+    private readonly IMembershipRequestService _membershipRequestService;
+    private readonly IMemberService _memberService;
+    private readonly IGymLocationService _gymLocationService;
     private readonly ILogger<ReportService> _logger;
 
     public ReportService(
         IAppointmentService appointmentService,
         ITrainerService trainerService,
         IServiceService serviceService,
+        IMembershipRequestService membershipRequestService,
+        IMemberService memberService,
+        IGymLocationService gymLocationService,
         ILogger<ReportService> logger)
     {
         _appointmentService = appointmentService;
         _trainerService = trainerService;
         _serviceService = serviceService;
+        _membershipRequestService = membershipRequestService;
+        _memberService = memberService;
+        _gymLocationService = gymLocationService;
         _logger = logger;
     }
 
@@ -394,6 +403,302 @@ public class ReportService : IReportService
             {
                 IsSuccessful = false,
                 Error = new ErrorInfo(ex.Message, "REPORT_013", ex.StackTrace, 500)
+            };
+        }
+    }
+
+    public async Task<ServiceResponse<object>> GetGymOwnerDashboardStatsAsync(int? gymLocationId = null)
+    {
+        try
+        {
+            var membersResponse = await _memberService.GetAllAsync();
+            var appointmentsResponse = await _appointmentService.GetAllAsync();
+            var trainersResponse = await _trainerService.GetAllAsync();
+            var membershipRequests = await _membershipRequestService.GetAllRequestsAsync();
+
+            if (!membersResponse.IsSuccessful || !appointmentsResponse.IsSuccessful || 
+                !trainersResponse.IsSuccessful)
+            {
+                return new ServiceResponse<object>
+                {
+                    IsSuccessful = false,
+                    Error = new ErrorInfo("Veriler alınamadı", "REPORT_014", null, 500)
+                };
+            }
+
+            var members = membersResponse.Data?.Where(m => m.IsActive).ToList() ?? new List<Member>();
+            var appointments = appointmentsResponse.Data?.Where(a => a.IsActive).ToList() ?? new List<Appointment>();
+            var trainers = trainersResponse.Data?.Where(t => t.IsActive).ToList() ?? new List<Trainer>();
+
+            // Filter by gym location if specified
+            if (gymLocationId.HasValue)
+            {
+                members = members.Where(m => m.CurrentGymLocationId == gymLocationId.Value).ToList();
+                trainers = trainers.Where(t => t.GymLocationId == gymLocationId.Value).ToList();
+                membershipRequests = membershipRequests.Where(mr => mr.GymLocationId == gymLocationId.Value).ToList();
+            }
+
+            // Calculate statistics
+            var totalMembers = members.Count;
+            var activeMembers = members.Count(m => m.HasActiveMembership());
+            var totalTrainers = trainers.Count;
+            var totalAppointments = appointments.Count;
+            var pendingMembershipRequests = membershipRequests.Count(mr => mr.Status == MembershipRequestStatus.Pending);
+
+            // Revenue calculations
+            var thisMonthRevenue = appointments
+                .Where(a => a.AppointmentDate.Year == DateTime.Now.Year && 
+                           a.AppointmentDate.Month == DateTime.Now.Month &&
+                           a.Status == AppointmentStatus.Confirmed)
+                .Sum(a => a.Price);
+
+            var lastMonthRevenue = appointments
+                .Where(a => a.AppointmentDate.Year == DateTime.Now.AddMonths(-1).Year && 
+                           a.AppointmentDate.Month == DateTime.Now.AddMonths(-1).Month &&
+                           a.Status == AppointmentStatus.Confirmed)
+                .Sum(a => a.Price);
+
+            var revenueGrowth = lastMonthRevenue > 0 
+                ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
+                : 0;
+
+            // Membership requests this month
+            var thisMonthRequests = membershipRequests
+                .Count(mr => mr.CreatedAt.Year == DateTime.Now.Year && 
+                            mr.CreatedAt.Month == DateTime.Now.Month);
+
+            return new ServiceResponse<object>
+            {
+                IsSuccessful = true,
+                Data = new
+                {
+                    TotalMembers = totalMembers,
+                    ActiveMembers = activeMembers,
+                    TotalTrainers = totalTrainers,
+                    TotalAppointments = totalAppointments,
+                    PendingMembershipRequests = pendingMembershipRequests,
+                    ThisMonthRevenue = thisMonthRevenue,
+                    LastMonthRevenue = lastMonthRevenue,
+                    RevenueGrowth = Math.Round(revenueGrowth, 2),
+                    ThisMonthRequests = thisMonthRequests
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Dashboard istatistikleri getirilirken hata oluştu");
+            return new ServiceResponse<object>
+            {
+                IsSuccessful = false,
+                Error = new ErrorInfo(ex.Message, "REPORT_014", ex.StackTrace, 500)
+            };
+        }
+    }
+
+    public async Task<ServiceResponse<object>> GetMembershipStatisticsAsync(int? gymLocationId = null)
+    {
+        try
+        {
+            var response = await _membershipRequestService.GetAllRequestsAsync();
+            var requests = response ?? new List<MembershipRequest>();
+
+            if (gymLocationId.HasValue)
+            {
+                requests = requests.Where(mr => mr.GymLocationId == gymLocationId.Value).ToList();
+            }
+
+            var stats = new
+            {
+                Total = requests.Count,
+                Pending = requests.Count(r => r.Status == MembershipRequestStatus.Pending),
+                Approved = requests.Count(r => r.Status == MembershipRequestStatus.Approved),
+                Rejected = requests.Count(r => r.Status == MembershipRequestStatus.Rejected),
+                ByDuration = requests
+                    .GroupBy(r => r.Duration)
+                    .Select(g => new
+                    {
+                        Duration = g.Key.ToString(),
+                        Count = g.Count(),
+                        TotalRevenue = g.Where(r => r.Status == MembershipRequestStatus.Approved).Sum(r => r.Price)
+                    })
+                    .ToList()
+            };
+
+            return new ServiceResponse<object>
+            {
+                IsSuccessful = true,
+                Data = stats
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Üyelik istatistikleri getirilirken hata oluştu");
+            return new ServiceResponse<object>
+            {
+                IsSuccessful = false,
+                Error = new ErrorInfo(ex.Message, "REPORT_015", ex.StackTrace, 500)
+            };
+        }
+    }
+
+    public async Task<ServiceResponse<object>> GetRevenueByGymLocationAsync()
+    {
+        try
+        {
+            var appointmentsResponse = await _appointmentService.GetAllAsync();
+            var trainersResponse = await _trainerService.GetAllAsync();
+            var gymLocationsResponse = await _gymLocationService.GetAllAsync();
+
+            if (!appointmentsResponse.IsSuccessful || !trainersResponse.IsSuccessful || !gymLocationsResponse.IsSuccessful)
+            {
+                return new ServiceResponse<object>
+                {
+                    IsSuccessful = false,
+                    Error = new ErrorInfo("Veriler alınamadı", "REPORT_016", null, 500)
+                };
+            }
+
+            var appointments = appointmentsResponse.Data?.Where(a => a.IsActive && a.Status == AppointmentStatus.Confirmed).ToList() ?? new List<Appointment>();
+            var trainers = trainersResponse.Data?.ToList() ?? new List<Trainer>();
+            var gymLocations = gymLocationsResponse.Data?.ToList() ?? new List<GymLocation>();
+
+            var revenueByGym = appointments
+                .Join(trainers, a => a.TrainerId, t => t.Id, (a, t) => new { Appointment = a, Trainer = t })
+                .GroupBy(x => x.Trainer.GymLocationId)
+                .Select(g => new
+                {
+                    GymLocationId = g.Key,
+                    TotalRevenue = g.Sum(x => x.Appointment.Price),
+                    AppointmentCount = g.Count()
+                })
+                .Join(gymLocations, r => r.GymLocationId, g => g.Id, (r, g) => new
+                {
+                    GymLocationId = g.Id,
+                    GymLocationName = g.Name,
+                    r.TotalRevenue,
+                    r.AppointmentCount
+                })
+                .OrderByDescending(x => x.TotalRevenue)
+                .ToList();
+
+            return new ServiceResponse<object>
+            {
+                IsSuccessful = true,
+                Data = new { RevenueByGym = revenueByGym, TotalGyms = revenueByGym.Count }
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Salonlara göre gelir dağılımı getirilirken hata oluştu");
+            return new ServiceResponse<object>
+            {
+                IsSuccessful = false,
+                Error = new ErrorInfo(ex.Message, "REPORT_016", ex.StackTrace, 500)
+            };
+        }
+    }
+
+    public async Task<ServiceResponse<object>> GetRevenueTrendAsync(int? gymLocationId = null)
+    {
+        try
+        {
+            var appointmentsResponse = await _appointmentService.GetAllAsync();
+            var trainersResponse = await _trainerService.GetAllAsync();
+
+            if (!appointmentsResponse.IsSuccessful || !trainersResponse.IsSuccessful)
+            {
+                return new ServiceResponse<object>
+                {
+                    IsSuccessful = false,
+                    Error = new ErrorInfo("Veriler alınamadı", "REPORT_017", null, 500)
+                };
+            }
+
+            var appointments = appointmentsResponse.Data?.Where(a => a.IsActive && a.Status == AppointmentStatus.Confirmed).ToList() ?? new List<Appointment>();
+            var trainers = trainersResponse.Data?.ToList() ?? new List<Trainer>();
+
+            // Filter by gym location if specified
+            if (gymLocationId.HasValue)
+            {
+                var gymTrainerIds = trainers.Where(t => t.GymLocationId == gymLocationId.Value).Select(t => t.Id).ToList();
+                appointments = appointments.Where(a => gymTrainerIds.Contains(a.TrainerId)).ToList();
+            }
+
+            var sixMonthsAgo = DateTime.Now.AddMonths(-6);
+            var trend = appointments
+                .Where(a => a.AppointmentDate >= sixMonthsAgo)
+                .GroupBy(a => new { a.AppointmentDate.Year, a.AppointmentDate.Month })
+                .Select(g => new
+                {
+                    Month = $"{g.Key.Month:00}/{g.Key.Year}",
+                    Year = g.Key.Year,
+                    MonthNumber = g.Key.Month,
+                    Revenue = g.Sum(a => a.Price),
+                    AppointmentCount = g.Count()
+                })
+                .OrderBy(x => x.Year).ThenBy(x => x.MonthNumber)
+                .ToList();
+
+            return new ServiceResponse<object>
+            {
+                IsSuccessful = true,
+                Data = new { Trend = trend, Months = trend.Count }
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Gelir trendi getirilirken hata oluştu");
+            return new ServiceResponse<object>
+            {
+                IsSuccessful = false,
+                Error = new ErrorInfo(ex.Message, "REPORT_017", ex.StackTrace, 500)
+            };
+        }
+    }
+
+    public async Task<ServiceResponse<object>> GetMemberGrowthTrendAsync(int? gymLocationId = null)
+    {
+        try
+        {
+            var membershipRequestsResponse = await _membershipRequestService.GetAllRequestsAsync();
+            var requests = membershipRequestsResponse ?? new List<MembershipRequest>();
+
+            if (gymLocationId.HasValue)
+            {
+                requests = requests.Where(mr => mr.GymLocationId == gymLocationId.Value).ToList();
+            }
+
+            var sixMonthsAgo = DateTime.Now.AddMonths(-6);
+            var approvedRequests = requests
+                .Where(r => r.Status == MembershipRequestStatus.Approved && r.ApprovedAt.HasValue && r.ApprovedAt >= sixMonthsAgo)
+                .ToList();
+
+            var trend = approvedRequests
+                .GroupBy(r => new { r.ApprovedAt!.Value.Year, r.ApprovedAt.Value.Month })
+                .Select(g => new
+                {
+                    Month = $"{g.Key.Month:00}/{g.Key.Year}",
+                    Year = g.Key.Year,
+                    MonthNumber = g.Key.Month,
+                    NewMembers = g.Count(),
+                    TotalRevenue = g.Sum(r => r.Price)
+                })
+                .OrderBy(x => x.Year).ThenBy(x => x.MonthNumber)
+                .ToList();
+
+            return new ServiceResponse<object>
+            {
+                IsSuccessful = true,
+                Data = new { Trend = trend, Months = trend.Count }
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Üye artış trendi getirilirken hata oluştu");
+            return new ServiceResponse<object>
+            {
+                IsSuccessful = false,
+                Error = new ErrorInfo(ex.Message, "REPORT_018", ex.StackTrace, 500)
             };
         }
     }

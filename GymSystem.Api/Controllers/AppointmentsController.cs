@@ -7,6 +7,7 @@ namespace GymSystem.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize] // Tüm endpoint'ler için default authorization
 public class AppointmentsController : ControllerBase
 {
     private readonly IAppointmentService _appointmentService;
@@ -19,6 +20,7 @@ public class AppointmentsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> GetAll()
     {
         var response = await _appointmentService.GetAllAsync();
@@ -52,6 +54,7 @@ public class AppointmentsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = "Admin,GymOwner,Member")]
     public async Task<IActionResult> Get(int id)
     {
         var response = await _appointmentService.GetByIdAsync(id);
@@ -93,6 +96,7 @@ public class AppointmentsController : ControllerBase
     /// Randevu oluştur (tüm kontroller ile)
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = "Member")]
     public async Task<IActionResult> Create([FromBody] CreateAppointmentRequest request)
     {
         if (request == null)
@@ -141,6 +145,7 @@ public class AppointmentsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> Update(int id, Appointment appointment)
     {
         if (id != appointment.Id)
@@ -159,6 +164,7 @@ public class AppointmentsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin,Member")]
     public async Task<IActionResult> Delete(int id)
     {
         var response = await _appointmentService.DeleteAsync(id);
@@ -188,7 +194,7 @@ public class AppointmentsController : ControllerBase
         return Ok(new { 
             id = response.Data?.Id,
             status = response.Data?.Status.ToString(),
-            message = "Randevu onaylandı" 
+            message = "Randevu onaylandi" 
         });
     }
 
@@ -196,6 +202,7 @@ public class AppointmentsController : ControllerBase
     /// Randevu iptal et
     /// </summary>
     [HttpPut("{id}/cancel")]
+    [Authorize(Roles = "Member,Admin")]
     public async Task<IActionResult> Cancel(int id, [FromBody] string? reason)
     {
         var response = await _appointmentService.CancelAppointmentAsync(id, reason);
@@ -212,6 +219,7 @@ public class AppointmentsController : ControllerBase
     /// Üyenin tüm randevularını getir
     /// </summary>
     [HttpGet("member/{memberId}")]
+    [Authorize(Roles = "Member,Admin,GymOwner")]
     public async Task<IActionResult> GetMemberAppointments(int memberId)
     {
         var response = await _appointmentService.GetMemberAppointmentsAsync(memberId);
@@ -248,6 +256,7 @@ public class AppointmentsController : ControllerBase
     /// Antrenörün tüm randevularını getir
     /// </summary>
     [HttpGet("trainer/{trainerId}")]
+    [Authorize(Roles = "Admin,GymOwner,Trainer")]
     public async Task<IActionResult> GetTrainerAppointments(int trainerId)
     {
         var response = await _appointmentService.GetTrainerAppointmentsAsync(trainerId);
@@ -284,6 +293,7 @@ public class AppointmentsController : ControllerBase
     /// Antrenör müsaitlik kontrolü
     /// </summary>
     [HttpGet("check-availability")]
+    [Authorize(Roles = "Member,Admin,GymOwner")]
     public async Task<IActionResult> CheckAvailability(
         [FromQuery] int trainerId,
         [FromQuery] DateTime appointmentDate,
@@ -303,6 +313,7 @@ public class AppointmentsController : ControllerBase
     /// Belirli bir hizmet için uygun antrenörleri getir
     /// </summary>
     [HttpGet("available-trainers")]
+    [Authorize(Roles = "Member,Admin,GymOwner")]
     public async Task<IActionResult> GetAvailableTrainers(
         [FromQuery] int serviceId,
         [FromQuery] DateTime appointmentDate,

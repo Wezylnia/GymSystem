@@ -15,7 +15,6 @@ builder.Services.AddControllersWithViews();
 // Project reference sayesinde assembly'ler otomatik yüklenecek
 builder.Services.AddInfrastructureServices(builder.Configuration, "appsettings.json");
 
-// HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
 
 // Authorization Policies
@@ -36,9 +35,12 @@ builder.Services.AddScoped<IAuthorizationHandler, GymOwnerAuthorizationHandler>(
 // Claims transformation
 builder.Services.AddScoped<IClaimsTransformation, GymLocationClaimsTransformation>();
 
-// Cookie settings (MVC için)
+// Cookie settings (MVC için - API ile paylaşımlı)
 builder.Services.ConfigureApplicationCookie(options =>
 {
+    options.Cookie.Name = "GymSystem.Auth"; // Shared cookie name
+    options.Cookie.Domain = null; // Same domain (localhost)
+    options.Cookie.Path = "/";
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
     options.AccessDeniedPath = "/Account/AccessDenied";
@@ -46,14 +48,27 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax; // Allow cross-site for localhost
 });
 
-// HttpClient for API calls
+// HttpClient for API calls - Cookie forwarding ile
 builder.Services.AddHttpClient("GymApi", client =>
 {
     var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5001";
     client.BaseAddress = new Uri(apiBaseUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
+})
+.ConfigurePrimaryHttpMessageHandler(() =>
+{
+    return new HttpClientHandler
+    {
+        UseCookies = true,
+        CookieContainer = new System.Net.CookieContainer()
+    };
+})
+.AddHttpMessageHandler(serviceProvider =>
+{
+    return new CookieForwardingHandler(serviceProvider.GetRequiredService<IHttpContextAccessor>());
 });
 
 var app = builder.Build();
@@ -114,5 +129,31 @@ public class GymLocationClaimsTransformation : IClaimsTransformation
         }
 
         return principal;
+    }
+}
+
+// Cookie Forwarding Handler
+public class CookieForwardingHandler : DelegatingHandler
+{
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public CookieForwardingHandler(IHttpContextAccessor httpContextAccessor)
+    {
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext != null)
+        {
+            var authCookie = httpContext.Request.Cookies["GymSystem.Auth"];
+            if (!string.IsNullOrEmpty(authCookie))
+            {
+                request.Headers.Add("Cookie", $"GymSystem.Auth={authCookie}");
+            }
+        }
+
+        return await base.SendAsync(request, cancellationToken);
     }
 }

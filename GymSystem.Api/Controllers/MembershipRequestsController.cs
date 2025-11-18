@@ -24,7 +24,7 @@ public class MembershipRequestsController : ControllerBase
     /// Yeni üyelik talebi oluşturur
     /// </summary>
     [HttpPost("create")]
-    [AllowAnonymous] // MVC'den internal çağrı için
+    [Authorize(Roles = "Member")]
     public async Task<IActionResult> CreateRequest([FromBody] CreateMembershipRequestDto request)
     {
         try
@@ -68,7 +68,7 @@ public class MembershipRequestsController : ControllerBase
     /// Belirli bir üyenin tüm taleplerini getirir
     /// </summary>
     [HttpGet("member/{memberId}")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Member,Admin,GymOwner")]
     public async Task<IActionResult> GetMemberRequests(int memberId)
     {
         try
@@ -92,7 +92,7 @@ public class MembershipRequestsController : ControllerBase
     /// Belirli bir salonun tüm taleplerini getirir
     /// </summary>
     [HttpGet("gym/{gymLocationId}")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> GetGymLocationRequests(int gymLocationId)
     {
         try
@@ -135,7 +135,7 @@ public class MembershipRequestsController : ControllerBase
     /// Bekleyen talepleri getirir
     /// </summary>
     [HttpGet("pending")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> GetPendingRequests()
     {
         try
@@ -154,7 +154,7 @@ public class MembershipRequestsController : ControllerBase
     /// Talep detayını getirir
     /// </summary>
     [HttpGet("{id}")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Admin,GymOwner,Member")]
     public async Task<IActionResult> GetRequestById(int id)
     {
         try
@@ -183,7 +183,7 @@ public class MembershipRequestsController : ControllerBase
     /// Talebi onaylar
     /// </summary>
     [HttpPost("{id}/approve")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> ApproveRequest(int id, [FromBody] ApproveRejectDto dto)
     {
         try
@@ -221,7 +221,7 @@ public class MembershipRequestsController : ControllerBase
     /// Talebi reddeder
     /// </summary>
     [HttpPost("{id}/reject")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> RejectRequest(int id, [FromBody] ApproveRejectDto dto)
     {
         try
@@ -256,10 +256,10 @@ public class MembershipRequestsController : ControllerBase
     }
 
     /// <summary>
-    /// Talebi siler
+    /// Talebi siler (Sadece Member kendi talebini silebilir)
     /// </summary>
     [HttpDelete("{id}")]
-    [AllowAnonymous]
+    [Authorize(Roles = "Member,Admin")]
     public async Task<IActionResult> DeleteRequest(int id)
     {
         try

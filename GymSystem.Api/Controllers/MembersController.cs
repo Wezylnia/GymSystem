@@ -8,6 +8,7 @@ namespace GymSystem.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class MembersController : ControllerBase
 {
     private readonly IMemberService _memberService;
@@ -20,6 +21,7 @@ public class MembersController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> GetAll()
     {
         // GymLocation ile birlikte getir
@@ -34,6 +36,7 @@ public class MembersController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = "Admin,GymOwner,Member")]
     public async Task<IActionResult> Get(int id)
     {
         var response = await _memberService.GetByIdAsync(id);
@@ -47,6 +50,7 @@ public class MembersController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> Create([FromBody] CreateMemberDto dto)
     {
         if (!ModelState.IsValid)
@@ -77,6 +81,7 @@ public class MembersController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin,GymOwner")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateMemberDto dto)
     {
         if (!ModelState.IsValid)
@@ -115,6 +120,7 @@ public class MembersController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
         var response = await _memberService.DeleteAsync(id);
