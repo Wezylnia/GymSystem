@@ -15,7 +15,7 @@ using GymSystem.Application.Services.Membership;
 using GymSystem.Common.Helpers;
 using GymSystem.Application.Abstractions.Services.IAIWorkoutPlan;
 using GymSystem.Application.Abstractions.Services.IGemini;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +38,11 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Data Protection for cookie sharing (MVC ve API arasında)
+builder.Services.AddDataProtection()
+    .SetApplicationName("GymSystem")
+    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\proje\GymSystem\shared-auth-keys"));
+
 // Infrastructure servisleri ekle (Database, Persistence, Identity)
 builder.Services.AddInfrastructureServices(builder.Configuration, "appsettings.json");
 
@@ -53,8 +58,8 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.Path = "/";
     options.ExpireTimeSpan = TimeSpan.FromHours(24);
     options.SlidingExpiration = true;
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.HttpOnly = false; // JavaScript'ten erişilebilir olması için
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None; // HTTP'de çalışsın (development)
     options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
     options.Events.OnRedirectToLogin = context =>
     {

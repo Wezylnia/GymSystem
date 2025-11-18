@@ -3,6 +3,7 @@ using GymSystem.Infastructure.Extensions;
 using GymSystem.Mvc.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 
@@ -10,6 +11,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Data Protection for cookie sharing (MVC ve API arasında)
+builder.Services.AddDataProtection()
+    .SetApplicationName("GymSystem")
+    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\proje\GymSystem\shared-auth-keys"));
 
 // Infrastructure servisleri (Database + Identity)
 // Project reference sayesinde assembly'ler otomatik yüklenecek
@@ -46,9 +52,9 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
     options.ExpireTimeSpan = TimeSpan.FromHours(24);
     options.SlidingExpiration = true;
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-    options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax; // Allow cross-site for localhost
+    options.Cookie.HttpOnly = false; // JavaScript'ten erişilebilir olması için
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None; // HTTP'de çalışsın (development)
+    options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
 });
 
 // HttpClient for API calls - Cookie forwarding ile
@@ -145,12 +151,14 @@ public class CookieForwardingHandler : DelegatingHandler
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext != null)
+        if (httpContext != null && httpContext.User?.Identity?.IsAuthenticated == true)
         {
-            var authCookie = httpContext.Request.Cookies["GymSystem.Auth"];
-            if (!string.IsNullOrEmpty(authCookie))
+            // Get all cookies from current request
+            var cookies = httpContext.Request.Cookies;
+            if (cookies.Any())
             {
-                request.Headers.Add("Cookie", $"GymSystem.Auth={authCookie}");
+                var cookieHeader = string.Join("; ", cookies.Select(c => $"{c.Key}={c.Value}"));
+                request.Headers.Add("Cookie", cookieHeader);
             }
         }
 
