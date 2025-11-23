@@ -12,26 +12,49 @@
                     <h3><i class="bi bi-lock"></i> Giriş Yap</h3>
                 </div>
                 <div class="card-body p-4">
-                    <form asp-action="Login" method="post">
+                    <form asp-action="Login" method="post" id="loginForm">
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                         
                         <input type="hidden" asp-for="ReturnUrl" />
                         
                         <div class="mb-3">
-                            <label asp-for="Email" class="form-label">Email</label>
-                            <input asp-for="Email" class="form-control form-control-lg" placeholder="ornek@email.com" autofocus />
-                            <span asp-validation-for="Email" class="text-danger"></span>
+                            <label asp-for="Email" class="form-label">
+                                <i class="bi bi-envelope"></i> Email *
+                            </label>
+                            <input asp-for="Email" 
+                                   type="email" 
+                                   class="form-control form-control-lg" 
+                                   placeholder="ornek@email.com" 
+                                   autocomplete="email"
+                                   autofocus 
+                                   required />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
                         </div>
                         
                         <div class="mb-3">
-                            <label asp-for="Password" class="form-label">Şifre</label>
-                            <input asp-for="Password" class="form-control form-control-lg" placeholder="••••••••" />
-                            <span asp-validation-for="Password" class="text-danger"></span>
+                            <label asp-for="Password" class="form-label">
+                                <i class="bi bi-lock"></i> Şifre *
+                            </label>
+                            <div class="input-group">
+                                <input asp-for="Password" 
+                                       type="password" 
+                                       class="form-control form-control-lg" 
+                                       placeholder="••••••••" 
+                                       autocomplete="current-password"
+                                       id="passwordInput"
+                                       required />
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="bi bi-eye" id="toggleIcon"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
                         </div>
                         
                         <div class="mb-3 form-check">
-                            <input asp-for="RememberMe" class="form-check-input" />
-                            <label asp-for="RememberMe" class="form-check-label">Beni Hatırla</label>
+                            <input asp-for="RememberMe" class="form-check-input" id="rememberMeCheck" />
+                            <label asp-for="RememberMe" class="form-check-label" for="rememberMeCheck">
+                                Beni Hatırla (Güvenli cihazlarda kullanın)
+                            </label>
                         </div>
                         
                         <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
@@ -39,7 +62,7 @@
                         </button>
                         
                         <div class="text-center">
-                            <p class="mb-0">Hesabınız yok mu? <a asp-action="Register" class="text-decoration-none">Kayıt Ol</a></p>
+                            <p class="mb-0">Hesabınız yok mu? <a asp-action="Register" class="text-decoration-none fw-bold">Kayıt Ol</a></p>
                         </div>
                     </form>
                 </div>
@@ -60,4 +83,34 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function() {
+            // Şifre göster/gizle
+            $('#togglePassword').click(function() {
+                const passwordInput = $('#passwordInput');
+                const toggleIcon = $('#toggleIcon');
+                
+                if (passwordInput.attr('type') === 'password') {
+                    passwordInput.attr('type', 'text');
+                    toggleIcon.removeClass('bi-eye').addClass('bi-eye-slash');
+                } else {
+                    passwordInput.attr('type', 'password');
+                    toggleIcon.removeClass('bi-eye-slash').addClass('bi-eye');
+                }
+            });
+
+            // Form submit'te loading göster
+            $('#loginForm').submit(function() {
+                const submitBtn = $(this).find('button[type="submit"]');
+                submitBtn.prop('disabled', true);
+                submitBtn.html('<span class="spinner-border spinner-border-sm me-2"></span>Giriş yapılıyor...');
+            });
+
+            // Email input'u küçük harfe çevir
+            $('#Email').on('input', function() {
+                this.value = this.value.toLowerCase().trim();
+            });
+        });
+    </script>
 }

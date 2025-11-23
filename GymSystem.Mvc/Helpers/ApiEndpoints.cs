@@ -7,7 +7,10 @@ public static class ApiEndpoints
 {
     // Members
     public const string Members = "/api/members";
+    public const string MembersCreate = "/api/members";
+    public const string MembersRegister = "/api/members/register"; // Register için AllowAnonymous endpoint
     public static string MemberById(int id) => $"/api/members/{id}";
+    public static string MemberByEmail(string email) => $"/api/members/by-email/{email}";
 
     // GymLocations
     public const string GymLocations = "/api/gymlocations";

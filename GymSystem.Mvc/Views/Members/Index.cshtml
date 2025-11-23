@@ -24,11 +24,14 @@
         </div>
     }
 
-    <div class="mb-3">
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Yeni Üye Ekle
-        </a>
-    </div>
+    @if (User.IsInRole("Admin"))
+    {
+        <div class="mb-3">
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Yeni Üye Ekle
+            </a>
+        </div>
+    }
 
     @if (Model != null && Model.Any())
     {
@@ -46,6 +49,10 @@
                         <th>Bitiş</th>
                         <th>Kalan</th>
                         <th>Kayıt Tarihi</th>
+                        @if (User.IsInRole("Admin") || User.IsInRole("GymOwner"))
+                        {
+                            <th class="text-center">İşlemler</th>
+                        }
                     </tr>
                 </thead>
                 <tbody>
@@ -136,6 +143,29 @@
                             <td>
                                 <small>@member.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small>
                             </td>
+                            @if (User.IsInRole("Admin") || User.IsInRole("GymOwner"))
+                            {
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a asp-action="Details" asp-route-id="@member.Id" 
+                                           class="btn btn-sm btn-info" 
+                                           title="Detaylar">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@member.Id" 
+                                           class="btn btn-sm btn-warning" 
+                                           title="Düzenle">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-danger" 
+                                                onclick="confirmDelete(@member.Id, '@member.FirstName @member.LastName')"
+                                                title="Sil">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            }
                         </tr>
                     }
                 </tbody>
@@ -157,6 +187,44 @@
     }
 </div>
 
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle"></i> Üye Silme Onayı
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong id="deleteMemberName"></strong> isimli üyeyi silmek istediğinize emin misiniz?</p>
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <strong>UYARI:</strong> Bu işlem geri alınamaz!
+                    <ul class="mt-2 mb-0">
+                        <li>Üyenin tüm üyelik talepleri silinecek</li>
+                        <li>Üyenin tüm randevuları silinecek</li>
+                        <li>Üyenin tüm AI planları silinecek</li>
+                        <li>İlişkili tüm kayıtlar kalıcı olarak silinecek</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i> İptal
+                </button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Evet, Sil
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         // Auto-dismiss success message after 3 seconds
@@ -167,5 +235,14 @@
                 bsAlert.close();
             }
         }, 3000);
+
+        // Delete confirmation
+        function confirmDelete(memberId, memberName) {
+            document.getElementById('deleteMemberName').textContent = memberName;
+            document.getElementById('deleteForm').action = '/Members/Delete/' + memberId;
+            
+            var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        }
     </script>
 }

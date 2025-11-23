@@ -12,45 +12,132 @@
                     <h3><i class="bi bi-person-plus"></i> Kayıt Ol</h3>
                 </div>
                 <div class="card-body p-4">
-                    <form asp-action="Register" method="post">
+                    <form asp-action="Register" method="post" id="registerForm" novalidate>
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="FirstName" class="form-label">Ad *</label>
-                                <input asp-for="FirstName" class="form-control" placeholder="Adınız" />
-                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                                <label asp-for="FirstName" class="form-label">
+                                    <i class="bi bi-person"></i> Ad *
+                                </label>
+                                <input asp-for="FirstName" 
+                                       type="text" 
+                                       class="form-control" 
+                                       placeholder="Adınız" 
+                                       pattern="[a-zA-ZğüşıöçĞÜŞİÖÇ\s]{2,100}"
+                                       maxlength="100"
+                                       autocomplete="given-name"
+                                       required />
+                                <span asp-validation-for="FirstName" class="text-danger small"></span>
+                                <div class="form-text">
+                                    <small>Sadece harf ve boşluk, en az 2 karakter</small>
+                                </div>
                             </div>
                             
                             <div class="col-md-6 mb-3">
-                                <label asp-for="LastName" class="form-label">Soyad *</label>
-                                <input asp-for="LastName" class="form-control" placeholder="Soyadınız" />
-                                <span asp-validation-for="LastName" class="text-danger"></span>
+                                <label asp-for="LastName" class="form-label">
+                                    <i class="bi bi-person"></i> Soyad *
+                                </label>
+                                <input asp-for="LastName" 
+                                       type="text" 
+                                       class="form-control" 
+                                       placeholder="Soyadınız" 
+                                       pattern="[a-zA-ZğüşıöçĞÜŞİÖÇ\s]{2,100}"
+                                       maxlength="100"
+                                       autocomplete="family-name"
+                                       required />
+                                <span asp-validation-for="LastName" class="text-danger small"></span>
+                                <div class="form-text">
+                                    <small>Sadece harf ve boşluk, en az 2 karakter</small>
+                                </div>
                             </div>
                         </div>
                         
                         <div class="mb-3">
-                            <label asp-for="Email" class="form-label">Email *</label>
-                            <input asp-for="Email" class="form-control" placeholder="ornek@email.com" />
-                            <span asp-validation-for="Email" class="text-danger"></span>
+                            <label asp-for="Email" class="form-label">
+                                <i class="bi bi-envelope"></i> Email *
+                            </label>
+                            <input asp-for="Email" 
+                                   type="email" 
+                                   class="form-control" 
+                                   placeholder="ornek@email.com" 
+                                   maxlength="200"
+                                   autocomplete="email"
+                                   required />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                            <div class="form-text">
+                                <small>Geçerli bir email adresi giriniz</small>
+                            </div>
                         </div>
                         
                         <div class="mb-3">
-                            <label asp-for="PhoneNumber" class="form-label">Telefon</label>
-                            <input asp-for="PhoneNumber" class="form-control" placeholder="05XXXXXXXXX" />
-                            <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                            <label asp-for="PhoneNumber" class="form-label">
+                                <i class="bi bi-phone"></i> Telefon *
+                            </label>
+                            <input asp-for="PhoneNumber" 
+                                   type="tel" 
+                                   class="form-control" 
+                                   placeholder="05XXXXXXXXX" 
+                                   pattern="^(05)[0-9]{9}$"
+                                   maxlength="11"
+                                   autocomplete="tel"
+                                   id="phoneInput"
+                                   required />
+                            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+                            <div class="form-text">
+                                <small><i class="bi bi-info-circle"></i> 05 ile başlamalı, 11 haneli olmalı (örn: 05321234567)</small>
+                            </div>
                         </div>
                         
                         <div class="mb-3">
-                            <label asp-for="Password" class="form-label">Şifre *</label>
-                            <input asp-for="Password" class="form-control" placeholder="En az 6 karakter" />
-                            <span asp-validation-for="Password" class="text-danger"></span>
+                            <label asp-for="Password" class="form-label">
+                                <i class="bi bi-lock"></i> Şifre *
+                            </label>
+                            <div class="input-group">
+                                <input asp-for="Password" 
+                                       type="password" 
+                                       class="form-control" 
+                                       placeholder="Güçlü bir şifre oluşturun" 
+                                       autocomplete="new-password"
+                                       id="registerPassword"
+                                       required />
+                                <button class="btn btn-outline-secondary" type="button" id="toggleRegisterPassword">
+                                    <i class="bi bi-eye" id="toggleRegisterIcon"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                            
+                            <!-- Şifre Güç Göstergesi -->
+                            <div class="progress mt-2" style="height: 5px;">
+                                <div id="passwordStrength" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <div id="passwordStrengthText" class="form-text small"></div>
+                            
+                            <div class="form-text mt-2">
+                                <small>
+                                    <strong>Şifre Gereksinimleri:</strong><br/>
+                                    <span id="req-length" class="text-muted">• En az 8 karakter</span><br/>
+                                    <span id="req-uppercase" class="text-muted">• En az bir büyük harf (A-Z)</span><br/>
+                                    <span id="req-lowercase" class="text-muted">• En az bir küçük harf (a-z)</span><br/>
+                                    <span id="req-number" class="text-muted">• En az bir rakam (0-9)</span><br/>
+                                    <span id="req-special" class="text-muted">• En az bir özel karakter (!@@&#35;$%^&amp;*)</span>
+                                </small>
+                            </div>
                         </div>
                         
                         <div class="mb-3">
-                            <label asp-for="ConfirmPassword" class="form-label">Şifre Tekrar *</label>
-                            <input asp-for="ConfirmPassword" class="form-control" placeholder="Şifrenizi tekrar girin" />
-                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                            <label asp-for="ConfirmPassword" class="form-label">
+                                <i class="bi bi-lock-fill"></i> Şifre Tekrar *
+                            </label>
+                            <input asp-for="ConfirmPassword" 
+                                   type="password" 
+                                   class="form-control" 
+                                   placeholder="Şifrenizi tekrar girin" 
+                                   autocomplete="new-password"
+                                   id="confirmPassword"
+                                   required />
+                            <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                            <div id="passwordMatchText" class="form-text small"></div>
                         </div>
                         
                         <div class="alert alert-info" role="alert">
@@ -60,12 +147,12 @@
                             </small>
                         </div>
                         
-                        <button type="submit" class="btn btn-success btn-lg w-100 mb-3">
+                        <button type="submit" class="btn btn-success btn-lg w-100 mb-3" id="submitBtn">
                             <i class="bi bi-check-circle"></i> Kayıt Ol
                         </button>
                         
                         <div class="text-center">
-                            <p class="mb-0">Zaten hesabınız var mı? <a asp-action="Login" class="text-decoration-none">Giriş Yap</a></p>
+                            <p class="mb-0">Zaten hesabınız var mı? <a asp-action="Login" class="text-decoration-none fw-bold">Giriş Yap</a></p>
                         </div>
                     </form>
                 </div>
@@ -76,4 +163,182 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function() {
+            // Şifre göster/gizle
+            $('#toggleRegisterPassword').click(function() {
+                const passwordInput = $('#registerPassword');
+                const toggleIcon = $('#toggleRegisterIcon');
+                
+                if (passwordInput.attr('type') === 'password') {
+                    passwordInput.attr('type', 'text');
+                    toggleIcon.removeClass('bi-eye').addClass('bi-eye-slash');
+                } else {
+                    passwordInput.attr('type', 'password');
+                    toggleIcon.removeClass('bi-eye-slash').addClass('bi-eye');
+                }
+            });
+
+            // Telefon numarası formatı (sadece rakam)
+            $('#phoneInput').on('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                
+                // Gerçek zamanlı validasyon
+                if (this.value.length > 0) {
+                    if (this.value.length === 11 && this.value.startsWith('05')) {
+                        $(this).removeClass('is-invalid').addClass('is-valid');
+                    } else {
+                        $(this).removeClass('is-valid').addClass('is-invalid');
+                    }
+                }
+            });
+
+            // İsim ve soyad sadece harf
+            $('#FirstName, #LastName').on('input', function() {
+                const turkishLetters = /^[a-zA-ZğüşıöçĞÜŞİÖÇ\s]*$/;
+                if (!turkishLetters.test(this.value)) {
+                    this.value = this.value.replace(/[^a-zA-ZğüşıöçĞÜŞİÖÇ\s]/g, '');
+                }
+                
+                // İlk harfi büyük yap
+                const words = this.value.split(' ');
+                this.value = words.map(word => {
+                    if (word.length > 0) {
+                        return word.charAt(0).toLocaleUpperCase('tr-TR') + word.slice(1).toLocaleLowerCase('tr-TR');
+                    }
+                    return word;
+                }).join(' ');
+            });
+
+            // Email küçük harfe çevir
+            $('#Email').on('input', function() {
+                this.value = this.value.toLowerCase().trim();
+            });
+
+            // Şifre güç göstergesi
+            $('#registerPassword').on('input', function() {
+                const password = $(this).val();
+                checkPasswordStrength(password);
+                checkPasswordMatch();
+            });
+
+            $('#confirmPassword').on('input', function() {
+                checkPasswordMatch();
+            });
+
+            function checkPasswordStrength(password) {
+                let strength = 0;
+                const requirements = {
+                    length: password.length >= 8,
+                    uppercase: /[A-Z]/.test(password),
+                    lowercase: /[a-z]/.test(password),
+                    number: /[0-9]/.test(password),
+                    special: /[^a-zA-Z0-9]/.test(password)
+                };
+
+                // Gereksinimleri işaretle
+                $('#req-length').toggleClass('text-success', requirements.length).toggleClass('text-muted', !requirements.length);
+                $('#req-uppercase').toggleClass('text-success', requirements.uppercase).toggleClass('text-muted', !requirements.uppercase);
+                $('#req-lowercase').toggleClass('text-success', requirements.lowercase).toggleClass('text-muted', !requirements.lowercase);
+                $('#req-number').toggleClass('text-success', requirements.number).toggleClass('text-muted', !requirements.number);
+                $('#req-special').toggleClass('text-success', requirements.special).toggleClass('text-muted', !requirements.special);
+
+                // Güç hesapla
+                Object.values(requirements).forEach(met => {
+                    if (met) strength += 20;
+                });
+
+                // Progress bar güncelle
+                const strengthBar = $('#passwordStrength');
+                const strengthText = $('#passwordStrengthText');
+                
+                strengthBar.css('width', strength + '%');
+                strengthBar.removeClass('bg-danger bg-warning bg-info bg-success');
+                
+                if (strength === 0) {
+                    strengthText.text('');
+                } else if (strength <= 40) {
+                    strengthBar.addClass('bg-danger');
+                    strengthText.html('<span class="text-danger">Çok zayıf şifre</span>');
+                } else if (strength <= 60) {
+                    strengthBar.addClass('bg-warning');
+                    strengthText.html('<span class="text-warning">Zayıf şifre</span>');
+                } else if (strength <= 80) {
+                    strengthBar.addClass('bg-info');
+                    strengthText.html('<span class="text-info">Orta güçte şifre</span>');
+                } else {
+                    strengthBar.addClass('bg-success');
+                    strengthText.html('<span class="text-success">✓ Güçlü şifre</span>');
+                }
+            }
+
+            function checkPasswordMatch() {
+                const password = $('#registerPassword').val();
+                const confirmPassword = $('#confirmPassword').val();
+                const matchText = $('#passwordMatchText');
+                
+                if (confirmPassword.length > 0) {
+                    if (password === confirmPassword) {
+                        $('#confirmPassword').removeClass('is-invalid').addClass('is-valid');
+                        matchText.html('<span class="text-success">✓ Şifreler eşleşiyor</span>');
+                    } else {
+                        $('#confirmPassword').removeClass('is-valid').addClass('is-invalid');
+                        matchText.html('<span class="text-danger">✗ Şifreler eşleşmiyor</span>');
+                    }
+                }
+            }
+
+            // Form submit'te loading göster
+            $('#registerForm').submit(function(e) {
+                const form = $(this);
+                
+                // Client-side validasyon kontrolü
+                if (!form[0].checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    form.addClass('was-validated');
+                    return false;
+                }
+
+                const submitBtn = $('#submitBtn');
+                submitBtn.prop('disabled', true);
+                submitBtn.html('<span class="spinner-border spinner-border-sm me-2"></span>Kayıt yapılıyor...');
+            });
+
+            // Bootstrap validasyon stillerini ekle
+            $('#registerForm input').on('blur', function() {
+                if ($(this).val().length > 0) {
+                    if (this.checkValidity()) {
+                        $(this).removeClass('is-invalid').addClass('is-valid');
+                    } else {
+                        $(this).removeClass('is-valid').addClass('is-invalid');
+                    }
+                }
+            });
+        });
+    </script>
+    
+    <style>
+        .is-valid {
+            border-color: #198754 !important;
+        }
+        .is-invalid {
+            border-color: #dc3545 !important;
+        }
+        .text-success {
+            color: #198754 !important;
+            font-weight: 500;
+        }
+        .text-danger {
+            color: #dc3545 !important;
+            font-weight: 500;
+        }
+        .form-text {
+            margin-top: 0.25rem;
+        }
+        #passwordStrength {
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+    </style>
 }

@@ -14,6 +14,12 @@ public class MvcMappingProfile : Profile {
             .ForMember(dest => dest.CurrentGymLocationName,
                 opt => opt.MapFrom(src => src.CurrentGymLocation != null ? src.CurrentGymLocation.Name : null));
 
+        // ApiMemberDto -> EditMemberViewModel
+        CreateMap<ApiMemberDto, EditMemberViewModel>();
+
+        // EditMemberViewModel -> ApiMemberDto (PUT için)
+        CreateMap<EditMemberViewModel, ApiMemberDto>();
+
         // CreateMemberViewModel -> ApiMemberDto (POST için)
         CreateMap<CreateMemberViewModel, ApiMemberDto>();
 

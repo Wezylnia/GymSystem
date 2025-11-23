@@ -13,6 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\GymSystem.Infastructure\GymSystem.Infastructure.csproj" />
     <ProjectReference Include="..\GymSystem.Domain\GymSystem.Domain.csproj" />
+    <ProjectReference Include="..\GymSystem.Abstractions\GymSystem.Application.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

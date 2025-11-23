@@ -1,0 +1,723 @@
+﻿═══════════════════════════════════════════════════════════════════════════════
+   GYMSYSTEM - MANUEL TEST SENARYOLARI
+   EKRAN: ACCOUNT CONTROLLER (Authentication & Authorization)
+   Tarih: 2024
+═══════════════════════════════════════════════════════════════════════════════
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 EKRAN GENEL BİLGİLER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Controller: AccountController
+Ekranlar: 
+  - Login (Giriş)
+  - Register (Kayıt)
+  - Logout (Çıkış)
+  - AccessDenied (Erişim Reddedildi)
+
+URL'ler:
+  - GET  /Account/Login
+  - POST /Account/Login
+  - GET  /Account/Register
+  - POST /Account/Register
+  - POST /Account/Logout
+  - GET  /Account/AccessDenied
+
+Roller: AllowAnonymous (Login/Register), Authenticated (Logout)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔐 1. LOGIN (GİRİŞ) EKRANI
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-001: Giriş Sayfası Görüntüleme
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Kullanıcı giriş yapmamış durumda
+
+Test Adımları:
+  1. Tarayıcıda http://localhost:5000/Account/Login adresine git
+  2. Sayfanın yüklendiğini doğrula
+
+Beklenen Sonuç:
+  ✓ Login sayfası başarıyla yüklenir
+  ✓ Email input alanı görünür
+  ✓ Password input alanı görünür
+  ✓ "Beni Hatırla" checkbox'ı görünür
+  ✓ "Giriş Yap" butonu aktif
+  ✓ "Kayıt Ol" linki görünür
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-002: Başarılı Admin Girişi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Admin hesabı database'de mevcut (admin@gym.com / Test123!)
+  - Kullanıcı giriş yapmamış durumda
+
+Test Adımları:
+  1. /Account/Login sayfasına git
+  2. Email: admin@gym.com
+  3. Password: Test123!
+  4. "Giriş Yap" butonuna tıkla
+
+Beklenen Sonuç:
+  ✓ Başarılı giriş mesajı gösterilir
+  ✓ Kullanıcı Home/Index sayfasına yönlendirilir
+  ✓ Navigation bar'da kullanıcı adı görünür
+  ✓ Admin menüleri (Dashboard, Üyeler, vb.) görünür
+  ✓ "Çıkış Yap" butonu görünür
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-003: Başarılı GymOwner Girişi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - GymOwner hesabı database'de mevcut
+  - GymLocationId claim'i ayarlanmış
+  - Kullanıcı giriş yapmamış durumda
+
+Test Adımları:
+  1. /Account/Login sayfasına git
+  2. Email: gymowner@gym.com
+  3. Password: Test123!
+  4. "Giriş Yap" butonuna tıkla
+
+Beklenen Sonuç:
+  ✓ Başarılı giriş mesajı gösterilir
+  ✓ Kullanıcı GymLocations/Index sayfasına yönlendirilir
+  ✓ Navigation bar'da kullanıcı adı görünür
+  ✓ GymOwner menüleri görünür
+  ✓ Dashboard linki görünür
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-004: Başarılı Member Girişi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Member hesabı database'de mevcut
+  - MemberId claim'i ayarlanmış
+  - Kullanıcı giriş yapmamış durumda
+
+Test Adımları:
+  1. /Account/Login sayfasına git
+  2. Email: member@gym.com
+  3. Password: Test123!
+  4. "Giriş Yap" butonuna tıkla
+
+Beklenen Sonuç:
+  ✓ Başarılı giriş mesajı gösterilir
+  ✓ Kullanıcı Appointments/Index sayfasına yönlendirilir
+  ✓ Navigation bar'da kullanıcı adı görünür
+  ✓ Member menüleri görünür (Randevular, Üyelik Taleplerim, AI Planlarım)
+  ✓ "Yeni AI Plan" butonu görünür
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-005: Hatalı Email ile Giriş Denemesi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Kullanıcı giriş yapmamış durumda
+
+Test Adımları:
+  1. /Account/Login sayfasına git
+  2. Email: wrongemail@gym.com (database'de olmayan)
+  3. Password: Test123!
+  4. "Giriş Yap" butonuna tıkla
+
+Beklenen Sonuç:
+  ✓ Giriş başarısız olur
+  ✓ "Email veya şifre hatalı." hata mesajı gösterilir
+  ✓ Kullanıcı login sayfasında kalır
+  ✓ Form alanları temizlenmez
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-006: Hatalı Şifre ile Giriş Denemesi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Admin hesabı database'de mevcut
+  - Kullanıcı giriş yapmamış durumda
+
+Test Adımları:
+  1. /Account/Login sayfasına git
+  2. Email: admin@gym.com
+  3. Password: WrongPassword123!
+  4. "Giriş Yap" butonuna tıkla
+
+Beklenen Sonuç:
+  ✓ Giriş başarısız olur
+  ✓ "Email veya şifre hatalı." hata mesajı gösterilir
+  ✓ Kullanıcı login sayfasında kalır
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-007: Boş Email ile Giriş Denemesi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Kullanıcı giriş yapmamış durumda
+
+Test Adımları:
+  1. /Account/Login sayfasına git
+  2. Email: (boş bırak)
+  3. Password: Test123!
+  4. "Giriş Yap" butonuna tıkla
+
+Beklenen Sonuç:
+  ✓ Giriş başarısız olur
+  ✓ "Email gereklidir" validation hatası gösterilir
+  ✓ Form submit edilmez
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-008: Boş Şifre ile Giriş Denemesi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Kullanıcı giriş yapmamış durumda
+
+Test Adımları:
+  1. /Account/Login sayfasına git
+  2. Email: admin@gym.com
+  3. Password: (boş bırak)
+  4. "Giriş Yap" butonuna tıkla
+
+Beklenen Sonuç:
+  ✓ Giriş başarısız olur
+  ✓ "Şifre gereklidir" validation hatası gösterilir
+  ✓ Form submit edilmez
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-009: Pasif Kullanıcı ile Giriş Denemesi (IsActive=false)
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Database'de IsActive=false olan bir kullanıcı mevcut
+  - Kullanıcı giriş yapmamış durumda
+
+Test Adımları:
+  1. /Account/Login sayfasına git
+  2. Pasif kullanıcının email'ini gir
+  3. Şifresini gir
+  4. "Giriş Yap" butonuna tıkla
+
+Beklenen Sonuç:
+  ✓ Giriş başarısız olur
+  ✓ "Hesabınız aktif değil. Lütfen yönetici ile iletişime geçin." mesajı gösterilir
+  ✓ Kullanıcı login sayfasında kalır
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-010: "Beni Hatırla" Checkbox Testi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Admin hesabı mevcut
+  - Kullanıcı giriş yapmamış durumda
+
+Test Adımları:
+  1. /Account/Login sayfasına git
+  2. Email: admin@gym.com
+  3. Password: Test123!
+  4. "Beni Hatırla" checkbox'ını işaretle
+  5. "Giriş Yap" butonuna tıkla
+  6. Başarılı giriş sonrası çıkış yap
+  7. Tarayıcıyı tamamen kapat
+  8. Tarayıcıyı tekrar aç ve http://localhost:5000 adresine git
+
+Beklenen Sonuç:
+  ✓ İlk giriş başarılı olur
+  ✓ Tarayıcı kapatılıp açıldığında kullanıcı otomatik giriş yapmış olmalı
+  ✓ Cookie süresi 24 saat olmalı
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-011: ReturnUrl Parametresi ile Giriş
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Kullanıcı giriş yapmamış durumda
+
+Test Adımları:
+  1. Tarayıcıda http://localhost:5000/Dashboard/Index adresine git
+  2. Otomatik olarak Login sayfasına yönlendirilecek
+  3. Email: admin@gym.com
+  4. Password: Test123!
+  5. "Giriş Yap" butonuna tıkla
+
+Beklenen Sonuç:
+  ✓ Giriş başarılı olur
+  ✓ Kullanıcı /Dashboard/Index sayfasına yönlendirilir (returnUrl)
+  ✓ Dashboard sayfası başarıyla yüklenir
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 2. REGISTER (KAYIT) EKRANI
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-012: Kayıt Sayfası Görüntüleme
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Kullanıcı giriş yapmamış durumda
+
+Test Adımları:
+  1. Tarayıcıda http://localhost:5000/Account/Register adresine git
+  2. Sayfanın yüklendiğini doğrula
+
+Beklenen Sonuç:
+  ✓ Register sayfası başarıyla yüklenir
+  ✓ FirstName input alanı görünür
+  ✓ LastName input alanı görünür
+  ✓ Email input alanı görünür
+  ✓ PhoneNumber input alanı görünür
+  ✓ Password input alanı görünür
+  ✓ ConfirmPassword input alanı görünür
+  ✓ "Kayıt Ol" butonu aktif
+  ✓ "Giriş Yap" linki görünür
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-013: Başarılı Kayıt İşlemi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Kullanıcı giriş yapmamış durumda
+  - Email database'de mevcut değil
+
+Test Adımları:
+  1. /Account/Register sayfasına git
+  2. FirstName: Ahmet
+  3. LastName: Yılmaz
+  4. Email: ahmet.yilmaz@test.com
+  5. PhoneNumber: 05551234567
+  6. Password: Test123!
+  7. ConfirmPassword: Test123!
+  8. "Kayıt Ol" butonuna tıkla
+
+Beklenen Sonuç:
+  ✓ Kayıt başarılı olur
+  ✓ "Kayıt başarılı! Hoş geldiniz." mesajı gösterilir
+  ✓ Kullanıcı otomatik giriş yapar (auto-login)
+  ✓ Home/Index sayfasına yönlendirilir
+  ✓ Navigation bar'da "Ahmet Yılmaz" görünür
+  ✓ Member menüleri görünür
+  ✓ Database'de user kaydı oluşturulur
+  ✓ Kullanıcıya "Member" rolü atanır
+  ✓ IsActive=true olarak ayarlanır
+  ✓ EmailConfirmed=false olarak ayarlanır
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-014: Mevcut Email ile Kayıt Denemesi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Database'de admin@gym.com email'i mevcut
+
+Test Adımları:
+  1. /Account/Register sayfasına git
+  2. FirstName: Test
+  3. LastName: User
+  4. Email: admin@gym.com (mevcut email)
+  5. PhoneNumber: 05551234567
+  6. Password: Test123!
+  7. ConfirmPassword: Test123!
+  8. "Kayıt Ol" butonuna tıkla
+
+Beklenen Sonuç:
+  ✓ Kayıt başarısız olur
+  ✓ "Bu email zaten kullanımda" veya benzeri hata mesajı gösterilir
+  ✓ Kullanıcı register sayfasında kalır
+  ✓ Form alanları korunur (şifreler hariç)
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-015: Şifre Uyumsuzluğu ile Kayıt Denemesi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Kullanıcı giriş yapmamış durumda
+
+Test Adımları:
+  1. /Account/Register sayfasına git
+  2. FirstName: Test
+  3. LastName: User
+  4. Email: test@test.com
+  5. PhoneNumber: 05551234567
+  6. Password: Test123!
+  7. ConfirmPassword: Test456! (farklı şifre)
+  8. "Kayıt Ol" butonuna tıkla
+
+Beklenen Sonuç:
+  ✓ Kayıt başarısız olur
+  ✓ "Şifreler eşleşmiyor" validation hatası gösterilir
+  ✓ Kullanıcı register sayfasında kalır
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-016: Zayıf Şifre ile Kayıt Denemesi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Kullanıcı giriş yapmamış durumda
+
+Test Adımları:
+  1. /Account/Register sayfasına git
+  2. FirstName: Test
+  3. LastName: User
+  4. Email: test@test.com
+  5. PhoneNumber: 05551234567
+  6. Password: 123 (zayıf şifre)
+  7. ConfirmPassword: 123
+  8. "Kayıt Ol" butonuna tıkla
+
+Beklenen Sonuç:
+  ✓ Kayıt başarısız olur
+  ✓ "Şifre en az 6 karakter olmalı, büyük harf, küçük harf ve rakam içermelidir" 
+     veya benzeri hata mesajı gösterilir
+  ✓ Kullanıcı register sayfasında kalır
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-017: Geçersiz Email Formatı ile Kayıt Denemesi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Kullanıcı giriş yapmamış durumda
+
+Test Adımları:
+  1. /Account/Register sayfasına git
+  2. FirstName: Test
+  3. LastName: User
+  4. Email: notavalidemail (@ işareti yok)
+  5. PhoneNumber: 05551234567
+  6. Password: Test123!
+  7. ConfirmPassword: Test123!
+  8. "Kayıt Ol" butonuna tıkla
+
+Beklenen Sonuç:
+  ✓ Kayıt başarısız olur
+  ✓ "Geçerli bir email adresi giriniz" validation hatası gösterilir
+  ✓ Form submit edilmez
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-018: Zorunlu Alanları Boş Bırakarak Kayıt Denemesi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Kullanıcı giriş yapmamış durumda
+
+Test Adımları:
+  1. /Account/Register sayfasına git
+  2. Tüm alanları boş bırak
+  3. "Kayıt Ol" butonuna tıkla
+
+Beklenen Sonuç:
+  ✓ Kayıt başarısız olur
+  ✓ Tüm zorunlu alanlar için validation hataları gösterilir:
+    - "Ad gereklidir"
+    - "Soyad gereklidir"
+    - "Email gereklidir"
+    - "Şifre gereklidir"
+  ✓ Form submit edilmez
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚪 3. LOGOUT (ÇIKIŞ) İŞLEMİ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-019: Başarılı Çıkış İşlemi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Kullanıcı giriş yapmış durumda
+
+Test Adımları:
+  1. Navigation bar'daki kullanıcı dropdown'ına tıkla
+  2. "Çıkış Yap" butonuna tıkla
+
+Beklenen Sonuç:
+  ✓ Çıkış işlemi başarılı olur
+  ✓ Kullanıcı Home/Index sayfasına yönlendirilir
+  ✓ Navigation bar'da "Giriş Yap" ve "Kayıt Ol" linkleri görünür
+  ✓ Kullanıcı adı ve dropdown kaybolur
+  ✓ Cookie silinir
+  ✓ Korumalı sayfalara erişim engellenir
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-020: Çıkış Sonrası Korumalı Sayfaya Erişim Denemesi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Kullanıcı giriş yapmış ve çıkış yapmış durumda
+
+Test Adımları:
+  1. Çıkış işlemini tamamla
+  2. Tarayıcı adres çubuğuna http://localhost:5000/Dashboard/Index yaz
+  3. Enter'a bas
+
+Beklenen Sonuç:
+  ✓ Kullanıcı /Account/Login sayfasına yönlendirilir
+  ✓ ReturnUrl parametresi ile Dashboard URL'i taşınır
+  ✓ Giriş yapıldıktan sonra Dashboard'a yönlendirilir
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚫 4. ACCESS DENIED (ERİŞİM REDDEDİLDİ)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-021: Yetkisiz Sayfa Erişimi - Member → Admin Sayfası
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Member rolünde bir kullanıcı giriş yapmış
+
+Test Adımları:
+  1. Member olarak giriş yap
+  2. Tarayıcı adres çubuğuna http://localhost:5000/Dashboard/Index yaz
+  3. Enter'a bas
+
+Beklenen Sonuç:
+  ✓ Erişim engellenir
+  ✓ Kullanıcı /Account/AccessDenied sayfasına yönlendirilir
+  ✓ "Bu sayfaya erişim yetkiniz bulunmamaktadır" mesajı gösterilir
+  ✓ Ana sayfaya dön linki görünür
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-022: Yetkisiz Sayfa Erişimi - Member → Members Listesi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Member rolünde bir kullanıcı giriş yapmış
+
+Test Adımları:
+  1. Member olarak giriş yap
+  2. Tarayıcı adres çubuğuna http://localhost:5000/Members/Index yaz
+  3. Enter'a bas
+
+Beklenen Sonuç:
+  ✓ Erişim engellenir
+  ✓ Kullanıcı /Account/AccessDenied sayfasına yönlendirilir
+  ✓ "AdminOrGymOwner" policy ihlali
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-023: Yetkisiz Sayfa Erişimi - GymOwner → Admin Only Sayfa
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - GymOwner rolünde bir kullanıcı giriş yapmış
+
+Test Adımları:
+  1. GymOwner olarak giriş yap
+  2. Admin-only bir endpoint'e erişmeyi dene (örn: GymLocation Create)
+
+Beklenen Sonuç:
+  ✓ Eğer endpoint AdminOnly policy gerektiriyorsa erişim engellenir
+  ✓ AccessDenied sayfasına yönlendirilir
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔐 5. CLAIMS TRANSFORMATION TESTLERİ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-024: GymLocationId Claim Kontrolü (GymOwner)
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - GymOwner kullanıcısı database'de mevcut
+  - GymLocationId field'ı dolu
+
+Test Adımları:
+  1. GymOwner olarak giriş yap
+  2. Browser Developer Tools > Application > Cookies kontrol et
+  3. Herhangi bir controller action'da User.FindFirst("GymLocationId") çağrısı yap
+
+Beklenen Sonuç:
+  ✓ Giriş başarılı olur
+  ✓ GymLocationId claim'i otomatik eklenir
+  ✓ Controller'da claim değeri okunabilir
+  ✓ Salon filtreleme işlemleri çalışır
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-025: MemberId Claim Kontrolü (Member)
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Member kullanıcısı database'de mevcut
+  - MemberId field'ı dolu
+
+Test Adımları:
+  1. Member olarak giriş yap
+  2. Appointments/Index sayfasına git
+  3. Sadece kendi randevularının göründüğünü doğrula
+
+Beklenen Sonuç:
+  ✓ Giriş başarılı olur
+  ✓ MemberId claim'i otomatik eklenir
+  ✓ Sadece kendi randevuları listelenir
+  ✓ Randevu oluşturma formunda MemberId otomatik set edilir
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🍪 6. COOKIE SHARING TESTLERİ (MVC ↔ API)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-026: MVC Giriş Sonrası API Erişimi
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - API projesi çalışır durumda (port 5001)
+  - MVC projesi çalışır durumda (port 5000)
+
+Test Adımları:
+  1. MVC'de giriş yap (http://localhost:5000/Account/Login)
+  2. Browser'da yeni tab aç
+  3. http://localhost:5001/api/appointments adresine git
+
+Beklenen Sonuç:
+  ✓ MVC'de giriş başarılı
+  ✓ Cookie "GymSystem.Auth" adıyla oluşturulur
+  ✓ API endpoint'ine erişim başarılı (401 döndürmez)
+  ✓ Data başarıyla alınır
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TEST-ACC-027: Cookie Forwarding - MVC → API Çağrısı
+═══════════════════════════════════════════════════════════════════════════════
+Önkoşullar:
+  - Kullanıcı MVC'de giriş yapmış
+
+Test Adımları:
+  1. MVC'de giriş yap
+  2. Appointments/Index sayfasına git (bu sayfa API'den veri çeker)
+  3. Browser Developer Tools > Network tab'ı aç
+  4. API çağrılarını incele
+
+Beklenen Sonuç:
+  ✓ MVC → API çağrılarında Cookie header gönderilir
+  ✓ API 200 OK döndürür
+  ✓ Data başarıyla MVC'de gösterilir
+  ✓ CookieForwardingHandler çalışır
+
+Test Durumu: [ ] PASS  [ ] FAIL
+Notlar: _______________________________________________________________
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 TEST ÖZETİ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Toplam Test Sayısı: 27
+
+Kategori Dağılımı:
+  - Login Testleri: 11
+  - Register Testleri: 7
+  - Logout Testleri: 2
+  - Access Denied Testleri: 3
+  - Claims Testleri: 2
+  - Cookie Testleri: 2
+
+Test Sonuçları:
+  PASS: ____ / 27
+  FAIL: ____ / 27
+  
+Genel Başarı Oranı: ____%
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 NOTLAR VE GÖZLEMLER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Tarih: _______________
+Test Eden: _______________
+
+Genel Notlar:
+_________________________________________________________________________
+_________________________________________________________________________
+_________________________________________________________________________
+
+Bulunan Kritik Hatalar:
+_________________________________________________________________________
+_________________________________________________________________________
+_________________________________________________________________________
+
+İyileştirme Önerileri:
+_________________________________________________________________________
+_________________________________________________________________________
+_________________________________________________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+   TEST DOKÜMANI SONU
+═══════════════════════════════════════════════════════════════════════════════
