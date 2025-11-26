@@ -109,12 +109,13 @@ public class AccountController : Controller {
                 _logger.LogInformation("Member rolü eklendi. User: {Email}", model.Email);
 
                 // 2. Member kaydı oluştur (API üzerinden - AllowAnonymous endpoint kullanarak)
+                // NOT: MembershipStartDate ve MembershipEndDate sadece üyelik onaylandığında atanır!
                 var memberData = new {
                     FirstName = model.FirstName,
                     LastName = model.LastName,
                     Email = model.Email,
                     PhoneNumber = model.PhoneNumber,
-                    MembershipStartDate = DateTimeHelper.Now,
+                    Gender = (int)model.Gender, // Enum to int
                     IsActive = true
                 };
 

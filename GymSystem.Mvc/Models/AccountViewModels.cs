@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
+using GymSystem.Domain.Enums;
 
 namespace GymSystem.Mvc.Models;
 
@@ -48,6 +49,10 @@ public class RegisterViewModel : IValidatableObject
     [StringLength(11, MinimumLength = 11, ErrorMessage = "Telefon numarası tam 11 haneli olmalıdır")]
     [Display(Name = "Telefon")]
     public string PhoneNumber { get; set; } = string.Empty;
+    
+    [Required(ErrorMessage = "Cinsiyet seçimi zorunludur")]
+    [Display(Name = "Cinsiyet")]
+    public Gender Gender { get; set; } = Gender.Male;
     
     [Required(ErrorMessage = "Şifre zorunludur")]
     [StringLength(100, MinimumLength = 8, ErrorMessage = "Şifre en az 8 karakter olmalıdır")]

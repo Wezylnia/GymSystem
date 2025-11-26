@@ -1,4 +1,6 @@
-﻿namespace GymSystem.Application.Abstractions.Contract.AI;
+﻿using GymSystem.Domain.Enums;
+
+namespace GymSystem.Application.Abstractions.Contract.AI;
 
 /// <summary>
 /// AI Workout Plan için tek DTO
@@ -15,6 +17,7 @@ public class AIWorkoutPlanDto
     public string PlanType { get; set; } = string.Empty; // "Workout" veya "Diet"
     public decimal Height { get; set; }
     public decimal Weight { get; set; }
+    public Gender Gender { get; set; } // Cinsiyet bilgisi
     public string? BodyType { get; set; }
     public string Goal { get; set; } = string.Empty;
     

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using GymSystem.Domain.Enums;
 
 namespace GymSystem.Mvc.Models;
 
@@ -9,7 +10,9 @@ public class MemberViewModel
     public string LastName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? PhoneNumber { get; set; }
-    public DateTime MembershipStartDate { get; set; }
+    public Gender Gender { get; set; }
+    public string GenderDisplay => Gender == Gender.Female ? "Kadın" : "Erkek";
+    public DateTime? MembershipStartDate { get; set; } // Nullable
     public DateTime? MembershipEndDate { get; set; }
     public int? CurrentGymLocationId { get; set; }
     public string? CurrentGymLocationName { get; set; }
@@ -50,10 +53,13 @@ public class CreateMemberViewModel
     [Display(Name = "Telefon")]
     public string? PhoneNumber { get; set; }
     
-    [Required(ErrorMessage = "Üyelik başlangıç tarihi zorunludur")]
+    [Required(ErrorMessage = "Cinsiyet seçimi zorunludur")]
+    [Display(Name = "Cinsiyet")]
+    public Gender Gender { get; set; } = Gender.Male;
+    
     [DataType(DataType.Date)]
     [Display(Name = "Üyelik Başlangıç Tarihi")]
-    public DateTime MembershipStartDate { get; set; } = DateTime.Now;
+    public DateTime? MembershipStartDate { get; set; } // Optional - varsayılan null
     
     [DataType(DataType.Date)]
     [Display(Name = "Üyelik Bitiş Tarihi")]
@@ -89,9 +95,13 @@ public class EditMemberViewModel : IValidatableObject
     [Display(Name = "Telefon")]
     public string? PhoneNumber { get; set; }
     
+    [Required(ErrorMessage = "Cinsiyet seçimi zorunludur")]
+    [Display(Name = "Cinsiyet")]
+    public Gender Gender { get; set; }
+    
     [DataType(DataType.Date)]
     [Display(Name = "Üyelik Başlangıç Tarihi")]
-    public DateTime MembershipStartDate { get; set; }
+    public DateTime? MembershipStartDate { get; set; } // Nullable - sadece onaylı üyelikler için
     
     [DataType(DataType.Date)]
     [Display(Name = "Üyelik Bitiş Tarihi")]

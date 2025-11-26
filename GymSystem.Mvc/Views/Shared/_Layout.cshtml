@@ -141,20 +141,60 @@
         <main role="main" class="pb-3">
             @if (TempData["SuccessMessage"] != null)
             {
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    @TempData["SuccessMessage"]
+                <div class="alert alert-success alert-dismissible fade show" role="alert" id="successAlert">
+                    <i class="bi bi-check-circle-fill"></i> @TempData["SuccessMessage"]
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             }
             @if (TempData["ErrorMessage"] != null)
             {
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    @TempData["ErrorMessage"]
+                <div class="alert alert-danger alert-dismissible fade show" role="alert" id="errorAlert">
+                    <i class="bi bi-exclamation-triangle-fill"></i> @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["WarningMessage"] != null)
+            {
+                <div class="alert alert-warning alert-dismissible fade show" role="alert" id="warningAlert">
+                    <i class="bi bi-exclamation-circle-fill"></i> @TempData["WarningMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["InfoMessage"] != null)
+            {
+                <div class="alert alert-info alert-dismissible fade show" role="alert" id="infoAlert">
+                    <i class="bi bi-info-circle-fill"></i> @TempData["InfoMessage"]
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             }
             @RenderBody()
         </main>
+    </div>
+    
+    <!-- Global Confirmation Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" id="confirmModalHeader">
+                    <h5 class="modal-title" id="confirmModalLabel">
+                        <i class="bi bi-exclamation-triangle" id="confirmModalIcon"></i>
+                        <span id="confirmModalTitle">Onay</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="confirmModalBody">
+                    <!-- Dynamic content -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="confirmModalCancelBtn">
+                        <i class="bi bi-x"></i> İptal
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmModalConfirmBtn">
+                        <i class="bi bi-check"></i> Onayla
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <footer class="border-top footer text-muted">
@@ -165,6 +205,85 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <script>
+        // Global Confirmation Modal Function
+        let confirmModalCallback = null;
+        
+        function showConfirmModal(options) {
+            const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            const defaults = {
+                title: 'Onay',
+                message: 'Bu işlemi yapmak istediğinizden emin misiniz?',
+                icon: 'bi-exclamation-triangle',
+                iconColor: 'text-warning',
+                headerClass: 'bg-warning text-dark',
+                confirmText: 'Onayla',
+                confirmClass: 'btn-danger',
+                cancelText: 'İptal',
+                onConfirm: null,
+                onCancel: null
+            };
+            
+            const settings = { ...defaults, ...options };
+            
+            // Set modal content
+            document.getElementById('confirmModalTitle').textContent = settings.title;
+            document.getElementById('confirmModalBody').innerHTML = settings.message;
+            document.getElementById('confirmModalIcon').className = `bi ${settings.icon}`;
+            document.getElementById('confirmModalHeader').className = `modal-header ${settings.headerClass}`;
+            document.getElementById('confirmModalConfirmBtn').innerHTML = `<i class="bi bi-check"></i> ${settings.confirmText}`;
+            document.getElementById('confirmModalConfirmBtn').className = `btn ${settings.confirmClass}`;
+            document.getElementById('confirmModalCancelBtn').innerHTML = `<i class="bi bi-x"></i> ${settings.cancelText}`;
+            
+            // Set callback
+            confirmModalCallback = settings.onConfirm;
+            
+            // Show modal
+            modal.show();
+        }
+        
+        // Handle confirm button click
+        document.getElementById('confirmModalConfirmBtn').addEventListener('click', function() {
+            if (confirmModalCallback) {
+                confirmModalCallback();
+                confirmModalCallback = null; // Reset callback
+            }
+            const modalEl = document.getElementById('confirmModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) {
+                modal.hide();
+            }
+        });
+        
+        // Auto-dismiss alerts after specified seconds
+        $(document).ready(function() {
+            setTimeout(function() {
+                $('#successAlert').fadeOut('slow', function() {
+                    $(this).alert('close');
+                });
+            }, 5000);
+            
+            setTimeout(function() {
+                $('#errorAlert').fadeOut('slow', function() {
+                    $(this).alert('close');
+                });
+            }, 7000);
+            
+            setTimeout(function() {
+                $('#warningAlert').fadeOut('slow', function() {
+                    $(this).alert('close');
+                });
+            }, 6000);
+            
+            setTimeout(function() {
+                $('#infoAlert').fadeOut('slow', function() {
+                    $(this).alert('close');
+                });
+            }, 5000);
+        });
+    </script>
+    
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

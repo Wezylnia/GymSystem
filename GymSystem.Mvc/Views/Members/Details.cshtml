@@ -46,6 +46,22 @@
                             </div>
                             
                             <div class="mb-2">
+                                <strong>Cinsiyet:</strong> 
+                                @if (Model.Gender == GymSystem.Domain.Enums.Gender.Female)
+                                {
+                                    <span class="badge bg-pink text-dark">
+                                        <i class="bi bi-gender-female"></i> Kadýn
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-primary">
+                                        <i class="bi bi-gender-male"></i> Erkek
+                                    </span>
+                                }
+                            </div>
+                            
+                            <div class="mb-2">
                                 <strong>Durum:</strong> 
                                 @if (Model.IsActive)
                                 {
@@ -104,13 +120,13 @@
                             
                             <div class="mb-2">
                                 <strong>Baþlangýç Tarihi:</strong> 
-                                @if (Model.MembershipStartDate != DateTime.MinValue)
+                                @if (Model.MembershipStartDate.HasValue)
                                 {
-                                    @Model.MembershipStartDate.ToString("dd.MM.yyyy")
+                                    @Model.MembershipStartDate.Value.ToString("dd.MM.yyyy")
                                 }
                                 else
                                 {
-                                    <span class="text-muted">-</span>
+                                    <span class="text-muted">Henüz üyelik yok</span>
                                 }
                             </div>
                             
@@ -192,8 +208,6 @@
         </div>
     </div>
 </div>
-
-<!-- Delete Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -234,11 +248,52 @@
 @section Scripts {
     <script>
         function confirmDelete(memberId, memberName) {
-            document.getElementById('deleteMemberName').textContent = memberName;
-            document.getElementById('deleteForm').action = '/Members/Delete/' + memberId;
-            
-            var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-            deleteModal.show();
+            showConfirmModal({
+                title: 'Üye Silme Onayý',
+                message: `
+                    <p><strong>${memberName}</strong> isimli üyeyi silmek istediðinizden emin misiniz?</p>
+                    <div class="alert alert-danger mt-3">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>UYARI:</strong> Bu iþlem geri alýnamaz!
+                        <ul class="mt-2 mb-0">
+                            <li>Üyenin tüm üyelik talepleri silinecek</li>
+                            <li>Üyenin tüm randevularý silinecek</li>
+                            <li>Üyenin tüm AI planlarý silinecek</li>
+                            <li>Ýliþkili tüm kayýtlar kalýcý olarak silinecek</li>
+                        </ul>
+                    </div>
+                `,
+                icon: 'bi-trash',
+                iconColor: 'text-danger',
+                headerClass: 'bg-danger text-white',
+                confirmText: 'Evet, Sil',
+                confirmClass: 'btn-danger',
+                cancelText: 'Ýptal',
+                onConfirm: function() {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/Members/Delete/' + memberId;
+                    
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                    const tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = '__RequestVerificationToken';
+                    tokenInput.value = token;
+                    
+                    form.appendChild(tokenInput);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
         }
     </script>
+    
+    <!-- Hidden token for delete form -->
+    @Html.AntiForgeryToken()
+    
+    <style>
+        .bg-pink {
+            background-color: #ff69b4 !important;
+        }
+    </style>
 }

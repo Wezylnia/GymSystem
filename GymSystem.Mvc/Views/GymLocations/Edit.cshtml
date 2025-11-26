@@ -21,40 +21,78 @@
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
                         <div class="mb-3">
-                            <label asp-for="Name" class="form-label">Salon Adı *</label>
-                            <input asp-for="Name" class="form-control" />
+                            <label asp-for="Name" class="form-label">
+                                <i class="bi bi-building"></i> Salon Adı *
+                            </label>
+                            <input asp-for="Name" class="form-control" 
+                                   autocomplete="organization" maxlength="200" />
+                            <div class="form-text">En az 3, en fazla 200 karakter</div>
                             <span asp-validation-for="Name" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="City" class="form-label">Şehir *</label>
-                            <input asp-for="City" class="form-control" />
+                            <label asp-for="City" class="form-label">
+                                <i class="bi bi-geo-alt"></i> Şehir *
+                            </label>
+                            <input asp-for="City" class="form-control" 
+                                   autocomplete="address-level2" maxlength="100" list="turkishCities" />
+                            <datalist id="turkishCities">
+                                <option value="İstanbul"></option>
+                                <option value="Ankara"></option>
+                                <option value="İzmir"></option>
+                                <option value="Bursa"></option>
+                                <option value="Antalya"></option>
+                                <option value="Adana"></option>
+                                <option value="Gaziantep"></option>
+                                <option value="Konya"></option>
+                                <option value="Kocaeli"></option>
+                                <option value="Sakarya"></option>
+                            </datalist>
+                            <div class="form-text">Sadece harf ve boşluk kullanılabilir</div>
                             <span asp-validation-for="City" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Address" class="form-label">Adres *</label>
-                            <textarea asp-for="Address" class="form-control" rows="3"></textarea>
+                            <label asp-for="Address" class="form-label">
+                                <i class="bi bi-map"></i> Adres *
+                            </label>
+                            <textarea asp-for="Address" class="form-control" rows="3" 
+                                      placeholder="Tam adres giriniz (cadde, sokak, bina no vb.)" 
+                                      autocomplete="street-address" maxlength="500"></textarea>
+                            <div class="form-text">En az 10, en fazla 500 karakter</div>
                             <span asp-validation-for="Address" class="text-danger"></span>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="PhoneNumber" class="form-label">Telefon</label>
-                                <input asp-for="PhoneNumber" type="tel" class="form-control" />
+                                <label asp-for="PhoneNumber" class="form-label">
+                                    <i class="bi bi-telephone"></i> Telefon
+                                </label>
+                                <input asp-for="PhoneNumber" type="tel" class="form-control" 
+                                       placeholder="0555 123 45 67" autocomplete="tel" maxlength="20" />
+                                <div class="form-text">Format: 0555 123 45 67</div>
                                 <span asp-validation-for="PhoneNumber" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="Email" class="form-label">Email</label>
-                                <input asp-for="Email" type="email" class="form-control" />
+                                <label asp-for="Email" class="form-label">
+                                    <i class="bi bi-envelope"></i> E-posta
+                                </label>
+                                <input asp-for="Email" type="email" class="form-control" 
+                                       placeholder="info@salon.com" autocomplete="email" maxlength="200" />
+                                <div class="form-text">İletişim için kullanılacak</div>
                                 <span asp-validation-for="Email" class="text-danger"></span>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Description" class="form-label">Açıklama</label>
-                            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                            <label asp-for="Description" class="form-label">
+                                <i class="bi bi-text-paragraph"></i> Açıklama
+                            </label>
+                            <textarea asp-for="Description" class="form-control" rows="4" 
+                                      placeholder="Salon hakkında kısa açıklama, özellikler, olanaklar..." 
+                                      maxlength="1000"></textarea>
+                            <div class="form-text">Opsiyonel - En fazla 1000 karakter</div>
                             <span asp-validation-for="Description" class="text-danger"></span>
                         </div>
 
@@ -75,4 +113,101 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            // Custom phone validation for Turkish format
+            $.validator.addMethod("turkishphone", function(value, element) {
+                if (!value) return true; // Optional field
+                // Remove all non-digit characters
+                var cleaned = value.replace(/\D/g, '');
+                // Check if it starts with 0 and has 11 digits or starts with country code
+                return /^(0[0-9]{10}|90[0-9]{10}|\+90[0-9]{10})$/.test(cleaned) || /^[0-9]{10}$/.test(cleaned);
+            }, "Geçerli bir Türk telefon numarası giriniz (örn: 05551234567)");
+
+            // Apply Turkish phone validation
+            $("#PhoneNumber").rules("add", {
+                turkishphone: true
+            });
+
+            // Real-time character counter for Description
+            $("#Description").on('input', function() {
+                var maxLength = 1000;
+                var currentLength = $(this).val().length;
+                var remaining = maxLength - currentLength;
+                var counterEl = $("#descriptionCounter");
+                
+                if (counterEl.length === 0) {
+                    $(this).after('<div id="descriptionCounter" class="form-text"></div>');
+                    counterEl = $("#descriptionCounter");
+                }
+                
+                counterEl.text(remaining + ' karakter kaldı');
+                
+                if (remaining < 100) {
+                    counterEl.removeClass('text-muted').addClass('text-warning');
+                } else {
+                    counterEl.removeClass('text-warning').addClass('text-muted');
+                }
+            }).trigger('input'); // Trigger on page load
+
+            // Trim whitespace on blur
+            $('input[type="text"], input[type="email"], input[type="tel"], textarea').on('blur', function() {
+                $(this).val($.trim($(this).val()));
+            });
+
+            // Capitalize first letter of City
+            $("#City").on('blur', function() {
+                var value = $(this).val();
+                if (value) {
+                    $(this).val(value.charAt(0).toUpperCase() + value.slice(1));
+                }
+            });
+
+            // Format phone number on input
+            $("#PhoneNumber").on('input', function() {
+                var value = $(this).val().replace(/\D/g, '');
+                if (value.length > 0) {
+                    if (value.startsWith('0')) {
+                        // Format: 0555 123 45 67
+                        if (value.length > 4) value = value.substring(0, 4) + ' ' + value.substring(4);
+                        if (value.length > 8) value = value.substring(0, 8) + ' ' + value.substring(8);
+                        if (value.length > 11) value = value.substring(0, 11) + ' ' + value.substring(11);
+                        if (value.length > 14) value = value.substring(0, 14);
+                    } else {
+                        if (value.length > 3) value = value.substring(0, 3) + ' ' + value.substring(3);
+                        if (value.length > 7) value = value.substring(0, 7) + ' ' + value.substring(7);
+                        if (value.length > 10) value = value.substring(0, 10) + ' ' + value.substring(10);
+                    }
+                    $(this).val(value);
+                }
+            });
+
+            // Show validation feedback with icons
+            $('form').on('submit', function() {
+                if (!$(this).valid()) {
+                    // Scroll to first error
+                    var firstError = $('.input-validation-error:first');
+                    if (firstError.length) {
+                        $('html, body').animate({
+                            scrollTop: firstError.offset().top - 100
+                        }, 500);
+                        firstError.focus();
+                    }
+                    return false;
+                }
+            });
+
+            // Visual feedback for valid/invalid fields
+            $('input, textarea, select').on('blur', function() {
+                var field = $(this);
+                setTimeout(function() {
+                    if (field.valid()) {
+                        field.removeClass('is-invalid').addClass('is-valid');
+                    } else {
+                        field.removeClass('is-valid').addClass('is-invalid');
+                    }
+                }, 100);
+            });
+        });
+    </script>
 }

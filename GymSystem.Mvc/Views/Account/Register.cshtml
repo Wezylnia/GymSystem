@@ -90,6 +90,26 @@
                         </div>
                         
                         <div class="mb-3">
+                            <label asp-for="Gender" class="form-label">
+                                <i class="bi bi-gender-ambiguous"></i> Cinsiyet *
+                            </label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="Gender" id="genderMale" value="1" 
+                                       checked="checked" asp-for="Gender" required />
+                                <label class="btn btn-outline-primary" for="genderMale">
+                                    <i class="bi bi-gender-male"></i> Erkek
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="Gender" id="genderFemale" value="0" 
+                                       asp-for="Gender" required />
+                                <label class="btn btn-outline-danger" for="genderFemale">
+                                    <i class="bi bi-gender-female"></i> Kadın
+                                </label>
+                            </div>
+                            <span asp-validation-for="Gender" class="text-danger small"></span>
+                        </div>
+                        
+                        <div class="mb-3">
                             <label asp-for="Password" class="form-label">
                                 <i class="bi bi-lock"></i> Şifre *
                             </label>

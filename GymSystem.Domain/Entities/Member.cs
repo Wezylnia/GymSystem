@@ -1,4 +1,6 @@
-﻿namespace GymSystem.Domain.Entities;
+﻿using GymSystem.Domain.Enums;
+
+namespace GymSystem.Domain.Entities;
 
 public class Member : BaseEntity
 {
@@ -6,7 +8,8 @@ public class Member : BaseEntity
     public string LastName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? PhoneNumber { get; set; }
-    public DateTime MembershipStartDate { get; set; }
+    public Gender Gender { get; set; } = Gender.Male; // Cinsiyet bilgisi
+    public DateTime? MembershipStartDate { get; set; } // Nullable - sadece üyelik onayında atanır
     public DateTime? MembershipEndDate { get; set; }
     
     // Aktif üyelik bilgisi

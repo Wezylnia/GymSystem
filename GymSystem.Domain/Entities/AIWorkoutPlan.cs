@@ -1,4 +1,6 @@
-﻿namespace GymSystem.Domain.Entities;
+﻿using GymSystem.Domain.Enums;
+
+namespace GymSystem.Domain.Entities;
 
 /// <summary>
 /// Yapay zeka tarafından oluşturulan egzersiz/diyet planları
@@ -11,6 +13,7 @@ public class AIWorkoutPlan : BaseEntity
     // Input verileri
     public decimal Height { get; set; } // Boy (cm)
     public decimal Weight { get; set; } // Kilo (kg)
+    public Gender Gender { get; set; } // Cinsiyet
     public string? BodyType { get; set; } // Vücut tipi (Ectomorph, Mesomorph, Endomorph)
     public string Goal { get; set; } = string.Empty; // Hedef (kilo verme, kas yapma, vb.)
     

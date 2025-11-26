@@ -15,10 +15,10 @@ public class MembershipRequestProfile : Profile
         // Entity -> DTO
         CreateMap<MembershipRequest, MembershipRequestDto>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-            .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.Member != null ? $"{src.Member.FirstName} {src.Member.LastName}" : null))
-            .ForMember(dest => dest.MemberEmail, opt => opt.MapFrom(src => src.Member != null ? src.Member.Email : null))
-            .ForMember(dest => dest.GymLocationName, opt => opt.MapFrom(src => src.GymLocation != null ? src.GymLocation.Name : null))
-            .ForMember(dest => dest.GymLocationAddress, opt => opt.MapFrom(src => src.GymLocation != null ? src.GymLocation.Address : null));
+            .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.Member != null ? $"{src.Member.FirstName} {src.Member.LastName}" : "N/A"))
+            .ForMember(dest => dest.MemberEmail, opt => opt.MapFrom(src => src.Member != null ? src.Member.Email : "N/A"))
+            .ForMember(dest => dest.GymLocationName, opt => opt.MapFrom(src => src.GymLocation != null ? src.GymLocation.Name : "N/A"))
+            .ForMember(dest => dest.GymLocationAddress, opt => opt.MapFrom(src => src.GymLocation != null ? src.GymLocation.Address : "N/A"));
 
         // DTO -> Entity
         CreateMap<MembershipRequestDto, MembershipRequest>()

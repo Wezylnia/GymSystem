@@ -5,24 +5,17 @@
 }
 
 <div class="container mt-4">
-    <h1 class="mb-4">
-        <i class="bi bi-people"></i> Üye Listesi
-    </h1>
+<h1 class="mb-4">
+    <i class="bi bi-people"></i> Üye Listesi
+</h1>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-
-    @if (ViewBag.ErrorMessage != null)
-    {
-        <div class="alert alert-danger" role="alert">
-            @ViewBag.ErrorMessage
-        </div>
-    }
+@if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i> @ViewBag.ErrorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 
     @if (User.IsInRole("Admin"))
     {
@@ -41,6 +34,7 @@
                     <tr>
                         <th>ID</th>
                         <th>Ad Soyad</th>
+                        <th>Cinsiyet</th>
                         <th>Email</th>
                         <th>Telefon</th>
                         <th>Salon Üyeliği</th>
@@ -62,6 +56,20 @@
                             <td>@member.Id</td>
                             <td>
                                 <strong>@member.FirstName @member.LastName</strong>
+                            </td>
+                            <td>
+                                @if (member.Gender == GymSystem.Domain.Enums.Gender.Female)
+                                {
+                                    <span class="badge bg-pink text-dark">
+                                        <i class="bi bi-gender-female"></i> Kadın
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-primary">
+                                        <i class="bi bi-gender-male"></i> Erkek
+                                    </span>
+                                }
                             </td>
                             <td>
                                 <small>@member.Email</small>
@@ -100,9 +108,9 @@
                                 }
                             </td>
                             <td>
-                                @if (member.MembershipStartDate != DateTime.MinValue)
+                                @if (member.MembershipStartDate.HasValue)
                                 {
-                                    @member.MembershipStartDate.ToString("dd.MM.yyyy")
+                                    @member.MembershipStartDate.Value.ToString("dd.MM.yyyy")
                                 }
                                 else
                                 {
@@ -187,62 +195,57 @@
     }
 </div>
 
-<!-- Delete Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">
-                    <i class="bi bi-exclamation-triangle"></i> Üye Silme Onayı
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p><strong id="deleteMemberName"></strong> isimli üyeyi silmek istediğinize emin misiniz?</p>
-                <div class="alert alert-danger">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    <strong>UYARI:</strong> Bu işlem geri alınamaz!
-                    <ul class="mt-2 mb-0">
-                        <li>Üyenin tüm üyelik talepleri silinecek</li>
-                        <li>Üyenin tüm randevuları silinecek</li>
-                        <li>Üyenin tüm AI planları silinecek</li>
-                        <li>İlişkili tüm kayıtlar kalıcı olarak silinecek</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x"></i> İptal
-                </button>
-                <form id="deleteForm" method="post" style="display: inline;">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-trash"></i> Evet, Sil
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
 @section Scripts {
     <script>
-        // Auto-dismiss success message after 3 seconds
-        setTimeout(function() {
-            var alert = document.querySelector('.alert-success');
-            if (alert) {
-                var bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            }
-        }, 3000);
-
-        // Delete confirmation
+        // Delete confirmation using global modal
         function confirmDelete(memberId, memberName) {
-            document.getElementById('deleteMemberName').textContent = memberName;
-            document.getElementById('deleteForm').action = '/Members/Delete/' + memberId;
-            
-            var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-            deleteModal.show();
+            showConfirmModal({
+                title: 'Üye Silme Onayı',
+                message: `
+                    <p><strong>${memberName}</strong> isimli üyeyi silmek istediğinizden emin misiniz?</p>
+                    <div class="alert alert-danger mt-3">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>UYARI:</strong> Bu işlem geri alınamaz!
+                        <ul class="mt-2 mb-0">
+                            <li>Üyenin tüm üyelik talepleri silinecek</li>
+                            <li>Üyenin tüm randevuları silinecek</li>
+                            <li>Üyenin tüm AI planları silinecek</li>
+                            <li>İlişkili tüm kayıtlar kalıcı olarak silinecek</li>
+                        </ul>
+                    </div>
+                `,
+                icon: 'bi-trash',
+                iconColor: 'text-danger',
+                headerClass: 'bg-danger text-white',
+                confirmText: 'Evet, Sil',
+                confirmClass: 'btn-danger',
+                cancelText: 'İptal',
+                onConfirm: function() {
+                    // Create and submit form
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/Members/Delete/' + memberId;
+                    
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                    const tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = '__RequestVerificationToken';
+                    tokenInput.value = token;
+                    
+                    form.appendChild(tokenInput);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
         }
     </script>
+    
+    <!-- Hidden token for delete form -->
+    @Html.AntiForgeryToken()
+    
+    <style>
+        .bg-pink {
+            background-color: #ff69b4 !important;
+        }
+    </style>
 }

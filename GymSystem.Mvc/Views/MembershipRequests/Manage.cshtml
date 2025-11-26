@@ -5,32 +5,17 @@
 }
 
 <div class="container mt-4">
-    <h2 class="mb-4">
-        <i class="bi bi-clipboard-check"></i> Bekleyen Üyelik Talepleri
-    </h2>
+<h2 class="mb-4">
+    <i class="bi bi-clipboard-check"></i> Bekleyen Üyelik Talepleri
+</h2>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-circle"></i> @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-
-    @if (ViewBag.ErrorMessage != null)
-    {
-        <div class="alert alert-danger" role="alert">
-            <i class="bi bi-exclamation-circle"></i> @ViewBag.ErrorMessage
-        </div>
-    }
+@if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i> @ViewBag.ErrorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
 
     @if (Model != null && Model.Any())
     {
@@ -185,51 +170,76 @@
     <script>
         function submitAction(requestId, action) {
             const adminNotes = document.getElementById('adminNotes' + requestId).value;
+            const isApprove = action === 'Approve';
             
-            const confirmMsg = action === 'Approve' 
-                ? 'Bu talebi onaylamak istediğinize emin misiniz?' 
-                : 'Bu talebi reddetmek istediğinize emin misiniz?';
-            
-            if (!confirm(confirmMsg)) {
-                return;
-            }
-
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/MembershipRequests/' + action;
-            
-            const idInput = document.createElement('input');
-            idInput.type = 'hidden';
-            idInput.name = 'id';
-            idInput.value = requestId;
-            form.appendChild(idInput);
-            
-            if (adminNotes) {
-                const notesInput = document.createElement('input');
-                notesInput.type = 'hidden';
-                notesInput.name = 'adminNotes';
-                notesInput.value = adminNotes;
-                form.appendChild(notesInput);
-            }
-            
-            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-            const tokenInput = document.createElement('input');
-            tokenInput.type = 'hidden';
-            tokenInput.name = '__RequestVerificationToken';
-            tokenInput.value = token;
-            form.appendChild(tokenInput);
-            
-            document.body.appendChild(form);
-            form.submit();
-        }
-
-        // Auto-dismiss alerts
-        setTimeout(function() {
-            var alerts = document.querySelectorAll('.alert-dismissible');
-            alerts.forEach(function(alert) {
-                var bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
+            showConfirmModal({
+                title: isApprove ? 'Talep Onaylama' : 'Talep Reddetme',
+                message: isApprove 
+                    ? `
+                        <div class="text-center">
+                            <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+                            <p class="mt-3 mb-3">Bu üyelik talebini <strong>onaylamak</strong> istediğinizden emin misiniz?</p>
+                            ${adminNotes ? `<div class="alert alert-info text-start"><strong>Not:</strong><br/>${adminNotes}</div>` : ''}
+                            <div class="alert alert-success text-start">
+                                <i class="bi bi-info-circle"></i> Onaylandığında üyenin üyeliği otomatik başlatılacaktır.
+                            </div>
+                        </div>
+                    `
+                    : `
+                        <div class="text-center">
+                            <i class="bi bi-x-circle text-danger" style="font-size: 3rem;"></i>
+                            <p class="mt-3 mb-3">Bu üyelik talebini <strong>reddetmek</strong> istediğinizden emin misiniz?</p>
+                            ${adminNotes ? `<div class="alert alert-info text-start"><strong>Red Nedeni:</strong><br/>${adminNotes}</div>` : ''}
+                            <div class="alert alert-warning text-start">
+                                <i class="bi bi-exclamation-triangle"></i> Bu işlem geri alınamaz!
+                            </div>
+                        </div>
+                    `,
+                icon: isApprove ? 'bi-check-circle' : 'bi-x-circle',
+                headerClass: isApprove ? 'bg-success text-white' : 'bg-danger text-white',
+                confirmText: isApprove ? 'Evet, Onayla' : 'Evet, Reddet',
+                confirmClass: isApprove ? 'btn-success' : 'btn-danger',
+                cancelText: 'İptal',
+                onConfirm: function() {
+                    // Close the detail modal first
+                    const detailModal = bootstrap.Modal.getInstance(document.getElementById('detailModal' + requestId));
+                    if (detailModal) {
+                        detailModal.hide();
+                    }
+                    
+                    // Create and submit form
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/MembershipRequests/' + action;
+                    
+                    const idInput = document.createElement('input');
+                    idInput.type = 'hidden';
+                    idInput.name = 'id';
+                    idInput.value = requestId;
+                    form.appendChild(idInput);
+                    
+                    if (adminNotes) {
+                        const notesInput = document.createElement('input');
+                        notesInput.type = 'hidden';
+                        notesInput.name = 'adminNotes';
+                        notesInput.value = adminNotes;
+                        form.appendChild(notesInput);
+                    }
+                    
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                    const tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = '__RequestVerificationToken';
+                    tokenInput.value = token;
+                    form.appendChild(tokenInput);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
             });
-        }, 5000);
+        }
     </script>
+    
+    <!-- Hidden token for forms -->
+    @Html.AntiForgeryToken()
 }

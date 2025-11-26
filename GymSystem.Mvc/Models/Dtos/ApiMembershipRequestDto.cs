@@ -12,7 +12,7 @@ public class ApiMembershipRequestDto
     public int GymLocationId { get; set; }
     public MembershipDuration Duration { get; set; }
     public decimal Price { get; set; }
-    public MembershipRequestStatus Status { get; set; }
+    public string Status { get; set; } = string.Empty; // API'den string olarak geliyor
     public string? Notes { get; set; }
     public string? AdminNotes { get; set; }
     public int? ApprovedBy { get; set; }
@@ -20,7 +20,14 @@ public class ApiMembershipRequestDto
     public DateTime? RejectedAt { get; set; }
     public DateTime CreatedAt { get; set; }
 
-    // Navigation properties
-    public ApiMemberDto? Member { get; set; }
-    public ApiGymLocationDto? GymLocation { get; set; }
+    // Navigation properties - API'den flat data geliyor
+    public string? MemberName { get; set; }
+    public string? MemberEmail { get; set; }
+    public string? GymLocationName { get; set; }
+    public string? GymLocationAddress { get; set; }
+    
+    // Helper property for enum conversion
+    public MembershipRequestStatus StatusEnum => Enum.TryParse<MembershipRequestStatus>(Status, out var result) 
+        ? result 
+        : MembershipRequestStatus.Pending;
 }

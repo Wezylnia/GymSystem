@@ -32,7 +32,7 @@ public class GeminiApiService : IGeminiApiService
     {
         try
         {
-            var prompt = BuildWorkoutPrompt(request.Height, request.Weight, request.BodyType, request.Goal);
+            var prompt = BuildWorkoutPrompt(request.Height, request.Weight, request.Gender, request.BodyType, request.Goal);
 
             if (!string.IsNullOrEmpty(request.PhotoBase64))
                 return await GenerateWithVisionAsync(prompt, request.PhotoBase64);
@@ -50,7 +50,7 @@ public class GeminiApiService : IGeminiApiService
     {
         try
         {
-            var prompt = BuildDietPrompt(request.Height, request.Weight, request.BodyType, request.Goal);
+            var prompt = BuildDietPrompt(request.Height, request.Weight, request.Gender, request.BodyType, request.Goal);
 
             if (!string.IsNullOrEmpty(request.PhotoBase64))
                 return await GenerateWithVisionAsync(prompt, request.PhotoBase64);
@@ -68,8 +68,10 @@ public class GeminiApiService : IGeminiApiService
     {
         try
         {
+            var genderText = request.Gender == Domain.Enums.Gender.Female ? "Kadın" : "Erkek";
             var prompt = $@"Bu fotoğraftaki kişinin fiziksel durumunu analiz et.
 Kişi Bilgileri:
+- Cinsiyet: {genderText}
 - Boy: {request.Height} cm
 - Kilo: {request.Weight} kg
 - Hedef: {request.Goal}
@@ -184,16 +186,20 @@ Türkçe olarak detaylı bir analiz yap.";
         }
     }
 
-    private string BuildWorkoutPrompt(decimal height, decimal weight, string? bodyType, string goal)
+    private string BuildWorkoutPrompt(decimal height, decimal weight, Domain.Enums.Gender gender, string? bodyType, string goal)
     {
         var bmi = weight / ((height / 100) * (height / 100));
+        var genderText = gender == Domain.Enums.Gender.Female ? "Kadın" : "Erkek";
 
         return $@"Sen bir fitness koçusun. Aşağıdaki bilgilere göre KISA ve ÖZ bir haftalık egzersiz planı oluştur.
 
 Bilgiler:
+- Cinsiyet: {genderText}
 - Boy: {height} cm, Kilo: {weight} kg, BMI: {bmi:F2}
 - Vücut Tipi: {bodyType ?? "Belirtilmemiş"}
 - Hedef: {goal}
+
+ÖNEMLİ: Cinsiyete uygun egzersizler seç. {(gender == Domain.Enums.Gender.Female ? "Kadınlar için özellikle alt vücut, kalça ve bacak egzersizlerine odaklan. Ağırlıkları kadınlar için uygun seç." : "Erkekler için göğüs, omuz ve kol egzersizlerine ağırlık ver. Daha yüksek ağırlıklarla çalışılabilir.")}
 
 SADECE ŞU FORMATTA YAZ (gereksiz açıklama yapma):
 
@@ -236,16 +242,20 @@ Protein: [miktar]g | Karbonhidrat: [miktar]g | Yağ: [miktar]g
 Türkçe yaz. Kısa ve net ol. Gereksiz açıklama yapma!";
     }
 
-    private string BuildDietPrompt(decimal height, decimal weight, string? bodyType, string goal)
+    private string BuildDietPrompt(decimal height, decimal weight, Domain.Enums.Gender gender, string? bodyType, string goal)
     {
         var bmi = weight / ((height / 100) * (height / 100));
+        var genderText = gender == Domain.Enums.Gender.Female ? "Kadın" : "Erkek";
 
         return $@"Sen bir beslenme uzmanısın. Aşağıdaki bilgilere göre KISA ve ÖZ bir haftalık diyet planı oluştur.
 
 Bilgiler:
+- Cinsiyet: {genderText}
 - Boy: {height} cm, Kilo: {weight} kg, BMI: {bmi:F2}
 - Vücut Tipi: {bodyType ?? "Belirtilmemiş"}
 - Hedef: {goal}
+
+ÖNEMLİ: Cinsiyete uygun kalori ve makro besin hesapla. {(gender == Domain.Enums.Gender.Female ? "Kadınlar için genelde 1500-2000 kcal aralığında, demir ve kalsiyum içeren besinlere odaklan." : "Erkekler için genelde 2000-2500 kcal aralığında, protein ağırlıklı beslenme öner.")}
 
 SADECE ŞU FORMATTA YAZ (gereksiz açıklama yapma):
 

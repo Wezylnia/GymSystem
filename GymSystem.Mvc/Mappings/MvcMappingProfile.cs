@@ -12,7 +12,7 @@ public class MvcMappingProfile : Profile {
         // ApiMemberDto -> MemberViewModel
         CreateMap<ApiMemberDto, MemberViewModel>()
             .ForMember(dest => dest.CurrentGymLocationName,
-                opt => opt.MapFrom(src => src.CurrentGymLocation != null ? src.CurrentGymLocation.Name : null));
+                opt => opt.MapFrom(src => src.CurrentGymLocationName)); // Direkt flat field'dan al
 
         // ApiMemberDto -> EditMemberViewModel
         CreateMap<ApiMemberDto, EditMemberViewModel>();
@@ -59,11 +59,13 @@ public class MvcMappingProfile : Profile {
 
         // ApiMembershipRequestDto -> MembershipRequestViewModel
         CreateMap<ApiMembershipRequestDto, MembershipRequestViewModel>()
+            .ForMember(dest => dest.Status,
+                opt => opt.MapFrom(src => src.StatusEnum)) // String'den enum'a dönüştür
             .ForMember(dest => dest.MemberName, 
-                opt => opt.MapFrom(src => src.Member != null ? $"{src.Member.FirstName} {src.Member.LastName}" : string.Empty))
+                opt => opt.MapFrom(src => src.MemberName ?? "Bilinmiyor"))
             .ForMember(dest => dest.GymLocationName, 
-                opt => opt.MapFrom(src => src.GymLocation != null ? src.GymLocation.Name : string.Empty))
+                opt => opt.MapFrom(src => src.GymLocationName ?? "Bilinmiyor"))
             .ForMember(dest => dest.GymLocationAddress, 
-                opt => opt.MapFrom(src => src.GymLocation != null ? src.GymLocation.Address : string.Empty));
+                opt => opt.MapFrom(src => src.GymLocationAddress ?? "Bilinmiyor"));
     }
 }

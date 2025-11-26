@@ -31,10 +31,13 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService
         try
         {
             var memberRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<Member>();
-            var memberExists = await memberRepository.QueryNoTracking().AnyAsync(m => m.Id == request.MemberId);
+            var member = await memberRepository.QueryNoTracking().FirstOrDefaultAsync(m => m.Id == request.MemberId);
 
-            if (!memberExists) 
+            if (member == null) 
                 return _responseHelper.SetError<AIWorkoutPlanDto>(null, $"Member ID {request.MemberId} bulunamadı.", 404, "AI_WORKOUT_001");
+
+            // Member'dan Gender bilgisini al
+            request.Gender = member.Gender;
 
             var geminiService = _baseFactory.GetService<IGeminiApiService>();
             var aiPlanResponse = await geminiService.GenerateWorkoutPlanAsync(request);
@@ -72,10 +75,13 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService
         try
         {
             var memberRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<Member>();
-            var memberExists = await memberRepository.QueryNoTracking().AnyAsync(m => m.Id == request.MemberId);
+            var member = await memberRepository.QueryNoTracking().FirstOrDefaultAsync(m => m.Id == request.MemberId);
 
-            if (!memberExists) 
+            if (member == null) 
                 return _responseHelper.SetError<AIWorkoutPlanDto>(null, $"Member ID {request.MemberId} bulunamadı.", 404, "AI_DIET_001");
+
+            // Member'dan Gender bilgisini al
+            request.Gender = member.Gender;
 
             var geminiService = _baseFactory.GetService<IGeminiApiService>();
             var aiPlanResponse = await geminiService.GenerateDietPlanAsync(request);
