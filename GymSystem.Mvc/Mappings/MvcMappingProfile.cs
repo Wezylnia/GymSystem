@@ -44,13 +44,25 @@ public class MvcMappingProfile : Profile {
         // ApiAppointmentDto -> AppointmentViewModel
         CreateMap<ApiAppointmentDto, AppointmentViewModel>()
             .ForMember(dest => dest.MemberName,
-                opt => opt.MapFrom(src => src.Member != null ? $"{src.Member.FirstName} {src.Member.LastName}" : string.Empty))
+                opt => opt.MapFrom(src => 
+                    !string.IsNullOrEmpty(src.MemberName) 
+                        ? src.MemberName 
+                        : src.Member != null ? $"{src.Member.FirstName} {src.Member.LastName}" : string.Empty))
             .ForMember(dest => dest.TrainerName,
-                opt => opt.MapFrom(src => src.Trainer != null ? $"{src.Trainer.FirstName} {src.Trainer.LastName}" : string.Empty))
+                opt => opt.MapFrom(src => 
+                    !string.IsNullOrEmpty(src.TrainerName) 
+                        ? src.TrainerName 
+                        : src.Trainer != null ? $"{src.Trainer.FirstName} {src.Trainer.LastName}" : string.Empty))
             .ForMember(dest => dest.ServiceName,
-                opt => opt.MapFrom(src => src.Service != null ? src.Service.Name : string.Empty))
+                opt => opt.MapFrom(src => 
+                    !string.IsNullOrEmpty(src.ServiceName) 
+                        ? src.ServiceName 
+                        : src.Service != null ? src.Service.Name : string.Empty))
             .ForMember(dest => dest.GymLocationName,
-                opt => opt.MapFrom(src => src.Service != null ? src.Service.GymLocationName : string.Empty));
+                opt => opt.MapFrom(src => 
+                    !string.IsNullOrEmpty(src.GymLocationName) 
+                        ? src.GymLocationName 
+                        : src.Service != null ? src.Service.GymLocationName : string.Empty));
 
         // ApiAIWorkoutPlanDto -> AIWorkoutPlanViewModel
         CreateMap<ApiAIWorkoutPlanDto, AIWorkoutPlanViewModel>()

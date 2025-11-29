@@ -18,15 +18,29 @@
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="MemberId" class="form-label">Üye *</label>
-                                <select asp-for="MemberId" class="form-select" asp-items="@ViewBag.Members">
-                                    <option value="">-- Üye Seçiniz --</option>
-                                </select>
-                                <span asp-validation-for="MemberId" class="text-danger"></span>
-                            </div>
+                            @if (User.IsInRole("Member"))
+                            {
+                                <!-- Member için hidden input -->
+                                <input type="hidden" asp-for="MemberId" value="@ViewBag.CurrentMemberId" />
+                                <div class="col-md-12 mb-3">
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-person-check"></i> <strong>Üye:</strong> @ViewBag.CurrentMemberName
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <!-- Admin ve GymOwner için dropdown -->
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="MemberId" class="form-label">Üye *</label>
+                                    <select asp-for="MemberId" class="form-select" asp-items="@ViewBag.Members">
+                                        <option value="">-- Üye Seçiniz --</option>
+                                    </select>
+                                    <span asp-validation-for="MemberId" class="text-danger"></span>
+                                </div>
+                            }
 
-                            <div class="col-md-6 mb-3">
+                            <div class="@(User.IsInRole("Member") ? "col-md-12" : "col-md-6") mb-3">
                                 <label asp-for="GymLocationId" class="form-label">Spor Salonu *</label>
                                 <select asp-for="GymLocationId" class="form-select" asp-items="@ViewBag.GymLocations" id="gymLocationSelect">
                                     <option value="">-- Spor Salonu Seçiniz --</option>

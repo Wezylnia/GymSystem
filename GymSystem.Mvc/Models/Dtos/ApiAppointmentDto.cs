@@ -19,7 +19,13 @@ public class ApiAppointmentDto
     public DateTime? UpdatedAt { get; set; }
     public bool IsActive { get; set; }
     
-    // Navigation properties
+    // Flat properties (API'den gelen - AppointmentDto'dan)
+    public string? MemberName { get; set; }
+    public string? TrainerName { get; set; }
+    public string? ServiceName { get; set; }
+    public string? GymLocationName { get; set; }
+    
+    // Navigation properties (alternatif - nested yapı)
     public ApiMemberDto? Member { get; set; }
     public ApiTrainerDto? Trainer { get; set; }
     public ApiServiceDto? Service { get; set; }

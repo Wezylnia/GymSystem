@@ -20,7 +20,7 @@ public class AppointmentsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin,GymOwner")]
+    [Authorize(Roles = "Admin,GymOwner,Member")]
     public async Task<IActionResult> GetAll()
     {
         var response = await _appointmentService.GetAllAsync();

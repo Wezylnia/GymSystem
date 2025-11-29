@@ -152,13 +152,26 @@ public class ReportService : IReportService {
             if (!appointmentsResponse.IsSuccessful || !trainersResponse.IsSuccessful)
                 return _responseHelper.SetError<object>(null, "Veriler alınamadı", 500, "REPORT_011");
 
-            var appointments = appointmentsResponse.Data?.Where(a => a.IsActive && a.Status == AppointmentStatus.Confirmed.ToString()).ToList() ?? new List<GymSystem.Application.Abstractions.Contract.Appointment.AppointmentDto>();
+            var appointments = appointmentsResponse.Data?.Where(a => a.IsActive).ToList() ?? new List<GymSystem.Application.Abstractions.Contract.Appointment.AppointmentDto>();
             var trainers = trainersResponse.Data ?? new List<GymSystem.Application.Abstractions.Contract.Trainer.TrainerDto>();
 
             if (trainerId.HasValue)
                 appointments = appointments.Where(a => a.TrainerId == trainerId.Value).ToList();
 
-            var workload = appointments.GroupBy(a => a.TrainerId).Select(g => { var trainer = trainers.FirstOrDefault(t => t.Id == g.Key); return new { TrainerId = g.Key, TrainerName = trainer != null ? $"{trainer.FirstName} {trainer.LastName}" : "Unknown", TotalAppointments = g.Count(), TotalHours = g.Sum(a => a.DurationMinutes) / 60.0, TotalRevenue = g.Sum(a => a.Price) }; }).OrderByDescending(x => x.TotalAppointments).ToList();
+            var workload = appointments.GroupBy(a => a.TrainerId).Select(g => {
+                var trainer = trainers.FirstOrDefault(t => t.Id == g.Key);
+                var trainerAppointments = g.ToList();
+                return new {
+                    TrainerId = g.Key,
+                    TrainerName = trainer != null ? $"{trainer.FirstName} {trainer.LastName}" : "Unknown",
+                    TotalAppointments = trainerAppointments.Count,
+                    PendingAppointments = trainerAppointments.Count(a => a.Status == AppointmentStatus.Pending.ToString()),
+                    ConfirmedAppointments = trainerAppointments.Count(a => a.Status == AppointmentStatus.Confirmed.ToString()),
+                    CompletedAppointments = trainerAppointments.Count(a => a.Status == AppointmentStatus.Completed.ToString()),
+                    TotalHours = trainerAppointments.Sum(a => a.DurationMinutes) / 60.0,
+                    TotalRevenue = trainerAppointments.Where(a => a.Status == AppointmentStatus.Confirmed.ToString() || a.Status == AppointmentStatus.Completed.ToString()).Sum(a => a.Price)
+                };
+            }).OrderByDescending(x => x.TotalAppointments).ToList();
 
             return _responseHelper.SetSuccess<object>(new { Workload = workload, TotalTrainers = workload.Count });
         }

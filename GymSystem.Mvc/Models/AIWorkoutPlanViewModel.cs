@@ -39,7 +39,7 @@ public class CreateAIWorkoutPlanViewModel
 
     [Required(ErrorMessage = "Hedef alanı zorunludur")]
     [Display(Name = "Hedef")]
-    [StringLength(500, ErrorMessage = "Hedef en fazla 500 karakter olabilir")]
+    [StringLength(500, MinimumLength = 10, ErrorMessage = "Hedef 10-500 karakter arasında olmalıdır")]
     public string Goal { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Plan tipi seçiniz")]

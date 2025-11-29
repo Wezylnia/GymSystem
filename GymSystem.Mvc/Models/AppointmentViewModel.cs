@@ -28,7 +28,8 @@ public class AppointmentViewModel
     
     public string Status { get; set; } = "Pending";
     
-    [StringLength(1000)]
+    [StringLength(1000, ErrorMessage = "Notlar en fazla 1000 karakter olabilir")]
+    [Display(Name = "Notlar")]
     public string? Notes { get; set; }
     
     // Display properties
@@ -62,6 +63,7 @@ public class CreateAppointmentViewModel
     [DataType(DataType.Time)]
     public TimeSpan AppointmentTime { get; set; }
     
-    [StringLength(1000)]
+    [StringLength(1000, ErrorMessage = "Notlar en fazla 1000 karakter olabilir")]
+    [Display(Name = "Notlar")]
     public string? Notes { get; set; }
 }

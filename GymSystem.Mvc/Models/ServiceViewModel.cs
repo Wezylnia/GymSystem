@@ -7,10 +7,12 @@ public class ServiceViewModel
     public int Id { get; set; }
     
     [Required(ErrorMessage = "Hizmet adı zorunludur")]
-    [StringLength(200, ErrorMessage = "Hizmet adı en fazla 200 karakter olabilir")]
+    [StringLength(200, MinimumLength = 3, ErrorMessage = "Hizmet adı 3-200 karakter arasında olmalıdır")]
+    [Display(Name = "Hizmet Adı")]
     public string Name { get; set; } = string.Empty;
     
     [StringLength(1000, ErrorMessage = "Açıklama en fazla 1000 karakter olabilir")]
+    [Display(Name = "Açıklama")]
     public string? Description { get; set; }
     
     [Required(ErrorMessage = "Süre zorunludur")]

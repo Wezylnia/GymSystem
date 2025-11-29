@@ -84,7 +84,9 @@ public class ApiHelper {
             _logger.LogError("API POST request failed. Endpoint: {Endpoint}, Status: {Status}, Error: {Error}",
                 endpoint, response.StatusCode, errorContent);
 
-            return (false, $"Status: {response.StatusCode}");
+            // API'den gelen hata mesajını parse et
+            var errorMessage = ExtractErrorMessage(errorContent, response.StatusCode);
+            return (false, errorMessage);
         }
         catch (Exception ex) {
             _logger.LogError(ex, "API POST request exception. Endpoint: {Endpoint}", endpoint);
@@ -116,7 +118,8 @@ public class ApiHelper {
             _logger.LogError("API POST request failed. Endpoint: {Endpoint}, Status: {Status}, Error: {Error}",
                 endpoint, response.StatusCode, errorContent);
 
-            return (false, null, $"Status: {response.StatusCode}");
+            var errorMessage = ExtractErrorMessage(errorContent, response.StatusCode);
+            return (false, null, errorMessage);
         }
         catch (Exception ex) {
             _logger.LogError(ex, "API POST request exception. Endpoint: {Endpoint}", endpoint);
@@ -143,7 +146,8 @@ public class ApiHelper {
             _logger.LogError("API PUT request failed. Endpoint: {Endpoint}, Status: {Status}, Error: {Error}",
                 endpoint, response.StatusCode, errorContent);
 
-            return (false, $"Status: {response.StatusCode}");
+            var errorMessage = ExtractErrorMessage(errorContent, response.StatusCode);
+            return (false, errorMessage);
         }
         catch (Exception ex) {
             _logger.LogError(ex, "API PUT request exception. Endpoint: {Endpoint}", endpoint);
@@ -167,7 +171,8 @@ public class ApiHelper {
             _logger.LogError("API DELETE request failed. Endpoint: {Endpoint}, Status: {Status}, Error: {Error}",
                 endpoint, response.StatusCode, errorContent);
 
-            return (false, $"Status: {response.StatusCode}");
+            var errorMessage = ExtractErrorMessage(errorContent, response.StatusCode);
+            return (false, errorMessage);
         }
         catch (Exception ex) {
             _logger.LogError(ex, "API DELETE request exception. Endpoint: {Endpoint}", endpoint);
@@ -181,5 +186,63 @@ public class ApiHelper {
     public async Task<HttpResponseMessage> GetRawAsync(string endpoint) {
         var client = _httpClientFactory.CreateClient("GymApi");
         return await client.GetAsync(endpoint);
+    }
+
+    /// <summary>
+    /// API'den gelen hata mesajını parse eder
+    /// </summary>
+    private string ExtractErrorMessage(string errorContent, System.Net.HttpStatusCode statusCode) {
+        try {
+            if (string.IsNullOrWhiteSpace(errorContent)) {
+                return $"Hata: {statusCode}";
+            }
+
+            // JSON parse et
+            using var doc = JsonDocument.Parse(errorContent);
+            var root = doc.RootElement;
+
+            // Önce "error" field'ına bak
+            if (root.TryGetProperty("error", out var errorElement)) {
+                var errorMessage = errorElement.GetString();
+                if (!string.IsNullOrWhiteSpace(errorMessage)) {
+                    return errorMessage;
+                }
+            }
+
+            // Sonra "errorMessage" field'ına bak
+            if (root.TryGetProperty("errorMessage", out var errorMessageElement)) {
+                var errorMessage = errorMessageElement.GetString();
+                if (!string.IsNullOrWhiteSpace(errorMessage)) {
+                    return errorMessage;
+                }
+            }
+
+            // "message" field'ına bak
+            if (root.TryGetProperty("message", out var messageElement)) {
+                var message = messageElement.GetString();
+                if (!string.IsNullOrWhiteSpace(message)) {
+                    return message;
+                }
+            }
+
+            // ServiceResponse error yapısı (Error.ErrorMessage)
+            if (root.TryGetProperty("Error", out var errorObj)) {
+                if (errorObj.TryGetProperty("ErrorMessage", out var errMsg)) {
+                    var msg = errMsg.GetString();
+                    if (!string.IsNullOrWhiteSpace(msg)) {
+                        return msg;
+                    }
+                }
+            }
+
+            // Hiçbiri yoksa raw content'i döndür (kısaltılmış)
+            return errorContent.Length > 200 
+                ? $"{statusCode}: {errorContent.Substring(0, 200)}..." 
+                : $"{statusCode}: {errorContent}";
+        }
+        catch {
+            // JSON parse başarısız olursa statusCode döndür
+            return $"Hata: {statusCode}";
+        }
     }
 }

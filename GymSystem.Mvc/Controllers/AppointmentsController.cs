@@ -22,18 +22,27 @@ public class AppointmentsController : Controller {
 
     public async Task<IActionResult> Index() {
         try {
-            var apiAppointments = await _apiHelper.GetListAsync<ApiAppointmentDto>(ApiEndpoints.Appointments);
+            List<ApiAppointmentDto> apiAppointments;
 
-            // AutoMapper ile map et
-            var appointments = _mapper.Map<List<AppointmentViewModel>>(apiAppointments);
-
-            // Member ise sadece kendi randevularını göster
+            // Member ise member-specific endpoint kullan
             if (User.IsInRole("Member")) {
                 var memberIdClaim = User.FindFirst("MemberId")?.Value;
                 if (int.TryParse(memberIdClaim, out var memberId)) {
-                    appointments = appointments.Where(a => a.MemberId == memberId).ToList();
+                    apiAppointments = await _apiHelper.GetListAsync<ApiAppointmentDto>($"/api/appointments/member/{memberId}");
+                }
+                else {
+                    _logger.LogWarning("Member ID claim not found for user {User}", User.Identity?.Name);
+                    ViewBag.ErrorMessage = "Üye bilgisi bulunamadı.";
+                    return View(new List<AppointmentViewModel>());
                 }
             }
+            else {
+                // Admin ve GymOwner için GetAll kullan
+                apiAppointments = await _apiHelper.GetListAsync<ApiAppointmentDto>(ApiEndpoints.Appointments);
+            }
+
+            // AutoMapper ile map et
+            var appointments = _mapper.Map<List<AppointmentViewModel>>(apiAppointments);
 
             return View(appointments);
         }
@@ -165,11 +174,29 @@ public class AppointmentsController : Controller {
     [HttpGet]
     public async Task<IActionResult> GetTrainersByService(int serviceId) {
         try {
-            var trainers = await _apiHelper.GetListAsync<ApiTrainerDto>(ApiEndpoints.Trainers);
-            return Json(trainers);
+            // Önce hizmet bilgisini al (hangi salona ait olduğunu öğrenmek için)
+            var service = await _apiHelper.GetAsync<ApiServiceDto>(ApiEndpoints.ServiceById(serviceId));
+            
+            if (service == null) {
+                _logger.LogWarning("Service bulunamadı. ServiceId: {ServiceId}", serviceId);
+                return Json(new List<ApiTrainerDto>());
+            }
+
+            // Tüm antrenörleri al
+            var allTrainers = await _apiHelper.GetListAsync<ApiTrainerDto>(ApiEndpoints.Trainers);
+            
+            // Sadece bu hizmetin salonundaki aktif antrenörleri filtrele
+            var filtered = allTrainers
+                .Where(t => t.GymLocationId == service.GymLocationId && t.IsActive)
+                .ToList();
+
+            _logger.LogInformation("ServiceId: {ServiceId}, GymLocationId: {GymLocationId}, Antrenör sayısı: {Count}", 
+                serviceId, service.GymLocationId, filtered.Count);
+
+            return Json(filtered);
         }
         catch (Exception ex) {
-            _logger.LogError(ex, "Antrenörler yüklenirken hata oluştu");
+            _logger.LogError(ex, "Antrenörler yüklenirken hata oluştu. ServiceId: {ServiceId}", serviceId);
             return Json(new List<ApiTrainerDto>());
         }
     }
@@ -180,14 +207,41 @@ public class AppointmentsController : Controller {
         try {
             // Members
             if (User.IsInRole("Member")) {
+                // Member için dropdown gerekmez, hidden input kullanılacak
                 var memberIdClaim = User.FindFirst("MemberId")?.Value;
                 if (int.TryParse(memberIdClaim, out var memberId)) {
-                    ViewBag.Members = new SelectList(new[] { new { Id = memberId, Name = User.Identity!.Name } }, "Id", "Name");
+                    var memberName = $"{User.Identity!.Name}";
+                    ViewBag.CurrentMemberId = memberId;
+                    ViewBag.CurrentMemberName = memberName;
                 }
             }
-            else {
+            else if (User.IsInRole("Admin")) {
+                // Admin tüm üyeleri görebilir
                 var members = await _apiHelper.GetListAsync<ApiMemberDto>(ApiEndpoints.Members);
-                ViewBag.Members = new SelectList(members, "Id", "FirstName");
+                var memberList = members.Select(m => new {
+                    Id = m.Id,
+                    FullName = $"{m.FirstName} {m.LastName} ({m.Email})"
+                }).ToList();
+                ViewBag.Members = new SelectList(memberList, "Id", "FullName");
+            }
+            else if (User.IsInRole("GymOwner")) {
+                // GymOwner sadece kendi salonunun aktif üyelerini görebilir
+                var gymLocationId = User.FindFirst("GymLocationId")?.Value;
+                if (int.TryParse(gymLocationId, out var locationId)) {
+                    var allMembers = await _apiHelper.GetListAsync<ApiMemberDto>(ApiEndpoints.Members);
+                    // Aktif üyelik olan ve bu salona ait üyeleri filtrele
+                    var activeMembers = allMembers
+                        .Where(m => m.IsActive && 
+                                   m.MembershipEndDate.HasValue && 
+                                   m.MembershipEndDate.Value >= DateTime.Now &&
+                                   m.CurrentGymLocationId == locationId)
+                        .Select(m => new {
+                            Id = m.Id,
+                            FullName = $"{m.FirstName} {m.LastName} ({m.Email})"
+                        })
+                        .ToList();
+                    ViewBag.Members = new SelectList(activeMembers, "Id", "FullName");
+                }
             }
 
             // GymLocations
