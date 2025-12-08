@@ -35,7 +35,7 @@ public class MembersController : Controller {
 
                 apiMembers = await _apiHelper.GetListAsync<ApiMemberDto>(
                     $"{ApiEndpoints.Members}?gymLocationId={gymLocationId.Value}");
-                
+
                 ViewBag.IsGymOwner = true;
                 ViewBag.GymLocationId = gymLocationId.Value;
             }
@@ -96,7 +96,7 @@ public class MembersController : Controller {
     public async Task<IActionResult> Edit(int id) {
         try {
             var apiMember = await _apiHelper.GetAsync<ApiMemberDto>(ApiEndpoints.MemberById(id));
-            
+
             if (apiMember == null) {
                 TempData["ErrorMessage"] = "Üye bulunamadı.";
                 return RedirectToAction(nameof(Index));
@@ -140,7 +140,7 @@ public class MembersController : Controller {
             if (User.IsInRole("GymOwner")) {
                 var apiMember = await _apiHelper.GetAsync<ApiMemberDto>(ApiEndpoints.MemberById(id));
                 var gymLocationId = GetCurrentGymLocationId();
-                
+
                 if (apiMember == null || gymLocationId == null || apiMember.CurrentGymLocationId != gymLocationId) {
                     TempData["ErrorMessage"] = "Bu üyeyi güncelleme yetkiniz yok.";
                     return RedirectToAction(nameof(Index));
@@ -171,7 +171,7 @@ public class MembersController : Controller {
     public async Task<IActionResult> Details(int id) {
         try {
             var apiMember = await _apiHelper.GetAsync<ApiMemberDto>(ApiEndpoints.MemberById(id));
-            
+
             if (apiMember == null) {
                 TempData["ErrorMessage"] = "Üye bulunamadı.";
                 return RedirectToAction(nameof(Index));
@@ -197,7 +197,7 @@ public class MembersController : Controller {
             if (User.IsInRole("GymOwner")) {
                 var apiMember = await _apiHelper.GetAsync<ApiMemberDto>(ApiEndpoints.MemberById(id));
                 var gymLocationId = GetCurrentGymLocationId();
-                
+
                 if (apiMember == null || gymLocationId == null || apiMember.CurrentGymLocationId != gymLocationId) {
                     TempData["ErrorMessage"] = "Bu üyeyi silme yetkiniz yok.";
                     return RedirectToAction(nameof(Index));
