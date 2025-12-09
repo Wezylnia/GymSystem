@@ -9,10 +9,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace GymSystem.Application.Services.Trainers;
-
-/// <summary>
-/// Trainer service - DTO + AutoMapper + ServiceResponse pattern
-/// </summary>
 public class TrainerService : ITrainerService
 {
     private readonly BaseFactory<TrainerService> _baseFactory;
