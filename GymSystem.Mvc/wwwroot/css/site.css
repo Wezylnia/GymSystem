@@ -104,22 +104,22 @@ h1, h2, h3, h4, h5, h6 {
     background: var(--gradient-secondary) !important;
     backdrop-filter: blur(10px);
     box-shadow: var(--shadow-lg);
-    padding: 0.75rem 1rem;
+    padding: 0.4rem 1rem;
     border-bottom: 3px solid var(--primary-color);
 }
 
 .navbar-brand {
     font-weight: 800;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     color: #fff !important;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
 }
 
 .navbar-brand i {
     color: var(--primary-color);
-    font-size: 1.8rem;
+    font-size: 1.4rem;
 }
 
 .navbar-brand:hover {
@@ -131,27 +131,31 @@ h1, h2, h3, h4, h5, h6 {
 .nav-link {
     color: rgba(255, 255, 255, 0.85) !important;
     font-weight: 500;
-    padding: 0.5rem 1rem !important;
-    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    padding: 0.35rem 0.65rem !important;
+    border-radius: var(--radius-sm);
     transition: var(--transition-normal);
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.3rem;
+}
+
+.nav-link i {
+    font-size: 0.9rem;
 }
 
 .nav-link:hover {
     color: #fff !important;
     background: rgba(255, 107, 53, 0.2);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
 }
 
 .nav-link.text-warning {
     color: var(--primary-color) !important;
-    background: rgba(255, 107, 53, 0.15);
 }
 
 .nav-link.text-warning:hover {
-    background: rgba(255, 107, 53, 0.3);
+    background: rgba(255, 107, 53, 0.25);
 }
 
 .nav-link.text-info {

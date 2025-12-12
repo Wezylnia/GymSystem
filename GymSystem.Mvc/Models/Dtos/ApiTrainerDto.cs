@@ -14,7 +14,21 @@ public class ApiTrainerDto
     public string? Bio { get; set; }
     public int GymLocationId { get; set; }
     public string? GymLocationName { get; set; }
+    
+    // Hizmet Uzmanlıkları
+    public List<int> SelectedServiceIds { get; set; } = new();
+    public List<ApiTrainerServiceInfo> Services { get; set; } = new();
+    
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public bool IsActive { get; set; }
+}
+
+/// <summary>
+/// Antrenör hizmet bilgisi
+/// </summary>
+public class ApiTrainerServiceInfo
+{
+    public int ServiceId { get; set; }
+    public string ServiceName { get; set; } = string.Empty;
 }

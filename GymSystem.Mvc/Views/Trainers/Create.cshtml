@@ -1,7 +1,9 @@
 ﻿@model GymSystem.Mvc.Models.TrainerViewModel
+@using GymSystem.Mvc.Models.Dtos
 
 @{
     ViewData["Title"] = "Yeni Antrenör Ekle";
+    var allServices = ViewBag.AllServices as List<ApiServiceDto> ?? new List<ApiServiceDto>();
 }
 
 <div class="container mt-4">
@@ -9,7 +11,7 @@
         <div class="col-md-8 offset-md-2">
             <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <h2 class="mb-0">Yeni Antrenör Ekle</h2>
+                    <h2 class="mb-0"><i class="bi bi-person-badge"></i> Yeni Antrenör Ekle</h2>
                 </div>
                 <div class="card-body">
                     <form asp-action="Create" method="post">
@@ -18,8 +20,10 @@
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
                         <div class="mb-3">
-                            <label asp-for="GymLocationId" class="form-label">Spor Salonu *</label>
-                            <select asp-for="GymLocationId" class="form-select" asp-items="@ViewBag.GymLocations">
+                            <label asp-for="GymLocationId" class="form-label">
+                                <i class="bi bi-building"></i> Spor Salonu *
+                            </label>
+                            <select asp-for="GymLocationId" class="form-select" asp-items="@ViewBag.GymLocations" id="gymLocationSelect">
                                 <option value="">-- Spor Salonu Seçiniz --</option>
                             </select>
                             <span asp-validation-for="GymLocationId" class="text-danger"></span>
@@ -27,13 +31,17 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="FirstName" class="form-label">Ad *</label>
+                                <label asp-for="FirstName" class="form-label">
+                                    <i class="bi bi-person"></i> Ad *
+                                </label>
                                 <input asp-for="FirstName" class="form-control" placeholder="Ad" />
                                 <span asp-validation-for="FirstName" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="LastName" class="form-label">Soyad *</label>
+                                <label asp-for="LastName" class="form-label">
+                                    <i class="bi bi-person"></i> Soyad *
+                                </label>
                                 <input asp-for="LastName" class="form-control" placeholder="Soyad" />
                                 <span asp-validation-for="LastName" class="text-danger"></span>
                             </div>
@@ -41,28 +49,54 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="Email" class="form-label">Email *</label>
+                                <label asp-for="Email" class="form-label">
+                                    <i class="bi bi-envelope"></i> Email *
+                                </label>
                                 <input asp-for="Email" type="email" class="form-control" placeholder="ornek@email.com" />
                                 <span asp-validation-for="Email" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="PhoneNumber" class="form-label">Telefon</label>
+                                <label asp-for="PhoneNumber" class="form-label">
+                                    <i class="bi bi-telephone"></i> Telefon
+                                </label>
                                 <input asp-for="PhoneNumber" type="tel" class="form-control" placeholder="5551234567" />
                                 <span asp-validation-for="PhoneNumber" class="text-danger"></span>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Bio" class="form-label">Biyografi</label>
+                            <label asp-for="Bio" class="form-label">
+                                <i class="bi bi-file-text"></i> Biyografi
+                            </label>
                             <textarea asp-for="Bio" class="form-control" rows="4" placeholder="Antrenör hakkında kısa bilgi"></textarea>
                             <span asp-validation-for="Bio" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="PhotoUrl" class="form-label">Fotoğraf URL</label>
+                            <label asp-for="PhotoUrl" class="form-label">
+                                <i class="bi bi-image"></i> Fotoğraf URL
+                            </label>
                             <input asp-for="PhotoUrl" class="form-control" placeholder="https://..." />
                             <span asp-validation-for="PhotoUrl" class="text-danger"></span>
+                        </div>
+
+                        <!-- Uzmanlık Alanları -->
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-award"></i> Uzmanlık Alanları
+                            </label>
+                            <div class="card">
+                                <div class="card-body" id="servicesContainer">
+                                    <div class="text-muted" id="noGymSelected">
+                                        <i class="bi bi-info-circle"></i> Önce bir spor salonu seçin
+                                    </div>
+                                    <div id="servicesList" style="display: none;">
+                                        <!-- Dinamik olarak doldurulacak -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-text">Antrenörün uzmanlaştığı hizmetleri seçin</div>
                         </div>
 
                         <div class="d-flex justify-content-between">
@@ -82,4 +116,56 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Tüm hizmetler (sayfa yüklendiğinde)
+        var allServices = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(allServices.Select(s => new { id = s.Id, name = s.Name, gymLocationId = s.GymLocationId })));
+
+        $(document).ready(function() {
+            // Spor salonu değiştiğinde hizmetleri güncelle
+            $('#gymLocationSelect').change(function() {
+                var gymLocationId = $(this).val();
+                updateServicesCheckboxes(gymLocationId);
+            });
+
+            function updateServicesCheckboxes(gymLocationId) {
+                var container = $('#servicesList');
+                var noGymMessage = $('#noGymSelected');
+                
+                if (!gymLocationId) {
+                    container.hide();
+                    noGymMessage.show();
+                    return;
+                }
+
+                // Seçili salona ait hizmetleri filtrele
+                var filteredServices = allServices.filter(function(s) {
+                    return s.gymLocationId == gymLocationId;
+                });
+
+                if (filteredServices.length === 0) {
+                    container.html('<div class="text-muted"><i class="bi bi-exclamation-circle"></i> Bu salonda tanımlı hizmet bulunmuyor</div>');
+                    container.show();
+                    noGymMessage.hide();
+                    return;
+                }
+
+                var html = '<div class="row">';
+                filteredServices.forEach(function(service) {
+                    html += '<div class="col-md-6 mb-2">';
+                    html += '<div class="form-check">';
+                    html += '<input class="form-check-input" type="checkbox" name="SelectedServiceIds" value="' + service.id + '" id="service_' + service.id + '">';
+                    html += '<label class="form-check-label" for="service_' + service.id + '">';
+                    html += '<i class="bi bi-check2-circle text-primary"></i> ' + service.name;
+                    html += '</label>';
+                    html += '</div>';
+                    html += '</div>';
+                });
+                html += '</div>';
+
+                container.html(html);
+                container.show();
+                noGymMessage.hide();
+            }
+        });
+    </script>
 }

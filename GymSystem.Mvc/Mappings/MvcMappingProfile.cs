@@ -24,10 +24,20 @@ public class MvcMappingProfile : Profile {
         CreateMap<CreateMemberViewModel, ApiMemberDto>();
 
         // ApiTrainerDto -> TrainerViewModel
-        CreateMap<ApiTrainerDto, TrainerViewModel>();
+        CreateMap<ApiTrainerDto, TrainerViewModel>()
+            .ForMember(dest => dest.Services,
+                opt => opt.MapFrom(src => src.Services));
 
         // TrainerViewModel -> ApiTrainerDto (POST/PUT için)
-        CreateMap<TrainerViewModel, ApiTrainerDto>();
+        CreateMap<TrainerViewModel, ApiTrainerDto>()
+            .ForMember(dest => dest.Services,
+                opt => opt.MapFrom(src => src.Services));
+
+        // ApiTrainerServiceInfo -> TrainerServiceViewModel
+        CreateMap<ApiTrainerServiceInfo, TrainerServiceViewModel>();
+
+        // TrainerServiceViewModel -> ApiTrainerServiceInfo
+        CreateMap<TrainerServiceViewModel, ApiTrainerServiceInfo>();
 
         // ApiServiceDto -> ServiceViewModel
         CreateMap<ApiServiceDto, ServiceViewModel>();

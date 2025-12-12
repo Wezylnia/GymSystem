@@ -46,6 +46,7 @@ public class TrainersController : Controller {
 
     public async Task<IActionResult> Create() {
         await LoadGymLocations();
+        await LoadAllServices();
         return View();
     }
 
@@ -62,11 +63,13 @@ public class TrainersController : Controller {
 
         if (!ModelState.IsValid) {
             await LoadGymLocations();
+            await LoadServicesByGymLocation(model.GymLocationId);
             return View(model);
         }
 
         try {
-            var (success, errorMessage) = await _apiHelper.PostAsync(ApiEndpoints.Trainers, model);
+            var dto = _mapper.Map<ApiTrainerDto>(model);
+            var (success, errorMessage) = await _apiHelper.PostAsync(ApiEndpoints.Trainers, dto);
 
             if (success) {
                 TempData["SuccessMessage"] = "Antrenör başarıyla eklendi!";
@@ -75,6 +78,7 @@ public class TrainersController : Controller {
             else {
                 ModelState.AddModelError("", $"Antrenör eklenirken bir hata oluştu. {errorMessage}");
                 await LoadGymLocations();
+                await LoadServicesByGymLocation(model.GymLocationId);
                 return View(model);
             }
         }
@@ -82,6 +86,7 @@ public class TrainersController : Controller {
             _logger.LogError(ex, "Antrenör eklenirken hata oluştu");
             ModelState.AddModelError("", "Bir hata oluştu: " + ex.Message);
             await LoadGymLocations();
+            await LoadServicesByGymLocation(model.GymLocationId);
             return View(model);
         }
     }
@@ -105,6 +110,7 @@ public class TrainersController : Controller {
 
             var viewModel = _mapper.Map<TrainerViewModel>(trainer);
             await LoadGymLocations();
+            await LoadServicesByGymLocation(trainer.GymLocationId);
             return View(viewModel);
         }
         catch (Exception ex) {
@@ -131,11 +137,13 @@ public class TrainersController : Controller {
 
         if (!ModelState.IsValid) {
             await LoadGymLocations();
+            await LoadServicesByGymLocation(model.GymLocationId);
             return View(model);
         }
 
         try {
-            var (success, errorMessage) = await _apiHelper.PutAsync(ApiEndpoints.TrainerById(id), model);
+            var dto = _mapper.Map<ApiTrainerDto>(model);
+            var (success, errorMessage) = await _apiHelper.PutAsync(ApiEndpoints.TrainerById(id), dto);
 
             if (success) {
                 TempData["SuccessMessage"] = "Antrenör başarıyla güncellendi!";
@@ -144,6 +152,7 @@ public class TrainersController : Controller {
             else {
                 ModelState.AddModelError("", $"Antrenör güncellenirken bir hata oluştu. {errorMessage}");
                 await LoadGymLocations();
+                await LoadServicesByGymLocation(model.GymLocationId);
                 return View(model);
             }
         }
@@ -151,6 +160,7 @@ public class TrainersController : Controller {
             _logger.LogError(ex, "Antrenör güncellenirken hata oluştu");
             ModelState.AddModelError("", "Bir hata oluştu: " + ex.Message);
             await LoadGymLocations();
+            await LoadServicesByGymLocation(model.GymLocationId);
             return View(model);
         }
     }
@@ -176,6 +186,25 @@ public class TrainersController : Controller {
         return RedirectToAction(nameof(Index));
     }
 
+    /// <summary>
+    /// AJAX: Salona göre hizmetleri getir
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetServicesByGymLocation(int gymLocationId) {
+        try {
+            var services = await _apiHelper.GetListAsync<ApiServiceDto>(ApiEndpoints.Services);
+            var filteredServices = services.Where(s => s.GymLocationId == gymLocationId).Select(s => new {
+                id = s.Id,
+                name = s.Name
+            }).ToList();
+            return Json(filteredServices);
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Hizmetler yüklenirken hata oluştu");
+            return Json(new List<object>());
+        }
+    }
+
     private async Task LoadGymLocations() {
         try {
             var gyms = await _apiHelper.GetListAsync<GymLocationViewModel>(ApiEndpoints.GymLocations);
@@ -193,6 +222,29 @@ public class TrainersController : Controller {
         catch (Exception ex) {
             _logger.LogError(ex, "Spor salonları yüklenirken hata oluştu");
             ViewBag.GymLocations = new SelectList(Enumerable.Empty<SelectListItem>());
+        }
+    }
+
+    private async Task LoadAllServices() {
+        try {
+            var services = await _apiHelper.GetListAsync<ApiServiceDto>(ApiEndpoints.Services);
+            ViewBag.AllServices = services;
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Hizmetler yüklenirken hata oluştu");
+            ViewBag.AllServices = new List<ApiServiceDto>();
+        }
+    }
+
+    private async Task LoadServicesByGymLocation(int gymLocationId) {
+        try {
+            var services = await _apiHelper.GetListAsync<ApiServiceDto>(ApiEndpoints.Services);
+            var filteredServices = services.Where(s => s.GymLocationId == gymLocationId).ToList();
+            ViewBag.GymServices = filteredServices;
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Hizmetler yüklenirken hata oluştu");
+            ViewBag.GymServices = new List<ApiServiceDto>();
         }
     }
 }

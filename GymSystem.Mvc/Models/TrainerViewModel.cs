@@ -41,6 +41,21 @@ public class TrainerViewModel
     public int GymLocationId { get; set; }
     
     public string? GymLocationName { get; set; }
+    
+    // Hizmet Uzmanlıkları
+    [Display(Name = "Uzmanlık Alanları")]
+    public List<int> SelectedServiceIds { get; set; } = new();
+    public List<TrainerServiceViewModel> Services { get; set; } = new();
+    
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
+}
+
+/// <summary>
+/// Antrenör hizmet bilgisi ViewModel
+/// </summary>
+public class TrainerServiceViewModel
+{
+    public int ServiceId { get; set; }
+    public string ServiceName { get; set; } = string.Empty;
 }

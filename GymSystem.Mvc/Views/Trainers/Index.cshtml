@@ -36,7 +36,7 @@
                                     <h5 class="card-title mb-0">@trainer.FirstName @trainer.LastName</h5>
                                     @if (!string.IsNullOrEmpty(trainer.GymLocationName))
                                     {
-                                        <small class="text-muted">@trainer.GymLocationName</small>
+                                        <small class="text-muted"><i class="bi bi-building"></i> @trainer.GymLocationName</small>
                                     }
                                 </div>
                             </div>
@@ -48,6 +48,19 @@
                                     <li><i class="bi bi-telephone"></i> @trainer.PhoneNumber</li>
                                 }
                             </ul>
+
+                            @if (trainer.Services != null && trainer.Services.Any())
+                            {
+                                <div class="mb-2">
+                                    <small class="text-muted"><i class="bi bi-award"></i> Uzmanlık Alanları:</small>
+                                    <div class="mt-1">
+                                        @foreach (var service in trainer.Services)
+                                        {
+                                            <span class="badge bg-info me-1 mb-1">@service.ServiceName</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
 
                             @if (!string.IsNullOrEmpty(trainer.Bio))
                             {

@@ -14,7 +14,13 @@ public class TrainerProfile : Profile
     {
         // Entity -> DTO
         CreateMap<Trainer, TrainerDto>()
-            .ForMember(dest => dest.GymLocationName, opt => opt.MapFrom(src => src.GymLocation != null ? src.GymLocation.Name : null));
+            .ForMember(dest => dest.GymLocationName, opt => opt.MapFrom(src => src.GymLocation != null ? src.GymLocation.Name : null))
+            .ForMember(dest => dest.SelectedServiceIds, opt => opt.MapFrom(src => src.Specialties.Where(s => s.IsActive).Select(s => s.ServiceId).ToList()))
+            .ForMember(dest => dest.Services, opt => opt.MapFrom(src => src.Specialties.Where(s => s.IsActive).Select(s => new TrainerServiceInfo
+            {
+                ServiceId = s.ServiceId,
+                ServiceName = s.Service != null ? s.Service.Name : string.Empty
+            }).ToList()));
 
         // DTO -> Entity
         CreateMap<TrainerDto, Trainer>()
@@ -23,6 +29,7 @@ public class TrainerProfile : Profile
             .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
             .ForMember(dest => dest.GymLocation, opt => opt.Ignore())
+            .ForMember(dest => dest.Specialties, opt => opt.Ignore())
             .ForMember(dest => dest.Appointments, opt => opt.Ignore());
     }
 }

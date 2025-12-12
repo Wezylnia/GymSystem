@@ -17,8 +17,21 @@ public class TrainerDto
     // Navigation Properties (Response için)
     public string? GymLocationName { get; set; }
     
+    // Hizmet Uzmanlıkları
+    public List<int> SelectedServiceIds { get; set; } = new();
+    public List<TrainerServiceInfo> Services { get; set; } = new();
+    
     // Metadata
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public bool IsActive { get; set; }
+}
+
+/// <summary>
+/// Antrenör hizmet bilgisi
+/// </summary>
+public class TrainerServiceInfo
+{
+    public int ServiceId { get; set; }
+    public string ServiceName { get; set; } = string.Empty;
 }

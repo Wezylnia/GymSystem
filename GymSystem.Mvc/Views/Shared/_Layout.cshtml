@@ -35,11 +35,11 @@
                         {
                             @if (User.IsInRole("Admin") || User.IsInRole("GymOwner"))
                             {
-                                <li class="nav-item">
-                                    <a class="nav-link text-warning fw-bold" asp-controller="Dashboard" asp-action="Index">
-                                        <i class="bi bi-graph-up-arrow"></i> Dashboard
-                                    </a>
-                                </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Dashboard" asp-action="Index">
+                                    <i class="bi bi-graph-up-arrow"></i> Dashboard
+                                </a>
+                            </li>
                                 <li class="nav-item">
                                     <a class="nav-link" asp-controller="GymLocations" asp-action="Index">
                                         <i class="bi bi-building"></i> Spor Salonları
@@ -55,10 +55,9 @@
                                         <i class="bi bi-person-badge"></i> Antrenörler
                                     </a>
                                 </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-danger" asp-controller="MembershipRequests" asp-action="Manage">
+                            <li class="nav-item">
+                                    <a class="nav-link" asp-controller="MembershipRequests" asp-action="Manage">
                                         <i class="bi bi-clipboard-check"></i> Üyelik Talepleri
-                                        <span class="badge bg-danger ms-1">Yönet</span>
                                     </a>
                                 </li>
                             }
@@ -81,13 +80,13 @@
                             @if (User.IsInRole("Member"))
                             {
                                 <li class="nav-item">
-                                    <a class="nav-link text-info" asp-controller="MembershipRequests" asp-action="Index">
+                                    <a class="nav-link" asp-controller="MembershipRequests" asp-action="Index">
                                         <i class="bi bi-card-checklist"></i> Üyelik Taleplerim
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link text-warning fw-bold" asp-controller="AIWorkoutPlans" asp-action="Index">
-                                        <i class="fas fa-robot"></i> AI Planlarım
+                                    <a class="nav-link" asp-controller="AIWorkoutPlans" asp-action="Index">
+                                        <i class="bi bi-robot"></i> AI Planlarım
                                     </a>
                                 </li>
                             }
