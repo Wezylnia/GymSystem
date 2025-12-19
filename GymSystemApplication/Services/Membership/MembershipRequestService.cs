@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
-using GymSystem.Application.Abstractions.Contract.MembershipRequest;
-using GymSystem.Application.Abstractions.Services;
+using GymSystem.Application.Abstractions.Services.IMembershipRequestService;
+using GymSystem.Application.Abstractions.Services.IMembershipRequestService.Contract;
 using GymSystem.Common.Factory.Managers;
 using GymSystem.Common.Helpers;
 using GymSystem.Common.Models;

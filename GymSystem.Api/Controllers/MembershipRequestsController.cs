@@ -1,4 +1,4 @@
-﻿using GymSystem.Application.Abstractions.Services;
+﻿using GymSystem.Application.Abstractions.Services.IMembershipRequestService;
 using GymSystem.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

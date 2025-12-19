@@ -2,7 +2,7 @@ using AutoFixture;
 using AutoFixture.AutoMoq;
 using AutoMapper;
 using FluentAssertions;
-using GymSystem.Application.Abstractions.Contract.Appointment;
+using GymSystem.Application.Abstractions.Services.IAppointmentService.Contract;
 using GymSystem.Application.Services.Appointments;
 using GymSystem.Common.Factory.Managers;
 using GymSystem.Common.Factory.Repository;

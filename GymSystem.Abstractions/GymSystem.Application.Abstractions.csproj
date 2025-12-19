@@ -12,4 +12,9 @@
     <ProjectReference Include="..\GymSystem.Infastructure\GymSystem.Infastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\IGeminiService\Contract\" />
+    <Folder Include="Services\IReportService\Contract\" />
+  </ItemGroup>
+
 </Project>

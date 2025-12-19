@@ -5,7 +5,7 @@ using GymSystem.Mvc.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using ApiMemberDto = GymSystem.Application.Abstractions.Contract.Member.MemberDto;
+using ApiMemberDto = GymSystem.Application.Abstractions.Services.IMemberService.Contract.MemberDto;
 
 namespace GymSystem.Mvc.Controllers;
 

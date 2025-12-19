@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using GymSystem.Application.Abstractions.Services;
+using GymSystem.Application.Abstractions.Services.IAppointmentService;
+using GymSystem.Application.Abstractions.Services.IMemberService;
+using GymSystem.Application.Abstractions.Services.ITrainerService;
 
 namespace GymSystem.Api.Controllers;
 

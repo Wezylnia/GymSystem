@@ -1,7 +1,6 @@
 ﻿using GymSystem.Infastructure.Extensions;
 
 // Application service imports
-using GymSystem.Application.Abstractions.Services;
 using GymSystem.Application.Services.Appointments;
 using GymSystem.Application.Services.GymLocations;
 using GymSystem.Application.Services.Members;
@@ -16,7 +15,14 @@ using GymSystem.Common.Helpers;
 using GymSystem.Application.Abstractions.Services.IAIWorkoutPlan;
 using GymSystem.Application.Abstractions.Services.IGemini;
 using Microsoft.AspNetCore.DataProtection;
-using GymSystem.Application.Services.GymLocations.Profile;
+using GymSystem.Application.Services.GymLocations.Mappings;
+using GymSystem.Application.Abstractions.Services.IAppointmentService;
+using GymSystem.Application.Abstractions.Services.IGymLocationService;
+using GymSystem.Application.Abstractions.Services.IMemberService;
+using GymSystem.Application.Abstractions.Services.IMembershipRequestService;
+using GymSystem.Application.Abstractions.Services.IReportService;
+using GymSystem.Application.Abstractions.Services.IServiceService;
+using GymSystem.Application.Abstractions.Services.ITrainerService;
 
 var builder = WebApplication.CreateBuilder(args);
 

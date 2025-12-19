@@ -1,4 +1,4 @@
-﻿using GymSystem.Application.Abstractions.Contract.AI;
+﻿using GymSystem.Application.Abstractions.Services.IAIWorkoutPlan.Contract;
 using GymSystem.Common.Models;
 
 namespace GymSystem.Application.Abstractions.Services.IAIWorkoutPlan;

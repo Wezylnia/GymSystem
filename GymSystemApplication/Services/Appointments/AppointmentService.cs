@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
-using GymSystem.Application.Abstractions.Contract.Appointment;
-using GymSystem.Application.Abstractions.Services;
+using GymSystem.Application.Abstractions.Services.IAppointmentService;
+using GymSystem.Application.Abstractions.Services.IAppointmentService.Contract;
 using GymSystem.Common.Factory.Managers;
 using GymSystem.Common.Helpers;
 using GymSystem.Common.Models;

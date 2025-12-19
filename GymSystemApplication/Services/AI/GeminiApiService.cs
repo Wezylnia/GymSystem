@@ -1,4 +1,4 @@
-﻿using GymSystem.Application.Abstractions.Contract.AI;
+﻿using GymSystem.Application.Abstractions.Services.IAIWorkoutPlan.Contract;
 using GymSystem.Application.Abstractions.Services.IGemini;
 using GymSystem.Common.Factory.Managers;
 using GymSystem.Common.Helpers;

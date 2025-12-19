@@ -1,5 +1,5 @@
-﻿using GymSystem.Application.Abstractions.Contract.Member;
-using GymSystem.Application.Abstractions.Services;
+﻿using GymSystem.Application.Abstractions.Services.IMemberService;
+using GymSystem.Application.Abstractions.Services.IMemberService.Contract;
 using GymSystem.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

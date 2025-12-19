@@ -1,4 +1,4 @@
-﻿using GymSystem.Application.Abstractions.Services;
+﻿using GymSystem.Application.Abstractions.Services.IReportService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

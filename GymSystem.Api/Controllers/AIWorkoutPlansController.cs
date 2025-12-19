@@ -1,5 +1,5 @@
-﻿using GymSystem.Application.Abstractions.Contract.AI;
-using GymSystem.Application.Abstractions.Services.IAIWorkoutPlan;
+﻿using GymSystem.Application.Abstractions.Services.IAIWorkoutPlan;
+using GymSystem.Application.Abstractions.Services.IAIWorkoutPlan.Contract;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

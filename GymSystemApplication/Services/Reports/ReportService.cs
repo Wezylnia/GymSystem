@@ -1,4 +1,13 @@
-﻿using GymSystem.Application.Abstractions.Services;
+﻿using GymSystem.Application.Abstractions.Services.IAppointmentService;
+using GymSystem.Application.Abstractions.Services.IAppointmentService.Contract;
+using GymSystem.Application.Abstractions.Services.IGymLocationService;
+using GymSystem.Application.Abstractions.Services.IGymLocationService.Contract;
+using GymSystem.Application.Abstractions.Services.IMembershipRequestService;
+using GymSystem.Application.Abstractions.Services.IReportService;
+using GymSystem.Application.Abstractions.Services.IServiceService;
+using GymSystem.Application.Abstractions.Services.IServiceService.Contract;
+using GymSystem.Application.Abstractions.Services.ITrainerService;
+using GymSystem.Application.Abstractions.Services.ITrainerService.Contract;
 using GymSystem.Common.Factory.Managers;
 using GymSystem.Common.Helpers;
 using GymSystem.Common.Models;
@@ -114,8 +123,8 @@ public class ReportService : IReportService {
             if (!appointmentsResponse.IsSuccessful || !servicesResponse.IsSuccessful)
                 return _responseHelper.SetError<object>(null, "Veriler alınamadı", 500, "REPORT_008");
 
-            var appointments = appointmentsResponse.Data?.Where(a => a.IsActive && a.Status == AppointmentStatus.Confirmed.ToString()).ToList() ?? new List<GymSystem.Application.Abstractions.Contract.Appointment.AppointmentDto>();
-            var services = servicesResponse.Data ?? new List<GymSystem.Application.Abstractions.Contract.Service.ServiceDto>();
+            var appointments = appointmentsResponse.Data?.Where(a => a.IsActive && a.Status == AppointmentStatus.Confirmed.ToString()).ToList() ?? new List<AppointmentDto>();
+            var services = servicesResponse.Data ?? new List<ServiceDto>();
 
             var popularServices = appointments.GroupBy(a => a.ServiceId).Select(g => new { ServiceId = g.Key, Count = g.Count() }).OrderByDescending(x => x.Count).Take(top).Join(services, ps => ps.ServiceId, s => s.Id, (ps, s) => new { s.Id, s.Name, s.Description, s.Price, s.DurationMinutes, AppointmentCount = ps.Count, s.GymLocationName }).ToList();
 
@@ -152,8 +161,8 @@ public class ReportService : IReportService {
             if (!appointmentsResponse.IsSuccessful || !trainersResponse.IsSuccessful)
                 return _responseHelper.SetError<object>(null, "Veriler alınamadı", 500, "REPORT_011");
 
-            var appointments = appointmentsResponse.Data?.Where(a => a.IsActive).ToList() ?? new List<GymSystem.Application.Abstractions.Contract.Appointment.AppointmentDto>();
-            var trainers = trainersResponse.Data ?? new List<GymSystem.Application.Abstractions.Contract.Trainer.TrainerDto>();
+            var appointments = appointmentsResponse.Data?.Where(a => a.IsActive).ToList() ?? new List<AppointmentDto>();
+            var trainers = trainersResponse.Data ?? new List<TrainerDto>();
 
             if (trainerId.HasValue)
                 appointments = appointments.Where(a => a.TrainerId == trainerId.Value).ToList();
@@ -269,9 +278,9 @@ public class ReportService : IReportService {
             if (!appointmentsResponse.IsSuccessful || !trainersResponse.IsSuccessful || !gymLocationsResponse.IsSuccessful)
                 return _responseHelper.SetError<object>(null, "Veriler alınamadı", 500, "REPORT_016");
 
-            var appointments = appointmentsResponse.Data?.Where(a => a.IsActive && a.Status == AppointmentStatus.Confirmed.ToString()).ToList() ?? new List<GymSystem.Application.Abstractions.Contract.Appointment.AppointmentDto>();
-            var trainers = trainersResponse.Data ?? new List<GymSystem.Application.Abstractions.Contract.Trainer.TrainerDto>();
-            var gymLocations = gymLocationsResponse.Data ?? new List<GymSystem.Application.Abstractions.Contract.GymLocation.GymLocationDto>();
+            var appointments = appointmentsResponse.Data?.Where(a => a.IsActive && a.Status == AppointmentStatus.Confirmed.ToString()).ToList() ?? new List<AppointmentDto>();
+            var trainers = trainersResponse.Data ?? new List<TrainerDto>();
+            var gymLocations = gymLocationsResponse.Data ?? new List<GymLocationDto>();
 
             var revenueByGym = appointments.Join(trainers, a => a.TrainerId, t => t.Id, (a, t) => new { Appointment = a, Trainer = t }).GroupBy(x => x.Trainer.GymLocationId).Select(g => new { GymLocationId = g.Key, TotalRevenue = g.Sum(x => x.Appointment.Price), AppointmentCount = g.Count() }).Join(gymLocations, r => r.GymLocationId, g => g.Id, (r, g) => new { GymLocationId = g.Id, GymLocationName = g.Name, r.TotalRevenue, r.AppointmentCount }).OrderByDescending(x => x.TotalRevenue).ToList();
 
@@ -291,8 +300,8 @@ public class ReportService : IReportService {
             if (!appointmentsResponse.IsSuccessful || !trainersResponse.IsSuccessful)
                 return _responseHelper.SetError<object>(null, "Veriler alınamadı", 500, "REPORT_017");
 
-            var appointments = appointmentsResponse.Data?.Where(a => a.IsActive && a.Status == AppointmentStatus.Confirmed.ToString()).ToList() ?? new List<GymSystem.Application.Abstractions.Contract.Appointment.AppointmentDto>();
-            var trainers = trainersResponse.Data ?? new List<GymSystem.Application.Abstractions.Contract.Trainer.TrainerDto>();
+            var appointments = appointmentsResponse.Data?.Where(a => a.IsActive && a.Status == AppointmentStatus.Confirmed.ToString()).ToList() ?? new List<AppointmentDto>();
+            var trainers = trainersResponse.Data ?? new List<TrainerDto>();
 
             if (gymLocationId.HasValue) {
                 var gymTrainerIds = trainers.Where(t => t.GymLocationId == gymLocationId.Value).Select(t => t.Id).ToHashSet();

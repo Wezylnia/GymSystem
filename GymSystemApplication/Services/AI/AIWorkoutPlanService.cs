@@ -1,5 +1,4 @@
-﻿using GymSystem.Application.Abstractions.Contract.AI;
-using GymSystem.Application.Abstractions.Services.IAIWorkoutPlan;
+﻿using GymSystem.Application.Abstractions.Services.IAIWorkoutPlan;
 using GymSystem.Application.Abstractions.Services.IGemini;
 using GymSystem.Common.Factory.Managers;
 using GymSystem.Common.Helpers;
@@ -8,6 +7,7 @@ using GymSystem.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using AutoMapper;
+using GymSystem.Application.Abstractions.Services.IAIWorkoutPlan.Contract;
 
 namespace GymSystem.Application.Services.AI;
 

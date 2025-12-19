@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
-using GymSystem.Application.Abstractions.Contract.GymLocation;
-using GymSystem.Application.Abstractions.Services;
+using GymSystem.Application.Abstractions.Services.IGymLocationService;
+using GymSystem.Application.Abstractions.Services.IGymLocationService.Contract;
 using GymSystem.Common.Factory.Managers;
 using GymSystem.Common.Helpers;
 using GymSystem.Common.Models;

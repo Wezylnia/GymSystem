@@ -1,5 +1,5 @@
-﻿using GymSystem.Application.Abstractions.Contract.Appointment;
-using GymSystem.Application.Abstractions.Services;
+﻿using GymSystem.Application.Abstractions.Services.IAppointmentService;
+using GymSystem.Application.Abstractions.Services.IAppointmentService.Contract;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

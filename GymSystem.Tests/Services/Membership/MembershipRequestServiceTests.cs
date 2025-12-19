@@ -2,7 +2,7 @@ using AutoFixture;
 using AutoFixture.AutoMoq;
 using AutoMapper;
 using FluentAssertions;
-using GymSystem.Application.Abstractions.Contract.MembershipRequest;
+using GymSystem.Application.Abstractions.Services.IMembershipRequestService.Contract;
 using GymSystem.Application.Services.Membership;
 using GymSystem.Common.Factory.Managers;
 using GymSystem.Common.Factory.Repository;
