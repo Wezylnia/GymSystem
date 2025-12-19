@@ -31,13 +31,23 @@ public class DashboardController : Controller {
 
             var queryParam = gymLocationId.HasValue ? $"?gymLocationId={gymLocationId}" : "";
 
-            // Fetch Dashboard Stats
-            dashboard.Stats = await _apiHelper.GetAsync<DashboardStatsViewModel>(
-                $"/api/reports/gym-owner-dashboard{queryParam}") ?? new DashboardStatsViewModel();
+            // Fetch Dashboard Stats - Raw response ile parse et
+            var statsResponse = await _apiHelper.GetRawAsync($"/api/reports/gym-owner-dashboard{queryParam}");
+            if (statsResponse.IsSuccessStatusCode) {
+                var statsContent = await statsResponse.Content.ReadAsStringAsync();
+                _logger.LogInformation("Dashboard stats raw response: {Response}", statsContent);
+                dashboard.Stats = JsonSerializer.Deserialize<DashboardStatsViewModel>(statsContent,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new DashboardStatsViewModel();
+            }
 
-            // Fetch Membership Statistics
-            dashboard.MembershipStats = await _apiHelper.GetAsync<MembershipStatisticsViewModel>(
-                $"/api/reports/membership-statistics{queryParam}") ?? new MembershipStatisticsViewModel();
+            // Fetch Membership Statistics - Raw response ile parse et
+            var membershipResponse = await _apiHelper.GetRawAsync($"/api/reports/membership-statistics{queryParam}");
+            if (membershipResponse.IsSuccessStatusCode) {
+                var membershipContent = await membershipResponse.Content.ReadAsStringAsync();
+                _logger.LogInformation("Membership stats raw response: {Response}", membershipContent);
+                dashboard.MembershipStats = JsonSerializer.Deserialize<MembershipStatisticsViewModel>(membershipContent,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new MembershipStatisticsViewModel();
+            }
 
             // Fetch Revenue Trend
             var revenueTrendResponse = await _apiHelper.GetRawAsync($"/api/reports/revenue-trend{queryParam}");

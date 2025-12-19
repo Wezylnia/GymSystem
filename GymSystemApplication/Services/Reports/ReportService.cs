@@ -191,19 +191,38 @@ public class ReportService : IReportService {
             var now = DateTime.Now;
             var lastMonth = now.AddMonths(-1);
 
-            var membersTask = memberRepository.QueryNoTracking().Where(m => m.IsActive && (!gymLocationId.HasValue || m.CurrentGymLocationId == gymLocationId.Value)).Select(m => new { m.Id, m.MembershipEndDate }).ToListAsync();
-            var trainersTask = trainerRepository.QueryNoTracking().Where(t => t.IsActive && (!gymLocationId.HasValue || t.GymLocationId == gymLocationId.Value)).CountAsync();
-            var requestsTask = requestRepository.QueryNoTracking().Where(mr => mr.IsActive && (!gymLocationId.HasValue || mr.GymLocationId == gymLocationId.Value)).ToListAsync();
-            var appointmentsTask = appointmentRepository.QueryNoTracking().Where(a => a.IsActive).ToListAsync();
+            // EF Core DbContext thread-safe olmadığı için sorguları sıralı çalıştır
+            // Üyeler: CurrentGymLocationId olan (yani bir salona kayıtlı) üyeleri çek
+            var members = await memberRepository.QueryNoTracking()
+                .Where(m => m.IsActive && m.CurrentGymLocationId.HasValue && (!gymLocationId.HasValue || m.CurrentGymLocationId == gymLocationId.Value))
+                .Select(m => new { m.Id, m.MembershipEndDate, m.CurrentGymLocationId })
+                .ToListAsync();
 
-            await Task.WhenAll(membersTask, trainersTask, requestsTask, appointmentsTask);
+            var trainers = await trainerRepository.QueryNoTracking()
+                .Where(t => t.IsActive && (!gymLocationId.HasValue || t.GymLocationId == gymLocationId.Value))
+                .Select(t => new { t.Id, t.GymLocationId })
+                .ToListAsync();
 
-            var members = await membersTask;
-            var trainersCount = await trainersTask;
-            var requests = await requestsTask;
-            var appointments = await appointmentsTask;
+            var requests = await requestRepository.QueryNoTracking()
+                .Where(mr => mr.IsActive && (!gymLocationId.HasValue || mr.GymLocationId == gymLocationId.Value))
+                .ToListAsync();
+
+            // Randevuları Trainer ile birlikte çek, gymLocationId filtrelemesi için
+            var appointments = await appointmentRepository.QueryNoTracking()
+                .Include(a => a.Trainer)
+                .Where(a => a.IsActive)
+                .ToListAsync();
+
+            var trainersCount = trainers.Count;
+
+            // gymLocationId varsa randevuları filtrele
+            if (gymLocationId.HasValue) {
+                var gymTrainerIds = trainers.Where(t => t.GymLocationId == gymLocationId.Value).Select(t => t.Id).ToHashSet();
+                appointments = appointments.Where(a => gymTrainerIds.Contains(a.TrainerId)).ToList();
+            }
 
             var totalMembers = members.Count;
+            // Aktif üye: MembershipEndDate > now olan ve CurrentGymLocationId'si olan üyeler
             var activeMembers = members.Count(m => m.MembershipEndDate.HasValue && m.MembershipEndDate.Value > now);
             var pendingRequests = requests.Count(r => r.Status == MembershipRequestStatus.Pending);
             var thisMonthRequests = requests.Count(r => r.CreatedAt.Year == now.Year && r.CreatedAt.Month == now.Month);
