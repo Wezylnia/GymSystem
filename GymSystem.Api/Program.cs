@@ -16,6 +16,7 @@ using GymSystem.Common.Helpers;
 using GymSystem.Application.Abstractions.Services.IAIWorkoutPlan;
 using GymSystem.Application.Abstractions.Services.IGemini;
 using Microsoft.AspNetCore.DataProtection;
+using GymSystem.Application.Services.GymLocations.Profile;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,7 +48,7 @@ builder.Services.AddDataProtection()
 builder.Services.AddInfrastructureServices(builder.Configuration, "appsettings.json");
 
 // AutoMapper Configuration - Scan assembly containing Profile classes
-builder.Services.AddAutoMapper(typeof(GymSystem.Application.Mappings.GymLocationProfile).Assembly);
+builder.Services.AddAutoMapper(typeof(GymLocationProfile).Assembly);
 Console.WriteLine("[ServiceRegistration] ✓ AutoMapper configured with all profiles");
 
 // Cookie Authentication için yapılandırma (MVC ile paylaşımlı)

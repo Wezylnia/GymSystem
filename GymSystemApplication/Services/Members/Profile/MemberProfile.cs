@@ -3,7 +3,7 @@ using GymSystem.Application.Abstractions.Contract.Member;
 using GymSystem.Common.Helpers;
 using GymSystem.Domain.Entities;
 
-namespace GymSystem.Application.Mappings;
+namespace GymSystem.Application.Services.Members.Profile;
 
 public class MemberProfile : Profile {
     public MemberProfile() {

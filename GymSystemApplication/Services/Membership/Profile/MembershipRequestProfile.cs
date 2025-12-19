@@ -3,7 +3,7 @@ using GymSystem.Application.Abstractions.Contract.MembershipRequest;
 using GymSystem.Common.Helpers;
 using GymSystem.Domain.Entities;
 
-namespace GymSystem.Application.Mappings;
+namespace GymSystem.Application.Services.Membership.Profile;
 
 /// <summary>
 /// AutoMapper profile for MembershipRequest mappings

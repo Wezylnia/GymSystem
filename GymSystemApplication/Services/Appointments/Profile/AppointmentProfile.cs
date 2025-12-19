@@ -2,7 +2,7 @@
 using GymSystem.Application.Abstractions.Contract.Appointment;
 using GymSystem.Common.Helpers;
 
-namespace GymSystem.Application.Mappings;
+namespace GymSystem.Application.Services.Appointments.Profile;
 
 /// <summary>
 /// AutoMapper profile for Appointment mappings

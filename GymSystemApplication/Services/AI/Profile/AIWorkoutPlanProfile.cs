@@ -3,7 +3,7 @@ using GymSystem.Application.Abstractions.Contract.AI;
 using GymSystem.Common.Helpers;
 using GymSystem.Domain.Entities;
 
-namespace GymSystem.Application.Mappings;
+namespace GymSystem.Application.Services.AI.Profile;
 
 public class AIWorkoutPlanProfile : Profile {
     public AIWorkoutPlanProfile() {

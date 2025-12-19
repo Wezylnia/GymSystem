@@ -3,7 +3,7 @@ using GymSystem.Application.Abstractions.Contract.Trainer;
 using GymSystem.Common.Helpers;
 using GymSystem.Domain.Entities;
 
-namespace GymSystem.Application.Mappings;
+namespace GymSystem.Application.Services.Trainers.Profile;
 
 /// <summary>
 /// AutoMapper profile for Trainer mappings
