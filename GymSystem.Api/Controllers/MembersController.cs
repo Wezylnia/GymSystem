@@ -84,7 +84,7 @@ public class MembersController : ControllerBase {
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin,GymOwner")]
+    [Authorize(Roles = "Admin")]  // Sadece Admin silebilir
     public async Task<IActionResult> Delete(int id) {
         var response = await _memberService.DeleteAsync(id);
 

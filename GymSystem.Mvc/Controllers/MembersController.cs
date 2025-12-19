@@ -102,11 +102,19 @@ public class MembersController : Controller {
                 return RedirectToAction(nameof(Index));
             }
 
-            // GymOwner ise, sadece kendi salonuna kayıtlı üyeleri düzenleyebilir
+            // GymOwner ise, sadece kendi salonuna kayıtlı ve AKTİF üyeliği olan kişileri düzenleyebilir
             if (User.IsInRole("GymOwner")) {
                 var gymLocationId = GetCurrentGymLocationId();
                 if (gymLocationId == null || apiMember.CurrentGymLocationId != gymLocationId) {
                     TempData["ErrorMessage"] = "Bu üyeyi düzenleme yetkiniz yok.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Aktif üyelik kontrolü
+                var hasActiveMembership = apiMember.MembershipEndDate.HasValue && 
+                                          apiMember.MembershipEndDate.Value > DateTime.Now;
+                if (!hasActiveMembership) {
+                    TempData["ErrorMessage"] = "Sadece aktif üyeliği olan kişileri düzenleyebilirsiniz.";
                     return RedirectToAction(nameof(Index));
                 }
             }
@@ -136,13 +144,21 @@ public class MembersController : Controller {
         }
 
         try {
-            // GymOwner ise, sadece kendi salonuna kayıtlı üyeleri güncelleyebilir
+            // GymOwner ise, sadece kendi salonuna kayıtlı ve AKTİF üyeliği olan kişileri güncelleyebilir
             if (User.IsInRole("GymOwner")) {
                 var apiMember = await _apiHelper.GetAsync<ApiMemberDto>(ApiEndpoints.MemberById(id));
                 var gymLocationId = GetCurrentGymLocationId();
 
                 if (apiMember == null || gymLocationId == null || apiMember.CurrentGymLocationId != gymLocationId) {
                     TempData["ErrorMessage"] = "Bu üyeyi güncelleme yetkiniz yok.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Aktif üyelik kontrolü
+                var hasActiveMembership = apiMember.MembershipEndDate.HasValue && 
+                                          apiMember.MembershipEndDate.Value > DateTime.Now;
+                if (!hasActiveMembership) {
+                    TempData["ErrorMessage"] = "Sadece aktif üyeliği olan kişileri güncelleyebilirsiniz.";
                     return RedirectToAction(nameof(Index));
                 }
             }
@@ -190,20 +206,9 @@ public class MembersController : Controller {
     // POST: Members/Delete/5
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(Roles = "Admin,GymOwner")]
+    [Authorize(Roles = "Admin")]  // Sadece Admin silebilir
     public async Task<IActionResult> Delete(int id) {
         try {
-            // GymOwner ise, sadece kendi salonuna kayıtlı üyeleri silebilir
-            if (User.IsInRole("GymOwner")) {
-                var apiMember = await _apiHelper.GetAsync<ApiMemberDto>(ApiEndpoints.MemberById(id));
-                var gymLocationId = GetCurrentGymLocationId();
-
-                if (apiMember == null || gymLocationId == null || apiMember.CurrentGymLocationId != gymLocationId) {
-                    TempData["ErrorMessage"] = "Bu üyeyi silme yetkiniz yok.";
-                    return RedirectToAction(nameof(Index));
-                }
-            }
-
             var (success, errorMessage) = await _apiHelper.DeleteAsync(
                 ApiEndpoints.MemberById(id));
 
