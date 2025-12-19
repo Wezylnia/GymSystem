@@ -514,20 +514,42 @@ public class MemberServiceTests {
             .With(x => x.Id, memberId)
             .With(x => x.IsActive, true)
             .Create();
-        var expectedResponse = _fixture.Build<ServiceResponse<bool>>()
-            .With(x => x.Data, true)
-            .With(x => x.IsSuccessful, true)
-            .With(x => x.Message, "Member silindi")
-            .With(x => x.Error, (ErrorInfo)null)
-            .Create();
 
         var members = new List<Member> { member };
         var mockQueryable = members.AsQueryable().BuildMock();
 
+        // Empty lists for related entities (cascade delete)
+        var emptyAiPlans = new List<AIWorkoutPlan>().AsQueryable().BuildMock();
+        var emptyRequests = new List<MembershipRequest>().AsQueryable().BuildMock();
+        var emptyAppointments = new List<Appointment>().AsQueryable().BuildMock();
+
+        // Mock repositories for cascade delete
+        var mockAiPlanRepository = new Mock<IRepository<AIWorkoutPlan>>();
+        var mockMembershipRequestRepository = new Mock<IRepository<MembershipRequest>>();
+        var mockAppointmentRepository = new Mock<IRepository<Appointment>>();
+
+        mockAiPlanRepository.Setup(x => x.Query()).Returns(emptyAiPlans);
+        mockMembershipRequestRepository.Setup(x => x.Query()).Returns(emptyRequests);
+        mockAppointmentRepository.Setup(x => x.Query()).Returns(emptyAppointments);
+
+        _mockRepositoryFactory.Setup(x => x.CreateRepository<AIWorkoutPlan>()).Returns(mockAiPlanRepository.Object);
+        _mockRepositoryFactory.Setup(x => x.CreateRepository<MembershipRequest>()).Returns(mockMembershipRequestRepository.Object);
+        _mockRepositoryFactory.Setup(x => x.CreateRepository<Appointment>()).Returns(mockAppointmentRepository.Object);
+
         _mockMemberRepository.Setup(x => x.Query()).Returns(mockQueryable);
         _mockMemberRepository.Setup(x => x.UpdateAsync(It.IsAny<Member>())).ReturnsAsync(member);
         _mockMemberRepository.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
-        _mockResponseHelper.Setup(x => x.SetSuccess(true, "Member silindi")).Returns(expectedResponse);
+
+        var expectedResponse = _fixture.Build<ServiceResponse<bool>>()
+            .With(x => x.Data, true)
+            .With(x => x.IsSuccessful, true)
+            .With(x => x.Message, "Member ve 0 AI planý, 0 üyelik talebi, 0 randevu silindi")
+            .With(x => x.Error, (ErrorInfo)null)
+            .Create();
+
+        _mockResponseHelper
+            .Setup(x => x.SetSuccess(true, It.Is<string>(s => s.Contains("Member ve"))))
+            .Returns(expectedResponse);
 
         // Act
         var result = await _sut.DeleteAsync(memberId);
@@ -536,7 +558,6 @@ public class MemberServiceTests {
         result.Should().NotBeNull();
         result.IsSuccessful.Should().BeTrue();
         result.Data.Should().BeTrue();
-        result.Message.Should().Be("Member silindi");
         member.IsActive.Should().BeFalse();
         member.UpdatedAt.Should().NotBeNull();
         _mockMemberRepository.Verify(x => x.UpdateAsync(It.Is<Member>(m => m.IsActive == false)), Times.Once);

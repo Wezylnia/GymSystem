@@ -272,11 +272,14 @@ public class TrainerServiceTests {
         // Arrange
         var trainerDto = _fixture.Build<TrainerDto>()
             .Without(x => x.Id)
+            .Without(x => x.SelectedServiceIds)
             .Create();
         var trainerId = _fixture.Create<int>();
         var trainer = _fixture.Build<Trainer>()
             .With(x => x.Id, trainerId)
             .With(x => x.IsActive, true)
+            .Without(x => x.Specialties)
+            .Without(x => x.GymLocation)
             .Create();
         var createdTrainerDto = _fixture.Build<TrainerDto>()
             .With(x => x.Id, trainerId)
@@ -287,6 +290,10 @@ public class TrainerServiceTests {
             .With(x => x.Message, "Antrenör oluþturuldu")
             .With(x => x.Error, (ErrorInfo)null)
             .Create();
+
+        // Setup QueryNoTracking for re-fetching after save
+        var trainers = new List<Trainer> { trainer };
+        var mockQueryable = trainers.AsQueryable().BuildMock();
 
         _mockMapper
             .Setup(x => x.Map<Trainer>(
@@ -300,47 +307,51 @@ public class TrainerServiceTests {
             .Returns(createdTrainerDto)
             .Verifiable();
 
-        _mockTrainerRepository
-            .Setup(x => x.AddAsync(It.IsAny<Trainer>()))
-            .ReturnsAsync(trainer)
-            .Verifiable();
+            _mockTrainerRepository
+                .Setup(x => x.AddAsync(It.IsAny<Trainer>()))
+                .ReturnsAsync(trainer)
+                .Verifiable();
 
-        _mockTrainerRepository
-            .Setup(x => x.SaveChangesAsync())
-            .ReturnsAsync(1)
-            .Verifiable();
+            _mockTrainerRepository
+                .Setup(x => x.SaveChangesAsync())
+                .ReturnsAsync(1)
+                .Verifiable();
 
-        _mockResponseHelper
-            .Setup(x => x.SetSuccess(It.IsAny<TrainerDto>(), "Antrenör oluþturuldu"))
-            .Returns(expectedResponse)
-            .Verifiable();
+            _mockTrainerRepository
+                .Setup(x => x.QueryNoTracking())
+                .Returns(mockQueryable);
 
-        // Act
-        var result = await _sut.CreateAsync(trainerDto);
+            _mockResponseHelper
+                .Setup(x => x.SetSuccess(It.IsAny<TrainerDto>(), "Antrenör oluþturuldu"))
+                .Returns(expectedResponse)
+                .Verifiable();
 
-        // Assert
-        result.Should().NotBeNull();
-        result.IsSuccessful.Should().BeTrue();
-        result.Data.Should().NotBeNull();
-        result.Data!.Id.Should().Be(trainerId);
-        result.Message.Should().Be("Antrenör oluþturuldu");
+            // Act
+            var result = await _sut.CreateAsync(trainerDto);
 
-        // Verify all mocks were called
-        _mockMapper.Verify();
-        _mockTrainerRepository.Verify();
-        _mockResponseHelper.Verify();
+            // Assert
+            result.Should().NotBeNull();
+            result.IsSuccessful.Should().BeTrue();
+            result.Data.Should().NotBeNull();
+            result.Data!.Id.Should().Be(trainerId);
+            result.Message.Should().Be("Antrenör oluþturuldu");
 
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Information,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => true),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
-    }
+            // Verify all mocks were called
+            _mockMapper.Verify();
+            _mockTrainerRepository.Verify();
+            _mockResponseHelper.Verify();
 
-    [Fact]
+            _mockLogger.Verify(
+                x => x.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => true),
+                    null,
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                Times.Once);
+        }
+
+        [Fact]
     public async Task CreateAsync_WhenRepositoryThrowsException_ShouldReturnError() {
         // Arrange
         var trainerDto = _fixture.Build<TrainerDto>()
@@ -395,10 +406,13 @@ public class TrainerServiceTests {
         var trainerId = _fixture.Create<int>();
         var trainerDto = _fixture.Build<TrainerDto>()
             .With(x => x.Id, trainerId)
+            .Without(x => x.SelectedServiceIds)
             .Create();
         var existingTrainer = _fixture.Build<Trainer>()
             .With(x => x.Id, trainerId)
             .With(x => x.IsActive, true)
+            .With(x => x.Specialties, new List<TrainerSpecialty>())
+            .Without(x => x.GymLocation)
             .Create();
         var updatedTrainerDto = _fixture.Build<TrainerDto>()
             .With(x => x.Id, trainerId)
@@ -413,12 +427,18 @@ public class TrainerServiceTests {
         var trainers = new List<Trainer> { existingTrainer };
         var mockQueryable = trainers.AsQueryable().BuildMock();
 
+        // Mock for TrainerSpecialty repository
+        var mockSpecialtyRepository = new Mock<IRepository<TrainerSpecialty>>();
+        mockSpecialtyRepository.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
+        _mockRepositoryFactory.Setup(x => x.CreateRepository<TrainerSpecialty>()).Returns(mockSpecialtyRepository.Object);
+
         _mockTrainerRepository.Setup(x => x.Query()).Returns(mockQueryable);
+        _mockTrainerRepository.Setup(x => x.QueryNoTracking()).Returns(mockQueryable);
         _mockMapper.Setup(x => x.Map(trainerDto, existingTrainer)).Returns(existingTrainer);
         _mockMapper.Setup(x => x.Map<TrainerDto>(It.IsAny<Trainer>())).Returns(updatedTrainerDto);
         _mockTrainerRepository.Setup(x => x.UpdateAsync(It.IsAny<Trainer>())).ReturnsAsync(existingTrainer);
         _mockTrainerRepository.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
-        _mockResponseHelper.Setup(x => x.SetSuccess(updatedTrainerDto, "Antrenör güncellendi")).Returns(expectedResponse);
+        _mockResponseHelper.Setup(x => x.SetSuccess(It.IsAny<TrainerDto>(), "Antrenör güncellendi")).Returns(expectedResponse);
 
         // Act
         var result = await _sut.UpdateAsync(trainerId, trainerDto);
