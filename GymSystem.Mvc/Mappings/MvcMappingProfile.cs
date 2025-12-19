@@ -54,24 +54,24 @@ public class MvcMappingProfile : Profile {
         // ApiAppointmentDto -> AppointmentViewModel
         CreateMap<ApiAppointmentDto, AppointmentViewModel>()
             .ForMember(dest => dest.MemberName,
-                opt => opt.MapFrom(src => 
-                    !string.IsNullOrEmpty(src.MemberName) 
-                        ? src.MemberName 
+                opt => opt.MapFrom(src =>
+                    !string.IsNullOrEmpty(src.MemberName)
+                        ? src.MemberName
                         : src.Member != null ? $"{src.Member.FirstName} {src.Member.LastName}" : string.Empty))
             .ForMember(dest => dest.TrainerName,
-                opt => opt.MapFrom(src => 
-                    !string.IsNullOrEmpty(src.TrainerName) 
-                        ? src.TrainerName 
+                opt => opt.MapFrom(src =>
+                    !string.IsNullOrEmpty(src.TrainerName)
+                        ? src.TrainerName
                         : src.Trainer != null ? $"{src.Trainer.FirstName} {src.Trainer.LastName}" : string.Empty))
             .ForMember(dest => dest.ServiceName,
-                opt => opt.MapFrom(src => 
-                    !string.IsNullOrEmpty(src.ServiceName) 
-                        ? src.ServiceName 
+                opt => opt.MapFrom(src =>
+                    !string.IsNullOrEmpty(src.ServiceName)
+                        ? src.ServiceName
                         : src.Service != null ? src.Service.Name : string.Empty))
             .ForMember(dest => dest.GymLocationName,
-                opt => opt.MapFrom(src => 
-                    !string.IsNullOrEmpty(src.GymLocationName) 
-                        ? src.GymLocationName 
+                opt => opt.MapFrom(src =>
+                    !string.IsNullOrEmpty(src.GymLocationName)
+                        ? src.GymLocationName
                         : src.Service != null ? src.Service.GymLocationName : string.Empty));
 
         // ApiAIWorkoutPlanDto -> AIWorkoutPlanViewModel
@@ -83,11 +83,11 @@ public class MvcMappingProfile : Profile {
         CreateMap<ApiMembershipRequestDto, MembershipRequestViewModel>()
             .ForMember(dest => dest.Status,
                 opt => opt.MapFrom(src => src.StatusEnum)) // String'den enum'a dönüştür
-            .ForMember(dest => dest.MemberName, 
+            .ForMember(dest => dest.MemberName,
                 opt => opt.MapFrom(src => src.MemberName ?? "Bilinmiyor"))
-            .ForMember(dest => dest.GymLocationName, 
+            .ForMember(dest => dest.GymLocationName,
                 opt => opt.MapFrom(src => src.GymLocationName ?? "Bilinmiyor"))
-            .ForMember(dest => dest.GymLocationAddress, 
+            .ForMember(dest => dest.GymLocationAddress,
                 opt => opt.MapFrom(src => src.GymLocationAddress ?? "Bilinmiyor"));
     }
 }

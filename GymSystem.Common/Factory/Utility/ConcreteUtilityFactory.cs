@@ -6,27 +6,22 @@ using Microsoft.Extensions.Logging;
 
 namespace GymSystem.Common.Factory.Utility;
 
-public class ConcreteUtilityFactory<T> : UtilityFactory<T>
-{
+public class ConcreteUtilityFactory<T> : UtilityFactory<T> {
     protected readonly IServiceProvider _serviceProvider;
 
-    public ConcreteUtilityFactory(IServiceProvider serviceProvider)
-    {
+    public ConcreteUtilityFactory(IServiceProvider serviceProvider) {
         _serviceProvider = serviceProvider;
     }
 
-    public override ILogger<T> CreateLogger()
-    {
+    public override ILogger<T> CreateLogger() {
         return _serviceProvider.GetRequiredService<ILogger<T>>();
     }
 
-    public override IConfiguration CreateConfiguration()
-    {
+    public override IConfiguration CreateConfiguration() {
         return _serviceProvider.GetRequiredService<IConfiguration>();
     }
 
-    public override IServiceResponseHelper CreateServiceResponseHelper()
-    {
+    public override IServiceResponseHelper CreateServiceResponseHelper() {
         return _serviceProvider.GetRequiredService<IServiceResponseHelper>();
     }
 

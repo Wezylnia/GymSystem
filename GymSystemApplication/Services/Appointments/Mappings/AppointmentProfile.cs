@@ -7,10 +7,8 @@ namespace GymSystem.Application.Services.Appointments.Mappings;
 /// <summary>
 /// AutoMapper profile for Appointment mappings
 /// </summary>
-public class AppointmentProfile : Profile
-{
-    public AppointmentProfile()
-    {
+public class AppointmentProfile : Profile {
+    public AppointmentProfile() {
         // Entity -> DTO
         CreateMap<Domain.Entities.Appointment, AppointmentDto>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))

@@ -11,29 +11,25 @@ using GymSystem.Application.Abstractions.Services.IAIWorkoutPlan.Contract;
 
 namespace GymSystem.Application.Services.AI;
 
-public class AIWorkoutPlanService : IAIWorkoutPlanService
-{
+public class AIWorkoutPlanService : IAIWorkoutPlanService {
     private readonly BaseFactory<AIWorkoutPlanService> _baseFactory;
     private readonly IServiceResponseHelper _responseHelper;
     private readonly ILogger<AIWorkoutPlanService> _logger;
     private readonly IMapper _mapper;
 
-    public AIWorkoutPlanService(BaseFactory<AIWorkoutPlanService> baseFactory)
-    {
+    public AIWorkoutPlanService(BaseFactory<AIWorkoutPlanService> baseFactory) {
         _baseFactory = baseFactory;
         _responseHelper = baseFactory.CreateUtilityFactory().CreateServiceResponseHelper();
         _logger = baseFactory.CreateUtilityFactory().CreateLogger();
         _mapper = baseFactory.CreateUtilityFactory().CreateMapper();
     }
 
-    public async Task<ServiceResponse<AIWorkoutPlanDto>> GenerateWorkoutPlanAsync(AIWorkoutPlanDto request)
-    {
-        try
-        {
+    public async Task<ServiceResponse<AIWorkoutPlanDto>> GenerateWorkoutPlanAsync(AIWorkoutPlanDto request) {
+        try {
             var memberRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<Member>();
             var member = await memberRepository.QueryNoTracking().FirstOrDefaultAsync(m => m.Id == request.MemberId);
 
-            if (member == null) 
+            if (member == null)
                 return _responseHelper.SetError<AIWorkoutPlanDto>(null, $"Member ID {request.MemberId} bulunamadı.", 404, "AI_WORKOUT_001");
 
             // Member'dan Gender bilgisini al
@@ -42,8 +38,7 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService
             var geminiService = _baseFactory.GetService<IGeminiApiService>();
             var aiPlanResponse = await geminiService.GenerateWorkoutPlanAsync(request);
 
-            if (!aiPlanResponse.IsSuccessful || string.IsNullOrWhiteSpace(aiPlanResponse.Data))
-            {
+            if (!aiPlanResponse.IsSuccessful || string.IsNullOrWhiteSpace(aiPlanResponse.Data)) {
                 _logger.LogError("Gemini API'den plan alınırken hata. Member ID: {MemberId}, Error: {Error}", request.MemberId, aiPlanResponse.Error?.ErrorMessage);
                 return _responseHelper.SetError<AIWorkoutPlanDto>(null, aiPlanResponse.Error?.ErrorMessage ?? "AI planı oluşturulamadı", aiPlanResponse.Error?.StatusCode ?? 500, aiPlanResponse.Error?.ErrorCode ?? "AI_WORKOUT_002");
             }
@@ -63,21 +58,18 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService
             var responseDto = _mapper.Map<AIWorkoutPlanDto>(workoutPlan);
             return _responseHelper.SetSuccess(responseDto, "Workout planı başarıyla oluşturuldu");
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Workout planı oluşturulurken hata. Member ID: {MemberId}", request.MemberId);
             return _responseHelper.SetError<AIWorkoutPlanDto>(null, new ErrorInfo("Workout planı oluşturulurken bir hata oluştu", "AI_WORKOUT_003", ex.StackTrace, 500));
         }
     }
 
-    public async Task<ServiceResponse<AIWorkoutPlanDto>> GenerateDietPlanAsync(AIWorkoutPlanDto request)
-    {
-        try
-        {
+    public async Task<ServiceResponse<AIWorkoutPlanDto>> GenerateDietPlanAsync(AIWorkoutPlanDto request) {
+        try {
             var memberRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<Member>();
             var member = await memberRepository.QueryNoTracking().FirstOrDefaultAsync(m => m.Id == request.MemberId);
 
-            if (member == null) 
+            if (member == null)
                 return _responseHelper.SetError<AIWorkoutPlanDto>(null, $"Member ID {request.MemberId} bulunamadı.", 404, "AI_DIET_001");
 
             // Member'dan Gender bilgisini al
@@ -86,8 +78,7 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService
             var geminiService = _baseFactory.GetService<IGeminiApiService>();
             var aiPlanResponse = await geminiService.GenerateDietPlanAsync(request);
 
-            if (!aiPlanResponse.IsSuccessful || string.IsNullOrWhiteSpace(aiPlanResponse.Data))
-            {
+            if (!aiPlanResponse.IsSuccessful || string.IsNullOrWhiteSpace(aiPlanResponse.Data)) {
                 _logger.LogError("Gemini API'den plan alınırken hata. Member ID: {MemberId}, Error: {Error}", request.MemberId, aiPlanResponse.Error?.ErrorMessage);
                 return _responseHelper.SetError<AIWorkoutPlanDto>(null, aiPlanResponse.Error?.ErrorMessage ?? "AI diet planı oluşturulamadı", aiPlanResponse.Error?.StatusCode ?? 500, aiPlanResponse.Error?.ErrorCode ?? "AI_DIET_002");
             }
@@ -107,58 +98,49 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService
             var responseDto = _mapper.Map<AIWorkoutPlanDto>(dietPlan);
             return _responseHelper.SetSuccess(responseDto, "Diet planı başarıyla oluşturuldu");
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Diet planı oluşturulurken hata. Member ID: {MemberId}", request.MemberId);
             return _responseHelper.SetError<AIWorkoutPlanDto>(null, new ErrorInfo("Diet planı oluşturulurken bir hata oluştu", "AI_DIET_003", ex.StackTrace, 500));
         }
     }
 
-    public async Task<ServiceResponse<List<AIWorkoutPlanDto>>> GetMemberPlansAsync(int memberId)
-    {
-        try
-        {
+    public async Task<ServiceResponse<List<AIWorkoutPlanDto>>> GetMemberPlansAsync(int memberId) {
+        try {
             var planRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<AIWorkoutPlan>();
             var plans = await planRepository.QueryNoTracking().Include(p => p.Member).Where(p => p.MemberId == memberId && p.IsActive).OrderByDescending(p => p.CreatedAt).ToListAsync();
 
             var dtos = _mapper.Map<List<AIWorkoutPlanDto>>(plans);
             return _responseHelper.SetSuccess(dtos);
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Member planları getirilirken hata. Member ID: {MemberId}", memberId);
             return _responseHelper.SetError<List<AIWorkoutPlanDto>>(null, new ErrorInfo("Planlar getirilirken bir hata oluştu", "AI_PLANS_001", ex.StackTrace, 500));
         }
     }
 
-    public async Task<ServiceResponse<AIWorkoutPlanDto?>> GetPlanByIdAsync(int id)
-    {
-        try
-        {
+    public async Task<ServiceResponse<AIWorkoutPlanDto?>> GetPlanByIdAsync(int id) {
+        try {
             var planRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<AIWorkoutPlan>();
             var plan = await planRepository.QueryNoTracking().Include(p => p.Member).Where(p => p.Id == id && p.IsActive).FirstOrDefaultAsync();
 
-            if (plan == null) 
+            if (plan == null)
                 return _responseHelper.SetError<AIWorkoutPlanDto?>(null, $"Plan ID {id} bulunamadı", 404, "AI_PLAN_001");
 
             var dto = _mapper.Map<AIWorkoutPlanDto>(plan);
             return _responseHelper.SetSuccess<AIWorkoutPlanDto?>(dto);
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Plan getirilirken hata. Plan ID: {PlanId}", id);
             return _responseHelper.SetError<AIWorkoutPlanDto?>(null, new ErrorInfo("Plan getirilirken bir hata oluştu", "AI_PLAN_002", ex.StackTrace, 500));
         }
     }
 
-    public async Task<ServiceResponse<bool>> DeletePlanAsync(int id)
-    {
-        try
-        {
+    public async Task<ServiceResponse<bool>> DeletePlanAsync(int id) {
+        try {
             var planRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<AIWorkoutPlan>();
             var plan = await planRepository.Query().Where(p => p.Id == id && p.IsActive).FirstOrDefaultAsync();
 
-            if (plan == null) 
+            if (plan == null)
                 return _responseHelper.SetError<bool>(false, $"Plan ID {id} bulunamadı", 404, "AI_DELETE_001");
 
             plan.IsActive = false;
@@ -170,25 +152,21 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService
             _logger.LogInformation("AI Plan silindi. Plan ID: {PlanId}", id);
             return _responseHelper.SetSuccess(true, "Plan başarıyla silindi");
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Plan silinirken hata oluştu. Plan ID: {PlanId}", id);
             return _responseHelper.SetError<bool>(false, new ErrorInfo("Plan silinirken bir hata oluştu", "AI_DELETE_002", ex.StackTrace, 500));
         }
     }
 
-    public async Task<ServiceResponse<List<AIWorkoutPlanDto>>> GetAllPlansAsync()
-    {
-        try
-        {
+    public async Task<ServiceResponse<List<AIWorkoutPlanDto>>> GetAllPlansAsync() {
+        try {
             var planRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<AIWorkoutPlan>();
             var plans = await planRepository.QueryNoTracking().Include(p => p.Member).Where(p => p.IsActive).OrderByDescending(p => p.CreatedAt).ToListAsync();
 
             var dtos = _mapper.Map<List<AIWorkoutPlanDto>>(plans);
             return _responseHelper.SetSuccess(dtos);
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _logger.LogError(ex, "Tüm planlar getirilirken hata");
             return _responseHelper.SetError<List<AIWorkoutPlanDto>>(null, new ErrorInfo("Tüm planlar getirilirken bir hata oluştu", "AI_ALLPLANS_001", ex.StackTrace, 500));
         }

@@ -38,7 +38,7 @@ public class AppointmentServiceBusinessLogicTests {
 
     public AppointmentServiceBusinessLogicTests() {
         _fixture = new Fixture().Customize(new AutoMoqCustomization());
-        
+
         _fixture.Behaviors.OfType<ThrowingRecursionBehavior>().ToList()
             .ForEach(b => _fixture.Behaviors.Remove(b));
         _fixture.Behaviors.Add(new OmitOnRecursionBehavior());

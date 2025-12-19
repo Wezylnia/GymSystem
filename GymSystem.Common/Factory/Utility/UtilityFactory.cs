@@ -5,8 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace GymSystem.Common.Factory.Utility;
 
-public abstract class UtilityFactory<T>
-{
+public abstract class UtilityFactory<T> {
     public abstract ILogger<T> CreateLogger();
     public abstract IConfiguration CreateConfiguration();
     public abstract IServiceResponseHelper CreateServiceResponseHelper();

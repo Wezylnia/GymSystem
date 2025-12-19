@@ -6,8 +6,7 @@ namespace GymSystem.Common.Services;
 /// Generic CRUD operations interface - DTO kullanımı ile
 /// TDto: Data Transfer Object
 /// </summary>
-public interface IGenericCrudService<TDto> where TDto : class
-{
+public interface IGenericCrudService<TDto> where TDto : class {
     Task<ServiceResponse<List<TDto>>> GetAllAsync();
     Task<ServiceResponse<TDto?>> GetByIdAsync(int id);
     Task<ServiceResponse<TDto>> CreateAsync(TDto dto);

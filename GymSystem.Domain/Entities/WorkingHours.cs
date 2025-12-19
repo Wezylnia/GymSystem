@@ -4,8 +4,7 @@
 /// Spor salonu çalışma saatleri
 /// Hangi gün, hangi saatler arası açık
 /// </summary>
-public class WorkingHours : BaseEntity
-{
+public class WorkingHours : BaseEntity {
     public int GymLocationId { get; set; }
     public DayOfWeek DayOfWeek { get; set; } // Pazartesi, Salı, vb.
     public TimeSpan OpenTime { get; set; } // Açılış saati

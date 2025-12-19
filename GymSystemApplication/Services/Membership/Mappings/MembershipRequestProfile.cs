@@ -8,10 +8,8 @@ namespace GymSystem.Application.Services.Membership.Mappings;
 /// <summary>
 /// AutoMapper profile for MembershipRequest mappings
 /// </summary>
-public class MembershipRequestProfile : Profile
-{
-    public MembershipRequestProfile()
-    {
+public class MembershipRequestProfile : Profile {
+    public MembershipRequestProfile() {
         // Entity -> DTO
         CreateMap<MembershipRequest, MembershipRequestDto>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))

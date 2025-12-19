@@ -4,13 +4,12 @@ using GymSystem.Common.ServiceRegistration;
 
 namespace GymSystem.Application.Abstractions.Services.IAppointmentService;
 
-public interface IAppointmentService : IApplicationService
-{
+public interface IAppointmentService : IApplicationService {
     Task<ServiceResponse<List<AppointmentDto>>> GetAllAsync();
     Task<ServiceResponse<AppointmentDto?>> GetByIdAsync(int id);
     Task<ServiceResponse<AppointmentDto>> CreateAsync(AppointmentDto dto);
     Task<ServiceResponse<AppointmentDto>> UpdateAsync(int id, AppointmentDto dto);
-    Task<ServiceResponse<bool>> DeleteAsync(int id);    
+    Task<ServiceResponse<bool>> DeleteAsync(int id);
     Task<ServiceResponse<bool>> CheckTrainerAvailabilityAsync(int trainerId, DateTime appointmentDate, int durationMinutes);
     Task<ServiceResponse<bool>> CheckMemberAvailabilityAsync(int memberId, DateTime appointmentDate, int durationMinutes);
     Task<ServiceResponse<AppointmentDto>> BookAppointmentAsync(AppointmentDto dto);

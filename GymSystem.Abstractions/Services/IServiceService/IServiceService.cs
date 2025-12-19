@@ -7,8 +7,7 @@ namespace GymSystem.Application.Abstractions.Services.IServiceService;
 /// <summary>
 /// Service service interface - DTO kullanımı ile
 /// </summary>
-public interface IServiceService : IApplicationService
-{
+public interface IServiceService : IApplicationService {
     Task<ServiceResponse<List<ServiceDto>>> GetAllAsync();
     Task<ServiceResponse<ServiceDto?>> GetByIdAsync(int id);
     Task<ServiceResponse<ServiceDto>> CreateAsync(ServiceDto dto);

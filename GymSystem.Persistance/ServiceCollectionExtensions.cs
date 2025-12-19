@@ -10,16 +10,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace GymSystem.Persistance;
 
-public static class ServiceCollectionExtensions
-{
+public static class ServiceCollectionExtensions {
     public static void AddPersistenceInfrastructure(
-        this IServiceCollection serviceCollection, 
-        IConfiguration configuration, 
-        string settingsFileName)
-    {
+        this IServiceCollection serviceCollection,
+        IConfiguration configuration,
+        string settingsFileName) {
         // GymDbContext'i kaydet
-        serviceCollection.AddDbContext<GymDbContext>((serviceProvider, options) =>
-        {
+        serviceCollection.AddDbContext<GymDbContext>((serviceProvider, options) => {
             options.ConfigureDatabase("GymDbContext", configuration["Data:Gym:MigrationsAssembly"], settingsFileName);
         });
 
@@ -27,8 +24,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<IRepositoryFactory, ConcreteRepositoryFactory>();
 
         // ASP.NET Core Identity
-        serviceCollection.AddIdentity<AppUser, IdentityRole<int>>(options =>
-        {
+        serviceCollection.AddIdentity<AppUser, IdentityRole<int>>(options => {
             // Password settings
             options.Password.RequireDigit = false;
             options.Password.RequireLowercase = false;
@@ -49,23 +45,19 @@ public static class ServiceCollectionExtensions
     }
 
     public static void ConfigureDatabase(
-        this DbContextOptionsBuilder builder, 
-        string contextName, 
-        string? migrationAssembly, 
-        string settingsFileName)
-    {
-        if (contextName == "GymDbContext")
-        {
+        this DbContextOptionsBuilder builder,
+        string contextName,
+        string? migrationAssembly,
+        string settingsFileName) {
+        if (contextName == "GymDbContext") {
             var connectionStringManager = new ConnectionStringManager(
-                connectionStringKey: "GymDbContext", 
+                connectionStringKey: "GymDbContext",
                 settingsFileName: settingsFileName);
-            
+
             string connectionString = connectionStringManager.GetConnectionString();
 
-            builder.UseNpgsql(connectionString, npgsqlOptions =>
-            {
-                if (!string.IsNullOrEmpty(migrationAssembly))
-                {
+            builder.UseNpgsql(connectionString, npgsqlOptions => {
+                if (!string.IsNullOrEmpty(migrationAssembly)) {
                     npgsqlOptions.MigrationsAssembly(migrationAssembly);
                 }
             });

@@ -4,10 +4,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace GymSystem.Persistance.Mappings;
 
-public class ServiceMapping : IEntityTypeConfiguration<Service>
-{
-    public void Configure(EntityTypeBuilder<Service> entity)
-    {
+public class ServiceMapping : IEntityTypeConfiguration<Service> {
+    public void Configure(EntityTypeBuilder<Service> entity) {
         // Base entity configuration
         entity.HasKey(e => e.Id);
         entity.Property(e => e.Id).UseIdentityAlwaysColumn();

@@ -8,6 +8,5 @@ namespace GymSystem.Infastructure.ServiceRegistration;
 /// Lütfen GymSystem.Common.ServiceRegistration.IService kullanın.
 /// </summary>
 [Obsolete("Use GymSystem.Common.ServiceRegistration.IService instead")]
-public interface IService : Common.ServiceRegistration.IService
-{
+public interface IService : Common.ServiceRegistration.IService {
 }

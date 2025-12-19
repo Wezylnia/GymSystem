@@ -119,13 +119,13 @@ public class AccountController : Controller {
                     IsActive = true
                 };
 
-                _logger.LogInformation("Member kaydı oluşturuluyor. User: {Email}, Endpoint: {Endpoint}", 
+                _logger.LogInformation("Member kaydı oluşturuluyor. User: {Email}, Endpoint: {Endpoint}",
                     model.Email, ApiEndpoints.MembersRegister);
 
                 var (memberCreated, memberDto, errorMessage) = await _apiHelper.PostWithResponseAsync<object, ApiMemberDto>(
                     ApiEndpoints.MembersRegister, memberData);
 
-                _logger.LogInformation("API Response: Success={Success}, Error={Error}", 
+                _logger.LogInformation("API Response: Success={Success}, Error={Error}",
                     memberCreated, errorMessage ?? "null");
 
                 if (memberCreated && memberDto != null) {
@@ -133,16 +133,16 @@ public class AccountController : Controller {
                     user.MemberId = memberDto.Id;
                     await _userManager.UpdateAsync(user);
 
-                    _logger.LogInformation("✅ Member kaydı başarıyla oluşturuldu. User: {Email}, Member ID: {MemberId}", 
+                    _logger.LogInformation("✅ Member kaydı başarıyla oluşturuldu. User: {Email}, Member ID: {MemberId}",
                         model.Email, memberDto.Id);
                 }
                 else {
-                    _logger.LogWarning("❌ Member kaydı oluşturulamadı: {Error}. User: {Email}", 
+                    _logger.LogWarning("❌ Member kaydı oluşturulamadı: {Error}. User: {Email}",
                         errorMessage ?? "Unknown error", model.Email);
-                    
+
                     // API yanıt vermediyse veya hata varsa, direkt database'e ekleyelim
                     _logger.LogInformation("Alternatif yöntem deneniyor: Direkt database insert...");
-                    
+
                     // Bu durumda başka bir mekanizma kullanabiliriz veya hata mesajı gösterebiliriz
                 }
 
@@ -157,17 +157,17 @@ public class AccountController : Controller {
                 else {
                     TempData["WarningMessage"] = "Kayıt tamamlandı ancak üyelik kaydınız oluşturulurken bir sorun oluştu. Lütfen yöneticiye başvurun.";
                 }
-                
+
                 return RedirectToAction("Index", "Home");
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "❌ Register sonrası Member oluşturulurken EXCEPTION. User: {Email}, Message: {Message}", 
+                _logger.LogError(ex, "❌ Register sonrası Member oluşturulurken EXCEPTION. User: {Email}, Message: {Message}",
                     model.Email, ex.Message);
-                
+
                 // Kullanıcı oluşturuldu ama Member kaydı başarısız
                 // Yine de giriş yapabilir, sonra düzeltilir
                 await _signInManager.SignInAsync(user, isPersistent: false);
-                
+
                 TempData["ErrorMessage"] = $"Kayıt tamamlandı ancak üyelik kaydınız oluşturulurken bir sorun oluştu: {ex.Message}";
                 return RedirectToAction("Index", "Home");
             }

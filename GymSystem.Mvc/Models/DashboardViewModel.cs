@@ -1,7 +1,6 @@
 ﻿namespace GymSystem.Mvc.Models;
 
-public class DashboardViewModel
-{
+public class DashboardViewModel {
     public DashboardStatsViewModel Stats { get; set; } = new();
     public MembershipStatisticsViewModel MembershipStats { get; set; } = new();
     public List<RevenueTrendItem> RevenueTrend { get; set; } = new();
@@ -9,8 +8,7 @@ public class DashboardViewModel
     public List<TrainerWorkloadItem> TrainerWorkload { get; set; } = new();
 }
 
-public class DashboardStatsViewModel
-{
+public class DashboardStatsViewModel {
     public int TotalMembers { get; set; }
     public int ActiveMembers { get; set; }
     public int TotalTrainers { get; set; }
@@ -22,8 +20,7 @@ public class DashboardStatsViewModel
     public int ThisMonthRequests { get; set; }
 }
 
-public class MembershipStatisticsViewModel
-{
+public class MembershipStatisticsViewModel {
     public int Total { get; set; }
     public int Pending { get; set; }
     public int Approved { get; set; }
@@ -31,15 +28,13 @@ public class MembershipStatisticsViewModel
     public List<MembershipByDuration> ByDuration { get; set; } = new();
 }
 
-public class MembershipByDuration
-{
+public class MembershipByDuration {
     public string Duration { get; set; } = string.Empty;
     public int Count { get; set; }
     public decimal TotalRevenue { get; set; }
 }
 
-public class RevenueTrendItem
-{
+public class RevenueTrendItem {
     public string Month { get; set; } = string.Empty;
     public int Year { get; set; }
     public int MonthNumber { get; set; }
@@ -47,8 +42,7 @@ public class RevenueTrendItem
     public int AppointmentCount { get; set; }
 }
 
-public class MemberGrowthTrendItem
-{
+public class MemberGrowthTrendItem {
     public string Month { get; set; } = string.Empty;
     public int Year { get; set; }
     public int MonthNumber { get; set; }
@@ -56,8 +50,7 @@ public class MemberGrowthTrendItem
     public decimal TotalRevenue { get; set; }
 }
 
-public class TrainerWorkloadItem
-{
+public class TrainerWorkloadItem {
     public int TrainerId { get; set; }
     public string TrainerName { get; set; } = string.Empty;
     public int TotalAppointments { get; set; }

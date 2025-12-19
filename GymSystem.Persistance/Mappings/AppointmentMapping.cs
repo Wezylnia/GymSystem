@@ -4,10 +4,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace GymSystem.Persistance.Mappings;
 
-public class AppointmentMapping : IEntityTypeConfiguration<Appointment>
-{
-    public void Configure(EntityTypeBuilder<Appointment> entity)
-    {
+public class AppointmentMapping : IEntityTypeConfiguration<Appointment> {
+    public void Configure(EntityTypeBuilder<Appointment> entity) {
         // Base entity configuration
         entity.HasKey(e => e.Id);
         entity.Property(e => e.Id).UseIdentityAlwaysColumn();

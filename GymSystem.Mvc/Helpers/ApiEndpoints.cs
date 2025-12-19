@@ -3,8 +3,7 @@
 /// <summary>
 /// API Endpoint'leri için enum
 /// </summary>
-public static class ApiEndpoints
-{
+public static class ApiEndpoints {
     // Members
     public const string Members = "/api/members";
     public const string MembersCreate = "/api/members";
@@ -44,23 +43,23 @@ public static class ApiEndpoints
     public static string AIWorkoutPlanById(int id) => $"/api/aiworkoutplans/{id}";
     public static string AIWorkoutPlansByMember(int memberId) => $"/api/aiworkoutplans/member/{memberId}";
 
-        // Reports
-        public const string ReportsPopularServices = "/api/reports/popular-services";
-        public const string ReportsAvailableTrainers = "/api/reports/available-trainers";
-        public const string ReportsMonthlyRevenue = "/api/reports/monthly-revenue";
-        public const string ReportsGymOwnerDashboard = "/api/reports/gym-owner-dashboard";
-        public const string ReportsMembershipStatistics = "/api/reports/membership-statistics";
-        public const string ReportsRevenueTrend = "/api/reports/revenue-trend";
-        public const string ReportsMemberGrowthTrend = "/api/reports/member-growth-trend";
-        public const string ReportsTrainerWorkload = "/api/reports/trainer-workload";
+    // Reports
+    public const string ReportsPopularServices = "/api/reports/popular-services";
+    public const string ReportsAvailableTrainers = "/api/reports/available-trainers";
+    public const string ReportsMonthlyRevenue = "/api/reports/monthly-revenue";
+    public const string ReportsGymOwnerDashboard = "/api/reports/gym-owner-dashboard";
+    public const string ReportsMembershipStatistics = "/api/reports/membership-statistics";
+    public const string ReportsRevenueTrend = "/api/reports/revenue-trend";
+    public const string ReportsMemberGrowthTrend = "/api/reports/member-growth-trend";
+    public const string ReportsTrainerWorkload = "/api/reports/trainer-workload";
 
-        public static string ReportsGymOwnerDashboardByLocation(int gymLocationId) => $"/api/reports/gym-owner-dashboard?gymLocationId={gymLocationId}";
-        public static string ReportsMembershipStatisticsByLocation(int gymLocationId) => $"/api/reports/membership-statistics?gymLocationId={gymLocationId}";
-        public static string ReportsRevenueTrendByLocation(int gymLocationId) => $"/api/reports/revenue-trend?gymLocationId={gymLocationId}";
-        public static string ReportsMemberGrowthTrendByLocation(int gymLocationId) => $"/api/reports/member-growth-trend?gymLocationId={gymLocationId}";
-        public static string ReportsTrainerWorkloadByLocation(int gymLocationId) => $"/api/reports/trainer-workload?gymLocationId={gymLocationId}";
+    public static string ReportsGymOwnerDashboardByLocation(int gymLocationId) => $"/api/reports/gym-owner-dashboard?gymLocationId={gymLocationId}";
+    public static string ReportsMembershipStatisticsByLocation(int gymLocationId) => $"/api/reports/membership-statistics?gymLocationId={gymLocationId}";
+    public static string ReportsRevenueTrendByLocation(int gymLocationId) => $"/api/reports/revenue-trend?gymLocationId={gymLocationId}";
+    public static string ReportsMemberGrowthTrendByLocation(int gymLocationId) => $"/api/reports/member-growth-trend?gymLocationId={gymLocationId}";
+    public static string ReportsTrainerWorkloadByLocation(int gymLocationId) => $"/api/reports/trainer-workload?gymLocationId={gymLocationId}";
 
-        // Appointments - Additional
-        public static string AppointmentConfirm(int id) => $"/api/appointments/{id}/confirm";
-        public static string AppointmentCancel(int id) => $"/api/appointments/{id}/cancel";
-    }
+    // Appointments - Additional
+    public static string AppointmentConfirm(int id) => $"/api/appointments/{id}/confirm";
+    public static string AppointmentCancel(int id) => $"/api/appointments/{id}/cancel";
+}

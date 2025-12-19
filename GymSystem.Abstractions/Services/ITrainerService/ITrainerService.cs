@@ -7,8 +7,7 @@ namespace GymSystem.Application.Abstractions.Services.ITrainerService;
 /// <summary>
 /// Trainer service interface - DTO kullanımı ile
 /// </summary>
-public interface ITrainerService : IApplicationService
-{
+public interface ITrainerService : IApplicationService {
     Task<ServiceResponse<List<TrainerDto>>> GetAllAsync();
     Task<ServiceResponse<TrainerDto?>> GetByIdAsync(int id);
     Task<ServiceResponse<TrainerDto>> CreateAsync(TrainerDto dto);

@@ -4,8 +4,7 @@
 /// Salon üyelik talepleri
 /// Kullanıcılar salon seçip üyelik talebinde bulunur, admin/gym owner onaylar
 /// </summary>
-public class MembershipRequest : BaseEntity
-{
+public class MembershipRequest : BaseEntity {
     public int MemberId { get; set; }
     public int GymLocationId { get; set; }
     public MembershipDuration Duration { get; set; } // 1, 3, 6 aylık
@@ -25,8 +24,7 @@ public class MembershipRequest : BaseEntity
 /// <summary>
 /// Üyelik süreleri
 /// </summary>
-public enum MembershipDuration
-{
+public enum MembershipDuration {
     OneMonth = 1,      // 1 aylık
     ThreeMonths = 3,   // 3 aylık
     SixMonths = 6      // 6 aylık
@@ -35,8 +33,7 @@ public enum MembershipDuration
 /// <summary>
 /// Üyelik talebi durumları
 /// </summary>
-public enum MembershipRequestStatus
-{
+public enum MembershipRequestStatus {
     Pending = 0,    // Onay bekliyor
     Approved = 1,   // Onaylandı
     Rejected = 2    // Reddedildi

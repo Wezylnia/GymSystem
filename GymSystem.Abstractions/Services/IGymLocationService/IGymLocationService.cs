@@ -4,8 +4,7 @@ using GymSystem.Common.ServiceRegistration;
 
 namespace GymSystem.Application.Abstractions.Services.IGymLocationService;
 
-public interface IGymLocationService : IApplicationService
-{
+public interface IGymLocationService : IApplicationService {
     Task<ServiceResponse<List<GymLocationDto>>> GetAllAsync();
     Task<ServiceResponse<GymLocationDto?>> GetByIdAsync(int id);
     Task<ServiceResponse<GymLocationDto>> CreateAsync(GymLocationDto dto);

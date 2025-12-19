@@ -4,10 +4,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace GymSystem.Persistance.Mappings;
 
-public class MembershipRequestMapping : IEntityTypeConfiguration<MembershipRequest>
-{
-    public void Configure(EntityTypeBuilder<MembershipRequest> builder)
-    {
+public class MembershipRequestMapping : IEntityTypeConfiguration<MembershipRequest> {
+    public void Configure(EntityTypeBuilder<MembershipRequest> builder) {
         builder.ToTable("MembershipRequests");
 
         builder.HasKey(mr => mr.Id);

@@ -3,8 +3,7 @@
 /// <summary>
 /// Spor salonu hizmetleri (Fitness, Yoga, Pilates, Cardio, Zumba vb.)
 /// </summary>
-public class Service : BaseEntity
-{
+public class Service : BaseEntity {
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public int DurationMinutes { get; set; } // Hizmet süresi (dakika)

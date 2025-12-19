@@ -111,7 +111,7 @@ public class MembersController : Controller {
                 }
 
                 // Aktif üyelik kontrolü
-                var hasActiveMembership = apiMember.MembershipEndDate.HasValue && 
+                var hasActiveMembership = apiMember.MembershipEndDate.HasValue &&
                                           apiMember.MembershipEndDate.Value > DateTime.Now;
                 if (!hasActiveMembership) {
                     TempData["ErrorMessage"] = "Sadece aktif üyeliği olan kişileri düzenleyebilirsiniz.";
@@ -155,7 +155,7 @@ public class MembersController : Controller {
                 }
 
                 // Aktif üyelik kontrolü
-                var hasActiveMembership = apiMember.MembershipEndDate.HasValue && 
+                var hasActiveMembership = apiMember.MembershipEndDate.HasValue &&
                                           apiMember.MembershipEndDate.Value > DateTime.Now;
                 if (!hasActiveMembership) {
                     TempData["ErrorMessage"] = "Sadece aktif üyeliği olan kişileri güncelleyebilirsiniz.";

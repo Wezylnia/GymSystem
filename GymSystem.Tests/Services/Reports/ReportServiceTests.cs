@@ -38,7 +38,7 @@ public class ReportServiceTests {
 
     public ReportServiceTests() {
         _fixture = new Fixture().Customize(new AutoMoqCustomization());
-        
+
         _fixture.Behaviors.OfType<ThrowingRecursionBehavior>().ToList()
             .ForEach(b => _fixture.Behaviors.Remove(b));
         _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
@@ -81,14 +81,14 @@ public class ReportServiceTests {
             .With(x => x.Status, "Confirmed")
             .CreateMany(5)
             .ToList();
-        
+
         var services = _fixture.CreateMany<ServiceDto>(3).ToList();
-        
+
         var appointmentsResponse = _fixture.Build<ServiceResponse<List<AppointmentDto>>>()
             .With(x => x.Data, appointments)
             .With(x => x.IsSuccessful, true)
             .Create();
-            
+
         var servicesResponse = _fixture.Build<ServiceResponse<List<ServiceDto>>>()
             .With(x => x.Data, services)
             .With(x => x.IsSuccessful, true)
@@ -172,7 +172,7 @@ public class ReportServiceTests {
             .With(x => x.Status, "Approved")
             .CreateMany(5)
             .ToList();
-        
+
         var requestsResponse = _fixture.Build<ServiceResponse<List<MembershipRequestDto>>>()
             .With(x => x.Data, requests)
             .With(x => x.IsSuccessful, true)
@@ -257,18 +257,18 @@ public class ReportServiceTests {
             .With(x => x.GymLocationId, 1)
             .CreateMany(1)
             .ToList();
-        
+
         var trainers = _fixture.Build<TrainerDto>()
             .With(x => x.GymLocationId, 1)
             .With(x => x.IsActive, true)
             .CreateMany(3)
             .ToList();
-        
+
         var servicesResponse = _fixture.Build<ServiceResponse<List<ServiceDto>>>()
             .With(x => x.Data, services)
             .With(x => x.IsSuccessful, true)
             .Create();
-            
+
         var trainersResponse = _fixture.Build<ServiceResponse<List<TrainerDto>>>()
             .With(x => x.Data, trainers)
             .With(x => x.IsSuccessful, true)
@@ -297,7 +297,7 @@ public class ReportServiceTests {
         // Arrange
         var specialty = "NonExistent";
         var services = _fixture.CreateMany<ServiceDto>(3).ToList();
-        
+
         var servicesResponse = _fixture.Build<ServiceResponse<List<ServiceDto>>>()
             .With(x => x.Data, services)
             .With(x => x.IsSuccessful, true)
@@ -382,7 +382,7 @@ public class ReportServiceTests {
         var serviceId = _fixture.Create<int>();
         var appointmentDateTime = DateTime.Now.AddDays(1);
         var durationMinutes = 60;
-        
+
         var availableTrainerIds = new List<int> { 1, 2, 3 };
         var trainers = _fixture.Build<TrainerDto>()
             .With(x => x.Id, () => availableTrainerIds[new Random().Next(availableTrainerIds.Count)])

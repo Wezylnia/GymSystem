@@ -6,13 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace GymSystem.Infastructure.Extensions;
 
-public static class ServiceCollectionExtensions
-{
+public static class ServiceCollectionExtensions {
     public static IServiceCollection AddInfrastructureServices(
         this IServiceCollection services,
         IConfiguration configuration,
-        string settingsFileName = "appsettings.json")
-    {
+        string settingsFileName = "appsettings.json") {
         // 1. Persistence layer'ı kaydet (DbContext + Identity)
         services.AddPersistenceInfrastructure(configuration, settingsFileName);
 

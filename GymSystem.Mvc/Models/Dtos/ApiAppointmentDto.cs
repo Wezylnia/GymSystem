@@ -3,8 +3,7 @@
 /// <summary>
 /// API'den dönen Appointment DTO
 /// </summary>
-public class ApiAppointmentDto
-{
+public class ApiAppointmentDto {
     public int Id { get; set; }
     public int MemberId { get; set; }
     public int TrainerId { get; set; }
@@ -18,13 +17,13 @@ public class ApiAppointmentDto
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public bool IsActive { get; set; }
-    
+
     // Flat properties (API'den gelen - AppointmentDto'dan)
     public string? MemberName { get; set; }
     public string? TrainerName { get; set; }
     public string? ServiceName { get; set; }
     public string? GymLocationName { get; set; }
-    
+
     // Navigation properties (alternatif - nested yapı)
     public ApiMemberDto? Member { get; set; }
     public ApiTrainerDto? Trainer { get; set; }

@@ -3,13 +3,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GymSystem.Persistance.Data;
 
-public static class DatabaseSeeder
-{
+public static class DatabaseSeeder {
     // Unspecified DateTime kullan (PostgreSQL timestamp without time zone için)
     private static readonly DateTime BaseDate = new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Unspecified);
 
-    public static void SeedData(ModelBuilder modelBuilder)
-    {
+    public static void SeedData(ModelBuilder modelBuilder) {
         SeedGymLocations(modelBuilder);
         SeedServices(modelBuilder);
         SeedTrainers(modelBuilder);
@@ -19,11 +17,9 @@ public static class DatabaseSeeder
         SeedTrainerSpecialties(modelBuilder);
     }
 
-    private static void SeedGymLocations(ModelBuilder modelBuilder)
-    {
+    private static void SeedGymLocations(ModelBuilder modelBuilder) {
         modelBuilder.Entity<GymLocation>().HasData(
-            new GymLocation
-            {
+            new GymLocation {
                 Id = 1,
                 Name = "FitZone Merkez Şube",
                 Address = "Atatürk Bulvarı No:123",
@@ -34,8 +30,7 @@ public static class DatabaseSeeder
                 IsActive = true,
                 CreatedAt = BaseDate
             },
-            new GymLocation
-            {
+            new GymLocation {
                 Id = 2,
                 Name = "FitZone Serdivan Şube",
                 Address = "Gazi Caddesi No:456",
@@ -49,8 +44,7 @@ public static class DatabaseSeeder
         );
     }
 
-    private static void SeedServices(ModelBuilder modelBuilder)
-    {
+    private static void SeedServices(ModelBuilder modelBuilder) {
         modelBuilder.Entity<Service>().HasData(
             new Service { Id = 1, Name = "Fitness", Description = "Genel kondisyon ve kas geliştirme", DurationMinutes = 60, Price = 150.00m, GymLocationId = 1, IsActive = true, CreatedAt = BaseDate },
             new Service { Id = 2, Name = "Yoga", Description = "Esneklik ve zihin-beden dengesi", DurationMinutes = 45, Price = 100.00m, GymLocationId = 1, IsActive = true, CreatedAt = BaseDate },
@@ -60,8 +54,7 @@ public static class DatabaseSeeder
         );
     }
 
-    private static void SeedTrainers(ModelBuilder modelBuilder)
-    {
+    private static void SeedTrainers(ModelBuilder modelBuilder) {
         modelBuilder.Entity<Trainer>().HasData(
             new Trainer { Id = 1, FirstName = "Ahmet", LastName = "Yılmaz", Email = "ahmet.yilmaz@fitzone.com", PhoneNumber = "05551111111", Bio = "10 yıllık fitness antrenörlüğü deneyimi.", GymLocationId = 1, IsActive = true, CreatedAt = BaseDate },
             new Trainer { Id = 2, FirstName = "Elif", LastName = "Demir", Email = "elif.demir@fitzone.com", PhoneNumber = "05552222222", Bio = "Yoga ve pilates uzmanı.", GymLocationId = 1, IsActive = true, CreatedAt = BaseDate },
@@ -69,67 +62,60 @@ public static class DatabaseSeeder
         );
     }
 
-    private static void SeedMembers(ModelBuilder modelBuilder)
-    {
+    private static void SeedMembers(ModelBuilder modelBuilder) {
         var memberDate = new DateTime(2024, 10, 1, 0, 0, 0, DateTimeKind.Unspecified);
         var now = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
-        
+
         modelBuilder.Entity<Member>().HasData(
-            new Member 
-            { 
-                Id = 1, 
-                FirstName = "Ayşe", 
-                LastName = "Şahin", 
-                Email = "ayse.sahin@example.com", 
-                PhoneNumber = "05554444444", 
+            new Member {
+                Id = 1,
+                FirstName = "Ayşe",
+                LastName = "Şahin",
+                Email = "ayse.sahin@example.com",
+                PhoneNumber = "05554444444",
                 MembershipStartDate = DateTime.SpecifyKind(now.AddMonths(-1), DateTimeKind.Unspecified),
                 MembershipEndDate = DateTime.SpecifyKind(now.AddMonths(1), DateTimeKind.Unspecified),
                 CurrentGymLocationId = 1,  // FitZone Merkez Şube'ye üye
-                IsActive = true, 
-                CreatedAt = memberDate 
+                IsActive = true,
+                CreatedAt = memberDate
             },
-            new Member 
-            { 
-                Id = 2, 
-                FirstName = "Can", 
-                LastName = "Öztürk", 
-                Email = "can.ozturk@example.com", 
-                PhoneNumber = "05555555555", 
-                MembershipStartDate = memberDate.AddMonths(1), 
-                MembershipEndDate = memberDate.AddMonths(13), 
+            new Member {
+                Id = 2,
+                FirstName = "Can",
+                LastName = "Öztürk",
+                Email = "can.ozturk@example.com",
+                PhoneNumber = "05555555555",
+                MembershipStartDate = memberDate.AddMonths(1),
+                MembershipEndDate = memberDate.AddMonths(13),
                 CurrentGymLocationId = 2,  // FitZone Serdivan Şube'ye üye
-                IsActive = true, 
-                CreatedAt = memberDate.AddMonths(1) 
+                IsActive = true,
+                CreatedAt = memberDate.AddMonths(1)
             },
-            new Member 
-            { 
-                Id = 3, 
-                FirstName = "Zeynep", 
-                LastName = "Arslan", 
-                Email = "zeynep.arslan@example.com", 
-                PhoneNumber = "05556666666", 
-                MembershipStartDate = memberDate.AddMonths(-1), 
-                MembershipEndDate = memberDate.AddMonths(11), 
+            new Member {
+                Id = 3,
+                FirstName = "Zeynep",
+                LastName = "Arslan",
+                Email = "zeynep.arslan@example.com",
+                PhoneNumber = "05556666666",
+                MembershipStartDate = memberDate.AddMonths(-1),
+                MembershipEndDate = memberDate.AddMonths(11),
                 CurrentGymLocationId = 1,  // FitZone Merkez Şube'ye üye
-                IsActive = true, 
-                CreatedAt = memberDate.AddMonths(-1) 
+                IsActive = true,
+                CreatedAt = memberDate.AddMonths(-1)
             }
         );
     }
 
-    private static void SeedWorkingHours(ModelBuilder modelBuilder)
-    {
+    private static void SeedWorkingHours(ModelBuilder modelBuilder) {
         var workingHours = new List<WorkingHours>();
-        
-        for (int i = 1; i <= 5; i++)
-        {
+
+        for (int i = 1; i <= 5; i++) {
             workingHours.Add(new WorkingHours { Id = i, GymLocationId = 1, DayOfWeek = (DayOfWeek)i, OpenTime = new TimeSpan(6, 0, 0), CloseTime = new TimeSpan(22, 0, 0), IsClosed = false, IsActive = true, CreatedAt = BaseDate });
         }
         workingHours.Add(new WorkingHours { Id = 6, GymLocationId = 1, DayOfWeek = DayOfWeek.Saturday, OpenTime = new TimeSpan(8, 0, 0), CloseTime = new TimeSpan(20, 0, 0), IsClosed = false, IsActive = true, CreatedAt = BaseDate });
         workingHours.Add(new WorkingHours { Id = 7, GymLocationId = 1, DayOfWeek = DayOfWeek.Sunday, OpenTime = new TimeSpan(0, 0, 0), CloseTime = new TimeSpan(0, 0, 0), IsClosed = true, IsActive = true, CreatedAt = BaseDate });
 
-        for (int i = 1; i <= 5; i++)
-        {
+        for (int i = 1; i <= 5; i++) {
             workingHours.Add(new WorkingHours { Id = 7 + i, GymLocationId = 2, DayOfWeek = (DayOfWeek)i, OpenTime = new TimeSpan(7, 0, 0), CloseTime = new TimeSpan(21, 0, 0), IsClosed = false, IsActive = true, CreatedAt = BaseDate.AddMonths(3) });
         }
         workingHours.Add(new WorkingHours { Id = 13, GymLocationId = 2, DayOfWeek = DayOfWeek.Saturday, OpenTime = new TimeSpan(9, 0, 0), CloseTime = new TimeSpan(18, 0, 0), IsClosed = false, IsActive = true, CreatedAt = BaseDate.AddMonths(3) });
@@ -138,31 +124,26 @@ public static class DatabaseSeeder
         modelBuilder.Entity<WorkingHours>().HasData(workingHours);
     }
 
-    private static void SeedTrainerAvailabilities(ModelBuilder modelBuilder)
-    {
+    private static void SeedTrainerAvailabilities(ModelBuilder modelBuilder) {
         var availabilities = new List<TrainerAvailability>();
         int id = 1;
 
-        foreach (var day in new[] { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday })
-        {
+        foreach (var day in new[] { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday }) {
             availabilities.Add(new TrainerAvailability { Id = id++, TrainerId = 1, DayOfWeek = day, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(17, 0, 0), IsActive = true, CreatedAt = BaseDate });
         }
 
-        foreach (var day in new[] { DayOfWeek.Tuesday, DayOfWeek.Thursday })
-        {
+        foreach (var day in new[] { DayOfWeek.Tuesday, DayOfWeek.Thursday }) {
             availabilities.Add(new TrainerAvailability { Id = id++, TrainerId = 2, DayOfWeek = day, StartTime = new TimeSpan(10, 0, 0), EndTime = new TimeSpan(18, 0, 0), IsActive = true, CreatedAt = BaseDate });
         }
 
-        for (int i = 1; i <= 5; i++)
-        {
+        for (int i = 1; i <= 5; i++) {
             availabilities.Add(new TrainerAvailability { Id = id++, TrainerId = 3, DayOfWeek = (DayOfWeek)i, StartTime = new TimeSpan(8, 0, 0), EndTime = new TimeSpan(16, 0, 0), IsActive = true, CreatedAt = BaseDate.AddMonths(3) });
         }
 
         modelBuilder.Entity<TrainerAvailability>().HasData(availabilities);
     }
 
-    private static void SeedTrainerSpecialties(ModelBuilder modelBuilder)
-    {
+    private static void SeedTrainerSpecialties(ModelBuilder modelBuilder) {
         modelBuilder.Entity<TrainerSpecialty>().HasData(
             new TrainerSpecialty { Id = 1, TrainerId = 1, ServiceId = 1, ExperienceYears = 10, CertificateName = "ACE Personal Trainer", IsActive = true, CreatedAt = BaseDate },
             new TrainerSpecialty { Id = 2, TrainerId = 2, ServiceId = 2, ExperienceYears = 8, CertificateName = "RYT 200 Yoga Alliance", IsActive = true, CreatedAt = BaseDate },

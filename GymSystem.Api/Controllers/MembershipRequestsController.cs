@@ -7,21 +7,18 @@ namespace GymSystem.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class MembershipRequestsController : ControllerBase
-{
+public class MembershipRequestsController : ControllerBase {
     private readonly IMembershipRequestService _membershipRequestService;
     private readonly ILogger<MembershipRequestsController> _logger;
 
-    public MembershipRequestsController(IMembershipRequestService membershipRequestService, ILogger<MembershipRequestsController> logger)
-    {
+    public MembershipRequestsController(IMembershipRequestService membershipRequestService, ILogger<MembershipRequestsController> logger) {
         _membershipRequestService = membershipRequestService;
         _logger = logger;
     }
 
     [HttpPost("create")]
     [Authorize(Roles = "Member")]
-    public async Task<IActionResult> CreateRequest([FromBody] CreateMembershipRequestDto request)
-    {
+    public async Task<IActionResult> CreateRequest([FromBody] CreateMembershipRequestDto request) {
         if (request.MemberId <= 0)
             return BadRequest(new { error = "Geçersiz member ID" });
 
@@ -38,8 +35,7 @@ public class MembershipRequestsController : ControllerBase
 
     [HttpGet("member/{memberId}")]
     [Authorize(Roles = "Member,Admin,GymOwner")]
-    public async Task<IActionResult> GetMemberRequests(int memberId)
-    {
+    public async Task<IActionResult> GetMemberRequests(int memberId) {
         if (memberId <= 0)
             return BadRequest(new { error = "Geçersiz member ID" });
 
@@ -53,8 +49,7 @@ public class MembershipRequestsController : ControllerBase
 
     [HttpGet("gym/{gymLocationId}")]
     [Authorize(Roles = "Admin,GymOwner")]
-    public async Task<IActionResult> GetGymLocationRequests(int gymLocationId)
-    {
+    public async Task<IActionResult> GetGymLocationRequests(int gymLocationId) {
         if (gymLocationId <= 0)
             return BadRequest(new { error = "Geçersiz gym location ID" });
 
@@ -68,8 +63,7 @@ public class MembershipRequestsController : ControllerBase
 
     [HttpGet]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> GetAllRequests()
-    {
+    public async Task<IActionResult> GetAllRequests() {
         var response = await _membershipRequestService.GetAllRequestsAsync();
 
         if (!response.IsSuccessful)
@@ -80,8 +74,7 @@ public class MembershipRequestsController : ControllerBase
 
     [HttpGet("pending")]
     [Authorize(Roles = "Admin,GymOwner")]
-    public async Task<IActionResult> GetPendingRequests()
-    {
+    public async Task<IActionResult> GetPendingRequests() {
         var response = await _membershipRequestService.GetPendingRequestsAsync();
 
         if (!response.IsSuccessful)
@@ -92,8 +85,7 @@ public class MembershipRequestsController : ControllerBase
 
     [HttpGet("{id}")]
     [Authorize(Roles = "Admin,GymOwner,Member")]
-    public async Task<IActionResult> GetRequestById(int id)
-    {
+    public async Task<IActionResult> GetRequestById(int id) {
         if (id <= 0)
             return BadRequest(new { error = "Geçersiz talep ID" });
 
@@ -110,8 +102,7 @@ public class MembershipRequestsController : ControllerBase
 
     [HttpPost("{id}/approve")]
     [Authorize(Roles = "Admin,GymOwner")]
-    public async Task<IActionResult> ApproveRequest(int id, [FromBody] ApproveRejectDto dto)
-    {
+    public async Task<IActionResult> ApproveRequest(int id, [FromBody] ApproveRejectDto dto) {
         if (id <= 0)
             return BadRequest(new { error = "Geçersiz talep ID" });
 
@@ -128,8 +119,7 @@ public class MembershipRequestsController : ControllerBase
 
     [HttpPost("{id}/reject")]
     [Authorize(Roles = "Admin,GymOwner")]
-    public async Task<IActionResult> RejectRequest(int id, [FromBody] ApproveRejectDto dto)
-    {
+    public async Task<IActionResult> RejectRequest(int id, [FromBody] ApproveRejectDto dto) {
         if (id <= 0)
             return BadRequest(new { error = "Geçersiz talep ID" });
 
@@ -146,8 +136,7 @@ public class MembershipRequestsController : ControllerBase
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Member,Admin")]
-    public async Task<IActionResult> DeleteRequest(int id)
-    {
+    public async Task<IActionResult> DeleteRequest(int id) {
         if (id <= 0)
             return BadRequest(new { error = "Geçersiz talep ID" });
 
@@ -160,8 +149,7 @@ public class MembershipRequestsController : ControllerBase
     }
 }
 
-public class CreateMembershipRequestDto
-{
+public class CreateMembershipRequestDto {
     public int MemberId { get; set; }
     public int GymLocationId { get; set; }
     public MembershipDuration Duration { get; set; }
@@ -169,8 +157,7 @@ public class CreateMembershipRequestDto
     public string? Notes { get; set; }
 }
 
-public class ApproveRejectDto
-{
+public class ApproveRejectDto {
     public int UserId { get; set; }
     public string? AdminNotes { get; set; }
 }

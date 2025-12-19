@@ -34,10 +34,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // CORS policy for MVC application
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowMvc", policy =>
-    {
+builder.Services.AddCors(options => {
+    options.AddPolicy("AllowMvc", policy => {
         policy.WithOrigins("http://localhost:5000", "https://localhost:5001")
               .AllowAnyMethod()
               .AllowAnyHeader()
@@ -58,8 +56,7 @@ builder.Services.AddAutoMapper(typeof(GymLocationProfile).Assembly);
 Console.WriteLine("[ServiceRegistration] ✓ AutoMapper configured with all profiles");
 
 // Cookie Authentication için yapılandırma (MVC ile paylaşımlı)
-builder.Services.ConfigureApplicationCookie(options =>
-{
+builder.Services.ConfigureApplicationCookie(options => {
     options.Cookie.Name = "GymSystem.Auth"; // MVC ile aynı cookie name
     options.Cookie.Domain = null; // Same domain (localhost)
     options.Cookie.Path = "/";
@@ -68,21 +65,18 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.HttpOnly = false; // JavaScript'ten erişilebilir olması için
     options.Cookie.SecurePolicy = CookieSecurePolicy.None; // HTTP'de çalışsın (development)
     options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
-    options.Events.OnRedirectToLogin = context =>
-    {
+    options.Events.OnRedirectToLogin = context => {
         context.Response.StatusCode = 401; // API için redirect yerine 401 döndür
         return Task.CompletedTask;
     };
-    options.Events.OnRedirectToAccessDenied = context =>
-    {
+    options.Events.OnRedirectToAccessDenied = context => {
         context.Response.StatusCode = 403; // API için redirect yerine 403 döndür
         return Task.CompletedTask;
     };
 });
 
 // HttpClient for Gemini API
-builder.Services.AddHttpClient("GeminiApi", client =>
-{
+builder.Services.AddHttpClient("GeminiApi", client => {
     client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
@@ -129,8 +123,7 @@ Console.WriteLine("[ServiceRegistration] All application services registered!");
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
-{
+if (app.Environment.IsDevelopment()) {
     app.UseSwagger();
     app.UseSwaggerUI();
 }

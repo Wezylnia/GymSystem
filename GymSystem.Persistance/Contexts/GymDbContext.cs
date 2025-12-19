@@ -7,15 +7,12 @@ using System.Reflection;
 
 namespace GymSystem.Persistance.Contexts;
 
-public class GymDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
-{
+public class GymDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int> {
     public GymDbContext(DbContextOptions<GymDbContext> options)
-        : base(options)
-    {
+        : base(options) {
     }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
+    protected override void OnModelCreating(ModelBuilder modelBuilder) {
         base.OnModelCreating(modelBuilder); // Identity tables için gerekli
 
         modelBuilder.HasDefaultSchema("public");
@@ -24,13 +21,12 @@ public class GymDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
         // AppUser - Member ilişkisi
-        modelBuilder.Entity<AppUser>(entity =>
-        {
+        modelBuilder.Entity<AppUser>(entity => {
             entity.HasOne(u => u.Member)
                 .WithOne()
                 .HasForeignKey<AppUser>(u => u.MemberId)
                 .OnDelete(DeleteBehavior.SetNull);
-                
+
             entity.HasOne(u => u.GymLocation)
                 .WithMany()
                 .HasForeignKey(u => u.GymLocationId)
@@ -42,12 +38,11 @@ public class GymDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
         IdentitySeeder.SeedIdentityData(modelBuilder);
     }
 
-    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
-    {
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) {
         // PostgreSQL için DateTime'ı timestamp without time zone olarak kullan
         configurationBuilder.Properties<DateTime>()
             .HaveColumnType("timestamp without time zone");
-            
+
         configurationBuilder.Properties<DateTime?>()
             .HaveColumnType("timestamp without time zone");
     }

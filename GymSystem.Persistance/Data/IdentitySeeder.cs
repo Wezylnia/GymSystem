@@ -4,36 +4,30 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GymSystem.Persistance.Data;
 
-public static class IdentitySeeder
-{
+public static class IdentitySeeder {
     private static readonly DateTime IdentityDate = new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Unspecified);
 
-    public static void SeedIdentityData(ModelBuilder modelBuilder)
-    {
+    public static void SeedIdentityData(ModelBuilder modelBuilder) {
         SeedRoles(modelBuilder);
         SeedUsers(modelBuilder);
         SeedUserRoles(modelBuilder);
     }
 
-    private static void SeedRoles(ModelBuilder modelBuilder)
-    {
+    private static void SeedRoles(ModelBuilder modelBuilder) {
         modelBuilder.Entity<IdentityRole<int>>().HasData(
-            new IdentityRole<int>
-            {
+            new IdentityRole<int> {
                 Id = 1,
                 Name = "Admin",
                 NormalizedName = "ADMIN",
                 ConcurrencyStamp = Guid.NewGuid().ToString()
             },
-            new IdentityRole<int>
-            {
+            new IdentityRole<int> {
                 Id = 2,
                 Name = "GymOwner",
                 NormalizedName = "GYMOWNER",
                 ConcurrencyStamp = Guid.NewGuid().ToString()
             },
-            new IdentityRole<int>
-            {
+            new IdentityRole<int> {
                 Id = 3,
                 Name = "Member",
                 NormalizedName = "MEMBER",
@@ -42,13 +36,11 @@ public static class IdentitySeeder
         );
     }
 
-    private static void SeedUsers(ModelBuilder modelBuilder)
-    {
+    private static void SeedUsers(ModelBuilder modelBuilder) {
         var hasher = new PasswordHasher<AppUser>();
 
         // 1. Admin user (sistem yöneticisi - her şeyi yapabilir)
-        var adminUser = new AppUser
-        {
+        var adminUser = new AppUser {
             Id = 1,
             UserName = "admin@sakarya.edu.tr",
             NormalizedUserName = "ADMIN@SAKARYA.EDU.TR",
@@ -67,8 +59,7 @@ public static class IdentitySeeder
         adminUser.PasswordHash = hasher.HashPassword(adminUser, "sau");
 
         // 2. GymOwner user 1 (FitZone Merkez Şube sahibi)
-        var gymOwner1 = new AppUser
-        {
+        var gymOwner1 = new AppUser {
             Id = 2,
             UserName = "owner.merkez@fitzone.com",
             NormalizedUserName = "OWNER.MERKEZ@FITZONE.COM",
@@ -88,8 +79,7 @@ public static class IdentitySeeder
         gymOwner1.PasswordHash = hasher.HashPassword(gymOwner1, "owner123");
 
         // 3. GymOwner user 2 (FitZone Serdivan Şube sahibi)
-        var gymOwner2 = new AppUser
-        {
+        var gymOwner2 = new AppUser {
             Id = 3,
             UserName = "owner.serdivan@fitzone.com",
             NormalizedUserName = "OWNER.SERDIVAN@FITZONE.COM",
@@ -109,8 +99,7 @@ public static class IdentitySeeder
         gymOwner2.PasswordHash = hasher.HashPassword(gymOwner2, "owner123");
 
         // 4. Member user 1 (Ayşe Şahin - üye)
-        var memberUser1 = new AppUser
-        {
+        var memberUser1 = new AppUser {
             Id = 4,
             UserName = "ayse.sahin@example.com",
             NormalizedUserName = "AYSE.SAHIN@EXAMPLE.COM",
@@ -130,8 +119,7 @@ public static class IdentitySeeder
         memberUser1.PasswordHash = hasher.HashPassword(memberUser1, "member123");
 
         // 5. Member user 2 (Can Öztürk - üye)
-        var memberUser2 = new AppUser
-        {
+        var memberUser2 = new AppUser {
             Id = 5,
             UserName = "can.ozturk@example.com",
             NormalizedUserName = "CAN.OZTURK@EXAMPLE.COM",
@@ -153,16 +141,15 @@ public static class IdentitySeeder
         modelBuilder.Entity<AppUser>().HasData(adminUser, gymOwner1, gymOwner2, memberUser1, memberUser2);
     }
 
-    private static void SeedUserRoles(ModelBuilder modelBuilder)
-    {
+    private static void SeedUserRoles(ModelBuilder modelBuilder) {
         modelBuilder.Entity<IdentityUserRole<int>>().HasData(
             // Admin user -> Admin role
             new IdentityUserRole<int> { UserId = 1, RoleId = 1 },
-            
+
             // GymOwner users -> GymOwner role
             new IdentityUserRole<int> { UserId = 2, RoleId = 2 },
             new IdentityUserRole<int> { UserId = 3, RoleId = 2 },
-            
+
             // Member users -> Member role
             new IdentityUserRole<int> { UserId = 4, RoleId = 3 },
             new IdentityUserRole<int> { UserId = 5, RoleId = 3 }

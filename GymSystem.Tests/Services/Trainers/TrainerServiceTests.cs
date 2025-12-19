@@ -307,51 +307,51 @@ public class TrainerServiceTests {
             .Returns(createdTrainerDto)
             .Verifiable();
 
-            _mockTrainerRepository
-                .Setup(x => x.AddAsync(It.IsAny<Trainer>()))
-                .ReturnsAsync(trainer)
-                .Verifiable();
+        _mockTrainerRepository
+            .Setup(x => x.AddAsync(It.IsAny<Trainer>()))
+            .ReturnsAsync(trainer)
+            .Verifiable();
 
-            _mockTrainerRepository
-                .Setup(x => x.SaveChangesAsync())
-                .ReturnsAsync(1)
-                .Verifiable();
+        _mockTrainerRepository
+            .Setup(x => x.SaveChangesAsync())
+            .ReturnsAsync(1)
+            .Verifiable();
 
-            _mockTrainerRepository
-                .Setup(x => x.QueryNoTracking())
-                .Returns(mockQueryable);
+        _mockTrainerRepository
+            .Setup(x => x.QueryNoTracking())
+            .Returns(mockQueryable);
 
-            _mockResponseHelper
-                .Setup(x => x.SetSuccess(It.IsAny<TrainerDto>(), "Antrenör oluþturuldu"))
-                .Returns(expectedResponse)
-                .Verifiable();
+        _mockResponseHelper
+            .Setup(x => x.SetSuccess(It.IsAny<TrainerDto>(), "Antrenör oluþturuldu"))
+            .Returns(expectedResponse)
+            .Verifiable();
 
-            // Act
-            var result = await _sut.CreateAsync(trainerDto);
+        // Act
+        var result = await _sut.CreateAsync(trainerDto);
 
-            // Assert
-            result.Should().NotBeNull();
-            result.IsSuccessful.Should().BeTrue();
-            result.Data.Should().NotBeNull();
-            result.Data!.Id.Should().Be(trainerId);
-            result.Message.Should().Be("Antrenör oluþturuldu");
+        // Assert
+        result.Should().NotBeNull();
+        result.IsSuccessful.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.Id.Should().Be(trainerId);
+        result.Message.Should().Be("Antrenör oluþturuldu");
 
-            // Verify all mocks were called
-            _mockMapper.Verify();
-            _mockTrainerRepository.Verify();
-            _mockResponseHelper.Verify();
+        // Verify all mocks were called
+        _mockMapper.Verify();
+        _mockTrainerRepository.Verify();
+        _mockResponseHelper.Verify();
 
-            _mockLogger.Verify(
-                x => x.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => true),
-                    null,
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
-        }
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => true),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
 
-        [Fact]
+    [Fact]
     public async Task CreateAsync_WhenRepositoryThrowsException_ShouldReturnError() {
         // Arrange
         var trainerDto = _fixture.Build<TrainerDto>()

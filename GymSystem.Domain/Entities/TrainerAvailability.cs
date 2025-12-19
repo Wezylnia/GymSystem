@@ -4,8 +4,7 @@
 /// Antrenör müsaitlik saatleri
 /// Hangi gün, hangi saatte antrenör müsait
 /// </summary>
-public class TrainerAvailability : BaseEntity
-{
+public class TrainerAvailability : BaseEntity {
     public int TrainerId { get; set; }
     public DayOfWeek DayOfWeek { get; set; } // Pazartesi, Salı, vb.
     public TimeSpan StartTime { get; set; } // Başlangıç saati (örn: 09:00)

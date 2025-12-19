@@ -8,8 +8,7 @@ namespace GymSystem.Application.Abstractions.Services.IMembershipRequestService;
 /// <summary>
 /// Membership request service interface - DTO + ServiceResponse pattern
 /// </summary>
-public interface IMembershipRequestService : IApplicationService
-{
+public interface IMembershipRequestService : IApplicationService {
     Task<ServiceResponse<MembershipRequestDto>> CreateRequestAsync(int memberId, int gymLocationId, MembershipDuration duration, decimal price, string? notes = null);
     Task<ServiceResponse<List<MembershipRequestDto>>> GetMemberRequestsAsync(int memberId);
     Task<ServiceResponse<List<MembershipRequestDto>>> GetGymLocationRequestsAsync(int gymLocationId);

@@ -8,16 +8,13 @@ namespace GymSystem.Application.Services.Trainers.Mappings;
 /// <summary>
 /// AutoMapper profile for Trainer mappings
 /// </summary>
-public class TrainerProfile : Profile
-{
-    public TrainerProfile()
-    {
+public class TrainerProfile : Profile {
+    public TrainerProfile() {
         // Entity -> DTO
         CreateMap<Trainer, TrainerDto>()
             .ForMember(dest => dest.GymLocationName, opt => opt.MapFrom(src => src.GymLocation != null ? src.GymLocation.Name : null))
             .ForMember(dest => dest.SelectedServiceIds, opt => opt.MapFrom(src => src.Specialties.Where(s => s.IsActive).Select(s => s.ServiceId).ToList()))
-            .ForMember(dest => dest.Services, opt => opt.MapFrom(src => src.Specialties.Where(s => s.IsActive).Select(s => new TrainerServiceInfo
-            {
+            .ForMember(dest => dest.Services, opt => opt.MapFrom(src => src.Specialties.Where(s => s.IsActive).Select(s => new TrainerServiceInfo {
                 ServiceId = s.ServiceId,
                 ServiceName = s.Service != null ? s.Service.Name : string.Empty
             }).ToList()));

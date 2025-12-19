@@ -3,8 +3,7 @@ using GymSystem.Common.Models;
 
 namespace GymSystem.Application.Abstractions.Services.IGemini;
 
-public interface IGeminiApiService
-{
+public interface IGeminiApiService {
     /// <summary>
     /// Gemini API ile workout planı oluşturur
     /// </summary>

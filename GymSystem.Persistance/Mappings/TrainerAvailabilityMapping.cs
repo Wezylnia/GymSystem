@@ -4,10 +4,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace GymSystem.Persistance.Mappings;
 
-public class TrainerAvailabilityMapping : IEntityTypeConfiguration<TrainerAvailability>
-{
-    public void Configure(EntityTypeBuilder<TrainerAvailability> entity)
-    {
+public class TrainerAvailabilityMapping : IEntityTypeConfiguration<TrainerAvailability> {
+    public void Configure(EntityTypeBuilder<TrainerAvailability> entity) {
         // Base entity configuration
         entity.HasKey(e => e.Id);
         entity.Property(e => e.Id).UseIdentityAlwaysColumn();

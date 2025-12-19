@@ -30,14 +30,13 @@ builder.Services.AddInfrastructureServices(builder.Configuration, "appsettings.j
 builder.Services.AddHttpContextAccessor();
 
 // Authorization Policies
-builder.Services.AddAuthorization(options =>
-{
+builder.Services.AddAuthorization(options => {
     options.AddPolicy("AdminOrGymOwner", policy =>
         policy.RequireRole("Admin", "GymOwner"));
-    
+
     options.AddPolicy("AdminOnly", policy =>
         policy.RequireRole("Admin"));
-    
+
     options.AddPolicy("GymOwnerPolicy", policy =>
         policy.Requirements.Add(new GymOwnerRequirement()));
 });
@@ -48,8 +47,7 @@ builder.Services.AddScoped<IAuthorizationHandler, GymOwnerAuthorizationHandler>(
 builder.Services.AddScoped<IClaimsTransformation, GymLocationClaimsTransformation>();
 
 // Cookie settings (MVC için - API ile paylaşımlı)
-builder.Services.ConfigureApplicationCookie(options =>
-{
+builder.Services.ConfigureApplicationCookie(options => {
     options.Cookie.Name = "GymSystem.Auth"; // Shared cookie name
     options.Cookie.Domain = null; // Same domain (localhost)
     options.Cookie.Path = "/";
@@ -64,30 +62,25 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 // HttpClient for API calls - Cookie forwarding ile
-builder.Services.AddHttpClient("GymApi", client =>
-{
+builder.Services.AddHttpClient("GymApi", client => {
     var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5001";
     client.BaseAddress = new Uri(apiBaseUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 })
-.ConfigurePrimaryHttpMessageHandler(() =>
-{
-    return new HttpClientHandler
-    {
+.ConfigurePrimaryHttpMessageHandler(() => {
+    return new HttpClientHandler {
         UseCookies = true,
         CookieContainer = new System.Net.CookieContainer()
     };
 })
-.AddHttpMessageHandler(serviceProvider =>
-{
+.AddHttpMessageHandler(serviceProvider => {
     return new CookieForwardingHandler(serviceProvider.GetRequiredService<IHttpContextAccessor>());
 });
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
-{
+if (!app.Environment.IsDevelopment()) {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
@@ -108,33 +101,26 @@ app.MapControllerRoute(
 app.Run();
 
 // Claims Transformation
-public class GymLocationClaimsTransformation : IClaimsTransformation
-{
+public class GymLocationClaimsTransformation : IClaimsTransformation {
     private readonly UserManager<AppUser> _userManager;
 
-    public GymLocationClaimsTransformation(UserManager<AppUser> userManager)
-    {
+    public GymLocationClaimsTransformation(UserManager<AppUser> userManager) {
         _userManager = userManager;
     }
 
-    public async Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
-    {
-        if (principal.Identity?.IsAuthenticated == true)
-        {
+    public async Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal) {
+        if (principal.Identity?.IsAuthenticated == true) {
             var claimsIdentity = (ClaimsIdentity)principal.Identity;
             var user = await _userManager.GetUserAsync(principal);
 
-            if (user != null)
-            {
+            if (user != null) {
                 // GymLocationId claim ekle
-                if (user.GymLocationId != null && !claimsIdentity.HasClaim(c => c.Type == "GymLocationId"))
-                {
+                if (user.GymLocationId != null && !claimsIdentity.HasClaim(c => c.Type == "GymLocationId")) {
                     claimsIdentity.AddClaim(new Claim("GymLocationId", user.GymLocationId.Value.ToString()));
                 }
 
                 // MemberId claim ekle
-                if (user.MemberId != null && !claimsIdentity.HasClaim(c => c.Type == "MemberId"))
-                {
+                if (user.MemberId != null && !claimsIdentity.HasClaim(c => c.Type == "MemberId")) {
                     claimsIdentity.AddClaim(new Claim("MemberId", user.MemberId.Value.ToString()));
                 }
             }
@@ -145,24 +131,19 @@ public class GymLocationClaimsTransformation : IClaimsTransformation
 }
 
 // Cookie Forwarding Handler
-public class CookieForwardingHandler : DelegatingHandler
-{
+public class CookieForwardingHandler : DelegatingHandler {
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public CookieForwardingHandler(IHttpContextAccessor httpContextAccessor)
-    {
+    public CookieForwardingHandler(IHttpContextAccessor httpContextAccessor) {
         _httpContextAccessor = httpContextAccessor;
     }
 
-    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-    {
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
         var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext != null && httpContext.User?.Identity?.IsAuthenticated == true)
-        {
+        if (httpContext != null && httpContext.User?.Identity?.IsAuthenticated == true) {
             // Get all cookies from current request
             var cookies = httpContext.Request.Cookies;
-            if (cookies.Any())
-            {
+            if (cookies.Any()) {
                 var cookieHeader = string.Join("; ", cookies.Select(c => $"{c.Key}={c.Value}"));
                 request.Headers.Add("Cookie", cookieHeader);
             }

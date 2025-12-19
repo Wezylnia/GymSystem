@@ -5,8 +5,7 @@ namespace GymSystem.Application.Abstractions.Services.IMembershipRequestService.
 /// <summary>
 /// MembershipRequest için DTO
 /// </summary>
-public class MembershipRequestDto
-{
+public class MembershipRequestDto {
     public int Id { get; set; }
     public int MemberId { get; set; }
     public int GymLocationId { get; set; }
@@ -18,13 +17,13 @@ public class MembershipRequestDto
     public int? ApprovedBy { get; set; }
     public DateTime? ApprovedAt { get; set; }
     public DateTime? RejectedAt { get; set; }
-    
+
     // Navigation Properties (Flat)
     public string? MemberName { get; set; }
     public string? MemberEmail { get; set; }
     public string? GymLocationName { get; set; }
     public string? GymLocationAddress { get; set; }
-    
+
     // Metadata
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

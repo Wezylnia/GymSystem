@@ -5,8 +5,7 @@ namespace GymSystem.Mvc.Models.Dtos;
 /// <summary>
 /// API'den dönen MembershipRequest DTO
 /// </summary>
-public class ApiMembershipRequestDto
-{
+public class ApiMembershipRequestDto {
     public int Id { get; set; }
     public int MemberId { get; set; }
     public int GymLocationId { get; set; }
@@ -25,9 +24,9 @@ public class ApiMembershipRequestDto
     public string? MemberEmail { get; set; }
     public string? GymLocationName { get; set; }
     public string? GymLocationAddress { get; set; }
-    
+
     // Helper property for enum conversion
-    public MembershipRequestStatus StatusEnum => Enum.TryParse<MembershipRequestStatus>(Status, out var result) 
-        ? result 
+    public MembershipRequestStatus StatusEnum => Enum.TryParse<MembershipRequestStatus>(Status, out var result)
+        ? result
         : MembershipRequestStatus.Pending;
 }

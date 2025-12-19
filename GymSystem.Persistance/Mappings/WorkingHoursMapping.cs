@@ -4,10 +4,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace GymSystem.Persistance.Mappings;
 
-public class WorkingHoursMapping : IEntityTypeConfiguration<WorkingHours>
-{
-    public void Configure(EntityTypeBuilder<WorkingHours> entity)
-    {
+public class WorkingHoursMapping : IEntityTypeConfiguration<WorkingHours> {
+    public void Configure(EntityTypeBuilder<WorkingHours> entity) {
         // Base entity configuration
         entity.HasKey(e => e.Id);
         entity.Property(e => e.Id).UseIdentityAlwaysColumn();

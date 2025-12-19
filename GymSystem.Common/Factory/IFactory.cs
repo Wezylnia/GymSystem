@@ -6,6 +6,5 @@ namespace GymSystem.Common.Factory;
 /// Factory marker interface - IApplicationService'den türer
 /// Otomatik service registration için kullanılır
 /// </summary>
-public interface IFactory : IApplicationService
-{
+public interface IFactory : IApplicationService {
 }

@@ -8,23 +8,20 @@ namespace GymSystem.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class AppointmentsController : ControllerBase
-{
+public class AppointmentsController : ControllerBase {
     private readonly IAppointmentService _appointmentService;
     private readonly ILogger<AppointmentsController> _logger;
 
-    public AppointmentsController(IAppointmentService appointmentService, ILogger<AppointmentsController> logger)
-    {
+    public AppointmentsController(IAppointmentService appointmentService, ILogger<AppointmentsController> logger) {
         _appointmentService = appointmentService;
         _logger = logger;
     }
 
     [HttpGet]
     [Authorize(Roles = "Admin,GymOwner,Member")]
-    public async Task<IActionResult> GetAll()
-    {
+    public async Task<IActionResult> GetAll() {
         var response = await _appointmentService.GetAllAsync();
-        
+
         if (!response.IsSuccessful)
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
 
@@ -33,10 +30,9 @@ public class AppointmentsController : ControllerBase
 
     [HttpGet("{id}")]
     [Authorize(Roles = "Admin,GymOwner,Member")]
-    public async Task<IActionResult> Get(int id)
-    {
+    public async Task<IActionResult> Get(int id) {
         var response = await _appointmentService.GetByIdAsync(id);
-        
+
         if (!response.IsSuccessful)
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
 
@@ -48,13 +44,12 @@ public class AppointmentsController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = "Member")]
-    public async Task<IActionResult> Create([FromBody] AppointmentDto request)
-    {
+    public async Task<IActionResult> Create([FromBody] AppointmentDto request) {
         if (request == null)
             return BadRequest(new { error = "Geçersiz istek" });
 
         var response = await _appointmentService.BookAppointmentAsync(request);
-        
+
         if (!response.IsSuccessful)
             return StatusCode(response.Error?.StatusCode ?? 500, new { error = response.Error?.ErrorMessage ?? "Randevu oluşturulamadı", errorCode = response.Error?.ErrorCode });
 
@@ -63,13 +58,12 @@ public class AppointmentsController : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin,GymOwner")]
-    public async Task<IActionResult> Update(int id, AppointmentDto dto)
-    {
+    public async Task<IActionResult> Update(int id, AppointmentDto dto) {
         if (id != dto.Id)
             return BadRequest(new { ErrorMessage = "Appointment ID mismatch", ErrorCode = "VALIDATION_001" });
 
         var response = await _appointmentService.UpdateAsync(id, dto);
-        
+
         if (!response.IsSuccessful)
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
 
@@ -78,10 +72,9 @@ public class AppointmentsController : ControllerBase
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin,Member")]
-    public async Task<IActionResult> Delete(int id)
-    {
+    public async Task<IActionResult> Delete(int id) {
         var response = await _appointmentService.DeleteAsync(id);
-        
+
         if (!response.IsSuccessful)
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
 
@@ -90,10 +83,9 @@ public class AppointmentsController : ControllerBase
 
     [HttpPut("{id}/confirm")]
     [Authorize(Roles = "Admin,GymOwner")]
-    public async Task<IActionResult> Confirm(int id)
-    {
+    public async Task<IActionResult> Confirm(int id) {
         var response = await _appointmentService.ConfirmAppointmentAsync(id);
-        
+
         if (!response.IsSuccessful)
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
 
@@ -102,10 +94,9 @@ public class AppointmentsController : ControllerBase
 
     [HttpPut("{id}/cancel")]
     [Authorize(Roles = "Member,Admin")]
-    public async Task<IActionResult> Cancel(int id, [FromBody] string? reason)
-    {
+    public async Task<IActionResult> Cancel(int id, [FromBody] string? reason) {
         var response = await _appointmentService.CancelAppointmentAsync(id, reason);
-        
+
         if (!response.IsSuccessful)
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
 
@@ -114,10 +105,9 @@ public class AppointmentsController : ControllerBase
 
     [HttpGet("member/{memberId}")]
     [Authorize(Roles = "Member,Admin,GymOwner")]
-    public async Task<IActionResult> GetMemberAppointments(int memberId)
-    {
+    public async Task<IActionResult> GetMemberAppointments(int memberId) {
         var response = await _appointmentService.GetMemberAppointmentsAsync(memberId);
-        
+
         if (!response.IsSuccessful)
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
 
@@ -126,10 +116,9 @@ public class AppointmentsController : ControllerBase
 
     [HttpGet("trainer/{trainerId}")]
     [Authorize(Roles = "Admin,GymOwner,Trainer")]
-    public async Task<IActionResult> GetTrainerAppointments(int trainerId)
-    {
+    public async Task<IActionResult> GetTrainerAppointments(int trainerId) {
         var response = await _appointmentService.GetTrainerAppointmentsAsync(trainerId);
-        
+
         if (!response.IsSuccessful)
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
 
@@ -138,10 +127,9 @@ public class AppointmentsController : ControllerBase
 
     [HttpGet("check-availability")]
     [Authorize(Roles = "Member,Admin,GymOwner")]
-    public async Task<IActionResult> CheckAvailability([FromQuery] int trainerId, [FromQuery] DateTime appointmentDate, [FromQuery] int durationMinutes)
-    {
+    public async Task<IActionResult> CheckAvailability([FromQuery] int trainerId, [FromQuery] DateTime appointmentDate, [FromQuery] int durationMinutes) {
         var response = await _appointmentService.CheckTrainerAvailabilityAsync(trainerId, appointmentDate, durationMinutes);
-        
+
         if (!response.IsSuccessful)
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
 
@@ -150,10 +138,9 @@ public class AppointmentsController : ControllerBase
 
     [HttpGet("available-trainers")]
     [Authorize(Roles = "Member,Admin,GymOwner")]
-    public async Task<IActionResult> GetAvailableTrainers([FromQuery] int serviceId, [FromQuery] DateTime appointmentDate, [FromQuery] int durationMinutes)
-    {
+    public async Task<IActionResult> GetAvailableTrainers([FromQuery] int serviceId, [FromQuery] DateTime appointmentDate, [FromQuery] int durationMinutes) {
         var response = await _appointmentService.GetAvailableTrainersAsync(serviceId, appointmentDate, durationMinutes);
-        
+
         if (!response.IsSuccessful)
             return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
 

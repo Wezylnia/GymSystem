@@ -175,7 +175,7 @@ public class AppointmentsController : Controller {
         try {
             // Önce hizmet bilgisini al (hangi salona ait olduğunu öğrenmek için)
             var service = await _apiHelper.GetAsync<ApiServiceDto>(ApiEndpoints.ServiceById(serviceId));
-            
+
             if (service == null) {
                 _logger.LogWarning("Service bulunamadı. ServiceId: {ServiceId}", serviceId);
                 return Json(new List<ApiTrainerDto>());
@@ -183,13 +183,13 @@ public class AppointmentsController : Controller {
 
             // Tüm antrenörleri al
             var allTrainers = await _apiHelper.GetListAsync<ApiTrainerDto>(ApiEndpoints.Trainers);
-            
+
             // Sadece bu hizmetin salonundaki aktif antrenörleri filtrele
             var filtered = allTrainers
                 .Where(t => t.GymLocationId == service.GymLocationId && t.IsActive)
                 .ToList();
 
-            _logger.LogInformation("ServiceId: {ServiceId}, GymLocationId: {GymLocationId}, Antrenör sayısı: {Count}", 
+            _logger.LogInformation("ServiceId: {ServiceId}, GymLocationId: {GymLocationId}, Antrenör sayısı: {Count}",
                 serviceId, service.GymLocationId, filtered.Count);
 
             return Json(filtered);
@@ -230,8 +230,8 @@ public class AppointmentsController : Controller {
                     var allMembers = await _apiHelper.GetListAsync<ApiMemberDto>(ApiEndpoints.Members);
                     // Aktif üyelik olan ve bu salona ait üyeleri filtrele
                     var activeMembers = allMembers
-                        .Where(m => m.IsActive && 
-                                   m.MembershipEndDate.HasValue && 
+                        .Where(m => m.IsActive &&
+                                   m.MembershipEndDate.HasValue &&
                                    m.MembershipEndDate.Value >= DateTime.Now &&
                                    m.CurrentGymLocationId == locationId)
                         .Select(m => new {

@@ -30,8 +30,8 @@ public class DashboardController : Controller {
             }
 
             // Fetch Dashboard Stats
-            var statsEndpoint = gymLocationId.HasValue 
-                ? ApiEndpoints.ReportsGymOwnerDashboardByLocation(gymLocationId.Value) 
+            var statsEndpoint = gymLocationId.HasValue
+                ? ApiEndpoints.ReportsGymOwnerDashboardByLocation(gymLocationId.Value)
                 : ApiEndpoints.ReportsGymOwnerDashboard;
             var statsResponse = await _apiHelper.GetRawAsync(statsEndpoint);
             if (statsResponse.IsSuccessStatusCode) {
@@ -41,8 +41,8 @@ public class DashboardController : Controller {
             }
 
             // Fetch Membership Statistics
-            var membershipEndpoint = gymLocationId.HasValue 
-                ? ApiEndpoints.ReportsMembershipStatisticsByLocation(gymLocationId.Value) 
+            var membershipEndpoint = gymLocationId.HasValue
+                ? ApiEndpoints.ReportsMembershipStatisticsByLocation(gymLocationId.Value)
                 : ApiEndpoints.ReportsMembershipStatistics;
             var membershipResponse = await _apiHelper.GetRawAsync(membershipEndpoint);
             if (membershipResponse.IsSuccessStatusCode) {
@@ -52,8 +52,8 @@ public class DashboardController : Controller {
             }
 
             // Fetch Revenue Trend
-            var revenueTrendEndpoint = gymLocationId.HasValue 
-                ? ApiEndpoints.ReportsRevenueTrendByLocation(gymLocationId.Value) 
+            var revenueTrendEndpoint = gymLocationId.HasValue
+                ? ApiEndpoints.ReportsRevenueTrendByLocation(gymLocationId.Value)
                 : ApiEndpoints.ReportsRevenueTrend;
             var revenueTrendResponse = await _apiHelper.GetRawAsync(revenueTrendEndpoint);
             if (revenueTrendResponse.IsSuccessStatusCode) {
@@ -69,8 +69,8 @@ public class DashboardController : Controller {
             }
 
             // Fetch Member Growth Trend
-            var memberGrowthEndpoint = gymLocationId.HasValue 
-                ? ApiEndpoints.ReportsMemberGrowthTrendByLocation(gymLocationId.Value) 
+            var memberGrowthEndpoint = gymLocationId.HasValue
+                ? ApiEndpoints.ReportsMemberGrowthTrendByLocation(gymLocationId.Value)
                 : ApiEndpoints.ReportsMemberGrowthTrend;
             var memberGrowthResponse = await _apiHelper.GetRawAsync(memberGrowthEndpoint);
             if (memberGrowthResponse.IsSuccessStatusCode) {
@@ -86,8 +86,8 @@ public class DashboardController : Controller {
             }
 
             // Fetch Trainer Workload
-            var workloadEndpoint = gymLocationId.HasValue 
-                ? ApiEndpoints.ReportsTrainerWorkloadByLocation(gymLocationId.Value) 
+            var workloadEndpoint = gymLocationId.HasValue
+                ? ApiEndpoints.ReportsTrainerWorkloadByLocation(gymLocationId.Value)
                 : ApiEndpoints.ReportsTrainerWorkload;
             var workloadResponse = await _apiHelper.GetRawAsync(workloadEndpoint);
             if (workloadResponse.IsSuccessStatusCode) {

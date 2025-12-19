@@ -130,7 +130,7 @@ public class MembersController : ControllerBase {
                 return StatusCode(response.Error?.StatusCode ?? 500, response.Error);
             }
 
-            _logger.LogInformation("✅ Member kaydı başarıyla oluşturuldu. ID: {Id}, Email: {Email}", 
+            _logger.LogInformation("✅ Member kaydı başarıyla oluşturuldu. ID: {Id}, Email: {Email}",
                 response.Data!.Id, dto.Email);
 
             return CreatedAtAction(nameof(Get), new { id = response.Data!.Id }, response.Data);

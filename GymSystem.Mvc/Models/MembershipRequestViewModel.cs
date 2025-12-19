@@ -3,8 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace GymSystem.Mvc.Models;
 
-public class MembershipRequestViewModel
-{
+public class MembershipRequestViewModel {
     public int Id { get; set; }
     public int MemberId { get; set; }
     public int GymLocationId { get; set; }
@@ -26,25 +25,22 @@ public class MembershipRequestViewModel
     public string MemberName { get; set; } = string.Empty;
     public string GymLocationName { get; set; } = string.Empty;
     public string GymLocationAddress { get; set; } = string.Empty;
-    
-    public string StatusText => Status switch
-    {
+
+    public string StatusText => Status switch {
         MembershipRequestStatus.Pending => "Beklemede",
         MembershipRequestStatus.Approved => "Onaylandı",
         MembershipRequestStatus.Rejected => "Reddedildi",
         _ => "Bilinmiyor"
     };
-    
-    public string StatusCssClass => Status switch
-    {
+
+    public string StatusCssClass => Status switch {
         MembershipRequestStatus.Pending => "warning",
         MembershipRequestStatus.Approved => "success",
         MembershipRequestStatus.Rejected => "danger",
         _ => "secondary"
     };
-    
-    public string DurationText => Duration switch
-    {
+
+    public string DurationText => Duration switch {
         MembershipDuration.OneMonth => "1 Ay",
         MembershipDuration.ThreeMonths => "3 Ay",
         MembershipDuration.SixMonths => "6 Ay",
@@ -52,8 +48,7 @@ public class MembershipRequestViewModel
     };
 }
 
-public class MemberDto
-{
+public class MemberDto {
     public int Id { get; set; }
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
@@ -61,16 +56,14 @@ public class MemberDto
     public string? PhoneNumber { get; set; }
 }
 
-public class GymLocationDto
-{
+public class GymLocationDto {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
     public string City { get; set; } = string.Empty;
 }
 
-public class CreateMembershipRequestViewModel
-{
+public class CreateMembershipRequestViewModel {
     public int MemberId { get; set; }
 
     [Required(ErrorMessage = "Salon seçimi zorunludur")]
@@ -94,8 +87,7 @@ public class CreateMembershipRequestViewModel
     public List<GymLocationSelectItem> AvailableGyms { get; set; } = new();
 }
 
-public class GymLocationSelectItem
-{
+public class GymLocationSelectItem {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
@@ -106,8 +98,7 @@ public class GymLocationSelectItem
     public decimal SixMonthsPrice { get; set; }
 }
 
-public class ManageMembershipRequestViewModel
-{
+public class ManageMembershipRequestViewModel {
     public int Id { get; set; }
     public int MemberId { get; set; }
     public string MemberName { get; set; } = string.Empty;
@@ -125,8 +116,7 @@ public class ManageMembershipRequestViewModel
     [StringLength(1000, ErrorMessage = "Not en fazla 1000 karakter olabilir")]
     public string? AdminNotes { get; set; }
 
-    public string DurationText => Duration switch
-    {
+    public string DurationText => Duration switch {
         MembershipDuration.OneMonth => "1 Ay",
         MembershipDuration.ThreeMonths => "3 Ay",
         MembershipDuration.SixMonths => "6 Ay",

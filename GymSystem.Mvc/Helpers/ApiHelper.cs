@@ -236,8 +236,8 @@ public class ApiHelper {
             }
 
             // Hiçbiri yoksa raw content'i döndür (kısaltılmış)
-            return errorContent.Length > 200 
-                ? $"{statusCode}: {errorContent.Substring(0, 200)}..." 
+            return errorContent.Length > 200
+                ? $"{statusCode}: {errorContent.Substring(0, 200)}..."
                 : $"{statusCode}: {errorContent}";
         }
         catch {

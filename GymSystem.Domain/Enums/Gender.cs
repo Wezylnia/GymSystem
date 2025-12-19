@@ -3,13 +3,12 @@ namespace GymSystem.Domain.Enums;
 /// <summary>
 /// Cinsiyet bilgisi
 /// </summary>
-public enum Gender
-{
+public enum Gender {
     /// <summary>
     /// Kadın
     /// </summary>
     Female = 0,
-    
+
     /// <summary>
     /// Erkek
     /// </summary>

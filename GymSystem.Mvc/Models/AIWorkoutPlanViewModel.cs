@@ -2,8 +2,7 @@
 
 namespace GymSystem.Mvc.Models;
 
-public class AIWorkoutPlanViewModel
-{
+public class AIWorkoutPlanViewModel {
     public int Id { get; set; }
     public int MemberId { get; set; }
     public string PlanType { get; set; } = string.Empty;
@@ -20,8 +19,7 @@ public class AIWorkoutPlanViewModel
     public string MemberName { get; set; } = string.Empty;
 }
 
-public class CreateAIWorkoutPlanViewModel
-{
+public class CreateAIWorkoutPlanViewModel {
     public int MemberId { get; set; }
 
     [Required(ErrorMessage = "Boy alanı zorunludur")]

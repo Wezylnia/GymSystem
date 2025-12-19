@@ -4,8 +4,7 @@
 /// Randevu sistemi
 /// Üye, antrenör ve hizmet bilgisi
 /// </summary>
-public class Appointment : BaseEntity
-{
+public class Appointment : BaseEntity {
     public int MemberId { get; set; }
     public int TrainerId { get; set; }
     public int ServiceId { get; set; }
@@ -24,8 +23,7 @@ public class Appointment : BaseEntity
 /// <summary>
 /// Randevu durumları
 /// </summary>
-public enum AppointmentStatus
-{
+public enum AppointmentStatus {
     Pending = 0,    // Onay bekliyor
     Confirmed = 1,  // Onaylandı
     Cancelled = 2,  // İptal edildi

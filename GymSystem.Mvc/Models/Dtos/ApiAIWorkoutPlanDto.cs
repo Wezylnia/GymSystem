@@ -3,8 +3,7 @@
 /// <summary>
 /// API'den dönen AIWorkoutPlan DTO
 /// </summary>
-public class ApiAIWorkoutPlanDto
-{
+public class ApiAIWorkoutPlanDto {
     public int Id { get; set; }
     public int MemberId { get; set; }
     public string PlanType { get; set; } = string.Empty;
@@ -16,7 +15,7 @@ public class ApiAIWorkoutPlanDto
     public string? ImageUrl { get; set; }
     public string? AIModel { get; set; }
     public DateTime CreatedAt { get; set; }
-    
+
     // Navigation
     public ApiMemberDto? Member { get; set; }
 }

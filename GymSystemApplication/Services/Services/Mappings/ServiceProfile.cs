@@ -8,10 +8,8 @@ namespace GymSystem.Application.Services.Services.Mappings;
 /// <summary>
 /// AutoMapper profile for Service mappings
 /// </summary>
-public class ServiceProfile : Profile
-{
-    public ServiceProfile()
-    {
+public class ServiceProfile : Profile {
+    public ServiceProfile() {
         // Entity -> DTO
         CreateMap<Service, ServiceDto>()
             .ForMember(dest => dest.GymLocationName, opt => opt.MapFrom(src => src.GymLocation != null ? src.GymLocation.Name : null));
