@@ -77,7 +77,7 @@
                                         </button>
                                     </form>
                                 }
-                                @if (appointment.Status == "Pending" || appointment.Status == "Confirmed")
+                                @if ((appointment.Status == "Pending" || appointment.Status == "Confirmed") && appointment.AppointmentDate > DateTime.Now)
                                 {
                                     <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#cancelModal@(appointment.Id)" title="İptal Et">
                                         <i class="bi bi-x-circle"></i> İptal

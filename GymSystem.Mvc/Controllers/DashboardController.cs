@@ -29,28 +29,33 @@ public class DashboardController : Controller {
                 }
             }
 
-            var queryParam = gymLocationId.HasValue ? $"?gymLocationId={gymLocationId}" : "";
-
-            // Fetch Dashboard Stats - Raw response ile parse et
-            var statsResponse = await _apiHelper.GetRawAsync($"/api/reports/gym-owner-dashboard{queryParam}");
+            // Fetch Dashboard Stats
+            var statsEndpoint = gymLocationId.HasValue 
+                ? ApiEndpoints.ReportsGymOwnerDashboardByLocation(gymLocationId.Value) 
+                : ApiEndpoints.ReportsGymOwnerDashboard;
+            var statsResponse = await _apiHelper.GetRawAsync(statsEndpoint);
             if (statsResponse.IsSuccessStatusCode) {
                 var statsContent = await statsResponse.Content.ReadAsStringAsync();
-                _logger.LogInformation("Dashboard stats raw response: {Response}", statsContent);
                 dashboard.Stats = JsonSerializer.Deserialize<DashboardStatsViewModel>(statsContent,
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new DashboardStatsViewModel();
             }
 
-            // Fetch Membership Statistics - Raw response ile parse et
-            var membershipResponse = await _apiHelper.GetRawAsync($"/api/reports/membership-statistics{queryParam}");
+            // Fetch Membership Statistics
+            var membershipEndpoint = gymLocationId.HasValue 
+                ? ApiEndpoints.ReportsMembershipStatisticsByLocation(gymLocationId.Value) 
+                : ApiEndpoints.ReportsMembershipStatistics;
+            var membershipResponse = await _apiHelper.GetRawAsync(membershipEndpoint);
             if (membershipResponse.IsSuccessStatusCode) {
                 var membershipContent = await membershipResponse.Content.ReadAsStringAsync();
-                _logger.LogInformation("Membership stats raw response: {Response}", membershipContent);
                 dashboard.MembershipStats = JsonSerializer.Deserialize<MembershipStatisticsViewModel>(membershipContent,
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new MembershipStatisticsViewModel();
             }
 
             // Fetch Revenue Trend
-            var revenueTrendResponse = await _apiHelper.GetRawAsync($"/api/reports/revenue-trend{queryParam}");
+            var revenueTrendEndpoint = gymLocationId.HasValue 
+                ? ApiEndpoints.ReportsRevenueTrendByLocation(gymLocationId.Value) 
+                : ApiEndpoints.ReportsRevenueTrend;
+            var revenueTrendResponse = await _apiHelper.GetRawAsync(revenueTrendEndpoint);
             if (revenueTrendResponse.IsSuccessStatusCode) {
                 var revenueContent = await revenueTrendResponse.Content.ReadAsStringAsync();
                 var revenueData = JsonSerializer.Deserialize<JsonElement>(revenueContent,
@@ -64,7 +69,10 @@ public class DashboardController : Controller {
             }
 
             // Fetch Member Growth Trend
-            var memberGrowthResponse = await _apiHelper.GetRawAsync($"/api/reports/member-growth-trend{queryParam}");
+            var memberGrowthEndpoint = gymLocationId.HasValue 
+                ? ApiEndpoints.ReportsMemberGrowthTrendByLocation(gymLocationId.Value) 
+                : ApiEndpoints.ReportsMemberGrowthTrend;
+            var memberGrowthResponse = await _apiHelper.GetRawAsync(memberGrowthEndpoint);
             if (memberGrowthResponse.IsSuccessStatusCode) {
                 var memberGrowthContent = await memberGrowthResponse.Content.ReadAsStringAsync();
                 var memberGrowthData = JsonSerializer.Deserialize<JsonElement>(memberGrowthContent,
@@ -78,7 +86,10 @@ public class DashboardController : Controller {
             }
 
             // Fetch Trainer Workload
-            var workloadResponse = await _apiHelper.GetRawAsync($"/api/reports/trainer-workload{queryParam}");
+            var workloadEndpoint = gymLocationId.HasValue 
+                ? ApiEndpoints.ReportsTrainerWorkloadByLocation(gymLocationId.Value) 
+                : ApiEndpoints.ReportsTrainerWorkload;
+            var workloadResponse = await _apiHelper.GetRawAsync(workloadEndpoint);
             if (workloadResponse.IsSuccessStatusCode) {
                 var workloadContent = await workloadResponse.Content.ReadAsStringAsync();
                 var workloadData = JsonSerializer.Deserialize<JsonElement>(workloadContent,

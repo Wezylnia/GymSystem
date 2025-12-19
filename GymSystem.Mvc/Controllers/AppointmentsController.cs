@@ -28,7 +28,7 @@ public class AppointmentsController : Controller {
             if (User.IsInRole("Member")) {
                 var memberIdClaim = User.FindFirst("MemberId")?.Value;
                 if (int.TryParse(memberIdClaim, out var memberId)) {
-                    apiAppointments = await _apiHelper.GetListAsync<ApiAppointmentDto>($"/api/appointments/member/{memberId}");
+                    apiAppointments = await _apiHelper.GetListAsync<ApiAppointmentDto>(ApiEndpoints.AppointmentsByMember(memberId));
                 }
                 else {
                     _logger.LogWarning("Member ID claim not found for user {User}", User.Identity?.Name);
@@ -118,9 +118,8 @@ public class AppointmentsController : Controller {
     [Authorize(Policy = "AdminOrGymOwner")]
     public async Task<IActionResult> Confirm(int id) {
         try {
-            var rawResponse = await _apiHelper.GetRawAsync($"/api/appointments/{id}/confirm");
-            // PUT metodu için raw kullanıyoruz
-            var (success, errorMessage) = await _apiHelper.PutAsync($"/api/appointments/{id}/confirm", new { });
+            // PUT metodu için ApiEndpoints kullanıyoruz
+            var (success, errorMessage) = await _apiHelper.PutAsync(ApiEndpoints.AppointmentConfirm(id), new { });
 
             if (success) {
                 TempData["SuccessMessage"] = "Randevu onaylandı!";
@@ -141,7 +140,7 @@ public class AppointmentsController : Controller {
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Cancel(int id, string? reason) {
         try {
-            var (success, errorMessage) = await _apiHelper.PutAsync($"/api/appointments/{id}/cancel", reason ?? "");
+            var (success, errorMessage) = await _apiHelper.PutAsync(ApiEndpoints.AppointmentCancel(id), reason ?? "");
 
             if (success) {
                 TempData["SuccessMessage"] = "Randevu iptal edildi!";
