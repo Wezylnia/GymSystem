@@ -51,7 +51,8 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService {
                 if (futureImageResponse.IsSuccessful && !string.IsNullOrEmpty(futureImageResponse.Data)) {
                     futureBodyImage = futureImageResponse.Data;
                     _logger.LogInformation("6 ay sonraki hedef görsel başarıyla oluşturuldu");
-                } else {
+                }
+                else {
                     _logger.LogWarning("6 ay sonraki hedef görsel oluşturulamadı: {Error}", futureImageResponse.Error?.ErrorMessage);
                 }
             }
@@ -107,7 +108,8 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService {
                 if (futureImageResponse.IsSuccessful && !string.IsNullOrEmpty(futureImageResponse.Data)) {
                     futureBodyImage = futureImageResponse.Data;
                     _logger.LogInformation("6 ay sonraki hedef görsel başarıyla oluşturuldu");
-                } else {
+                }
+                else {
                     _logger.LogWarning("6 ay sonraki hedef görsel oluşturulamadı: {Error}", futureImageResponse.Error?.ErrorMessage);
                 }
             }

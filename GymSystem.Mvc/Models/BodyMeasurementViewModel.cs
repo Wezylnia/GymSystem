@@ -84,7 +84,7 @@ public class BodyMeasurementListViewModel {
     public List<BodyMeasurementViewModel> Measurements { get; set; } = new();
     public int MemberId { get; set; }
     public string? MemberName { get; set; }
-    
+
     // İstatistikler
     public decimal? CurrentWeight { get; set; }
     public decimal? CurrentHeight { get; set; }

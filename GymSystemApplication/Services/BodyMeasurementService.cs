@@ -33,7 +33,7 @@ public class BodyMeasurementService : IBodyMeasurementService {
                 .ToListAsync();
 
             var dtos = _mapper.Map<List<BodyMeasurementDto>>(measurements);
-            
+
             // Deðiþimleri hesapla
             CalculateChanges(dtos);
 
@@ -67,7 +67,7 @@ public class BodyMeasurementService : IBodyMeasurementService {
     public async Task<ServiceResponse<BodyMeasurementDto>> CreateAsync(BodyMeasurementDto dto) {
         try {
             var repository = _baseFactory.CreateRepositoryFactory().CreateRepository<BodyMeasurement>();
-            
+
             var measurement = _mapper.Map<BodyMeasurement>(dto);
             measurement.CreatedAt = DateTimeHelper.Now;
             measurement.IsActive = true;
@@ -84,7 +84,7 @@ public class BodyMeasurementService : IBodyMeasurementService {
                 .FirstOrDefaultAsync();
 
             var resultDto = _mapper.Map<BodyMeasurementDto>(measurement);
-            
+
             if (previousMeasurement != null) {
                 resultDto.HeightChange = measurement.Height - previousMeasurement.Height;
                 resultDto.WeightChange = measurement.Weight - previousMeasurement.Weight;
@@ -170,7 +170,7 @@ public class BodyMeasurementService : IBodyMeasurementService {
                 .ToListAsync();
 
             var dtos = _mapper.Map<List<BodyMeasurementDto>>(measurements);
-            
+
             // Grafik için deðiþimleri hesapla
             CalculateChanges(dtos, ascending: true);
 
@@ -190,8 +190,8 @@ public class BodyMeasurementService : IBodyMeasurementService {
 
         // Ascending = true ise tarihe göre artan sýralý (grafik için)
         // Ascending = false ise tarihe göre azalan sýralý (liste için)
-        var ordered = ascending 
-            ? measurements.OrderBy(m => m.MeasurementDate).ToList() 
+        var ordered = ascending
+            ? measurements.OrderBy(m => m.MeasurementDate).ToList()
             : measurements.OrderByDescending(m => m.MeasurementDate).ToList();
 
         for (int i = 1; i < ordered.Count; i++) {

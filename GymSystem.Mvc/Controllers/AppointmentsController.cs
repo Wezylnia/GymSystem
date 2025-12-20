@@ -186,8 +186,8 @@ public class AppointmentsController : Controller {
 
             // Sadece bu hizmetin salonundaki, aktif ve bu hizmette uzmanlığı olan antrenörleri filtrele
             var filtered = allTrainers
-                .Where(t => t.GymLocationId == service.GymLocationId 
-                         && t.IsActive 
+                .Where(t => t.GymLocationId == service.GymLocationId
+                         && t.IsActive
                          && t.SelectedServiceIds.Contains(serviceId))
                 .ToList();
 

@@ -178,7 +178,7 @@ public class BodyMeasurementsController : Controller {
         try {
             // Önce ölçümü kontrol et
             var measurement = await _apiHelper.GetAsync<ApiBodyMeasurementDto>(ApiEndpoints.BodyMeasurementById(id));
-            
+
             if (measurement == null)
                 return NotFound();
 

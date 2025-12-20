@@ -12,27 +12,27 @@ public interface IBodyMeasurementService : IApplicationService {
     /// Üyenin tüm ölçümlerini getirir (tarihe göre sýralý)
     /// </summary>
     Task<ServiceResponse<List<BodyMeasurementDto>>> GetMemberMeasurementsAsync(int memberId);
-    
+
     /// <summary>
     /// Belirli bir ölçümü getirir
     /// </summary>
     Task<ServiceResponse<BodyMeasurementDto?>> GetByIdAsync(int id);
-    
+
     /// <summary>
     /// Yeni ölçüm ekler
     /// </summary>
     Task<ServiceResponse<BodyMeasurementDto>> CreateAsync(BodyMeasurementDto dto);
-    
+
     /// <summary>
     /// Ölçüm günceller
     /// </summary>
     Task<ServiceResponse<BodyMeasurementDto>> UpdateAsync(BodyMeasurementDto dto);
-    
+
     /// <summary>
     /// Ölçüm siler (soft delete)
     /// </summary>
     Task<ServiceResponse<bool>> DeleteAsync(int id);
-    
+
     /// <summary>
     /// Grafik verileri için ölçümleri getirir
     /// </summary>
