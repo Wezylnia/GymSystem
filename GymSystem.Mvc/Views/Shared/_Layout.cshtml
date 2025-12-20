@@ -77,20 +77,25 @@
                                 </a>
                             </li>
                             
-                            @if (User.IsInRole("Member"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="MembershipRequests" asp-action="Index">
-                                        <i class="bi bi-card-checklist"></i> Üyelik Taleplerim
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="AIWorkoutPlans" asp-action="Index">
-                                        <i class="bi bi-robot"></i> AI Planlarım
-                                    </a>
-                                </li>
+                                @if (User.IsInRole("Member"))
+                                {
+                                    <li class="nav-item">
+                                        <a class="nav-link" asp-controller="MembershipRequests" asp-action="Index">
+                                            <i class="bi bi-card-checklist"></i> Üyelik Taleplerim
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" asp-controller="AIWorkoutPlans" asp-action="Index">
+                                            <i class="bi bi-robot"></i> AI Planlarım
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" asp-controller="BodyMeasurements" asp-action="Index">
+                                            <i class="bi bi-graph-up"></i> Boy-Kilo Takibi
+                                        </a>
+                                    </li>
+                                }
                             }
-                        }
                     </ul>
                     
                     <ul class="navbar-nav">

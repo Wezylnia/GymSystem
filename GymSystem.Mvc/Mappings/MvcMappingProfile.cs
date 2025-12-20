@@ -79,6 +79,9 @@ public class MvcMappingProfile : Profile {
             .ForMember(dest => dest.MemberName,
                 opt => opt.MapFrom(src => src.Member != null ? $"{src.Member.FirstName} {src.Member.LastName}" : string.Empty));
 
+        // ApiBodyMeasurementDto -> BodyMeasurementViewModel
+        CreateMap<ApiBodyMeasurementDto, BodyMeasurementViewModel>();
+
         // ApiMembershipRequestDto -> MembershipRequestViewModel
         CreateMap<ApiMembershipRequestDto, MembershipRequestViewModel>()
             .ForMember(dest => dest.Status,

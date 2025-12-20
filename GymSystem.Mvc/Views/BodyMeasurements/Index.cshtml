@@ -1,0 +1,362 @@
+@model GymSystem.Mvc.Models.BodyMeasurementListViewModel
+
+@{
+    ViewData["Title"] = "Boy-Kilo Takibi";
+}
+
+<div class="container-fluid mt-4">
+    <!-- Baþlýk ve Ekle Butonu -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-weight"></i> Boy-Kilo Takibi</h2>
+            <p class="text-muted mb-0">Fiziksel geliþiminizi takip edin</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Yeni Ölçüm Ekle
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Ýstatistik Kartlarý -->
+    @if (Model.Measurements.Any())
+    {
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50">Güncel Kilo</h6>
+                                <h3 class="mb-0">@Model.CurrentWeight?.ToString("F1") kg</h3>
+                            </div>
+                            <i class="fas fa-weight fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50">Güncel Boy</h6>
+                                <h3 class="mb-0">@Model.CurrentHeight?.ToString("F1") cm</h3>
+                            </div>
+                            <i class="fas fa-ruler-vertical fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card @(Model.TotalWeightChange >= 0 ? "bg-success" : "bg-warning") text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50">Toplam Kilo Deðiþimi</h6>
+                                <h3 class="mb-0">
+                                    @if (Model.TotalWeightChange >= 0)
+                                    {
+                                        <span>+@Model.TotalWeightChange?.ToString("F1") kg</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@Model.TotalWeightChange?.ToString("F1") kg</span>
+                                    }
+                                </h3>
+                            </div>
+                            <i class="fas fa-chart-line fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-secondary text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white-50">Toplam Ölçüm</h6>
+                                <h3 class="mb-0">@Model.TotalMeasurements</h3>
+                            </div>
+                            <i class="fas fa-clipboard-list fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grafikler -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-line"></i> Kilo Grafiði</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="weightChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-chart-line"></i> Boy Grafiði</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="heightChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Ölçüm Listesi -->
+    <div class="card shadow">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0"><i class="fas fa-list"></i> Ölçüm Geçmiþi</h5>
+        </div>
+        <div class="card-body">
+            @if (!Model.Measurements.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">Henüz ölçüm kaydýnýz yok</h4>
+                    <p class="text-muted">Ýlk ölçümünüzü ekleyerek takibe baþlayýn!</p>
+                    <a asp-action="Create" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Ýlk Ölçümü Ekle
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Boy (cm)</th>
+                                <th>Kilo (kg)</th>
+                                <th>BMI</th>
+                                <th>Deðiþim</th>
+                                <th>Not</th>
+                                <th class="text-end">Ýþlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Measurements)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@item.MeasurementDate.ToString("dd MMMM yyyy")</strong>
+                                        <br />
+                                        <small class="text-muted">@item.MeasurementDate.ToString("dddd")</small>
+                                    </td>
+                                    <td>
+                                        <span class="fs-5">@item.Height.ToString("F1")</span>
+                                        @if (item.HeightChange.HasValue && item.HeightChange != 0)
+                                        {
+                                            <br />
+                                            <small class="@(item.HeightChange > 0 ? "text-success" : "text-danger")">
+                                                @(item.HeightChange > 0 ? "+" : "")@item.HeightChange?.ToString("F1") cm
+                                            </small>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="fs-5">@item.Weight.ToString("F1")</span>
+                                        @if (item.WeightChange.HasValue && item.WeightChange != 0)
+                                        {
+                                            <br />
+                                            <small class="@(item.WeightChange > 0 ? "text-success" : "text-danger")">
+                                                @(item.WeightChange > 0 ? "+" : "")@item.WeightChange?.ToString("F1") kg
+                                            </small>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge @item.BMIBadgeClass">
+                                            @item.BMI.ToString("F1") - @item.BMICategory
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (item.HeightChange.HasValue || item.WeightChange.HasValue)
+                                        {
+                                            <div class="d-flex flex-column gap-1">
+                                                @if (item.HeightChange.HasValue && item.HeightChange != 0)
+                                                {
+                                                    <span class="badge @(item.HeightChange > 0 ? "bg-success" : "bg-danger")">
+                                                        <i class="fas @(item.HeightChange > 0 ? "fa-arrow-up" : "fa-arrow-down")"></i>
+                                                        Boy: @(item.HeightChange > 0 ? "+" : "")@item.HeightChange?.ToString("F1") cm
+                                                    </span>
+                                                }
+                                                @if (item.WeightChange.HasValue && item.WeightChange != 0)
+                                                {
+                                                    <span class="badge @(item.WeightChange > 0 ? "bg-success" : "bg-warning")">
+                                                        <i class="fas @(item.WeightChange > 0 ? "fa-arrow-up" : "fa-arrow-down")"></i>
+                                                        Kilo: @(item.WeightChange > 0 ? "+" : "")@item.WeightChange?.ToString("F1") kg
+                                                    </span>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Ýlk ölçüm</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.Note))
+                                        {
+                                            <span class="text-truncate d-inline-block" style="max-width: 150px;" title="@item.Note">
+                                                @item.Note
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary" title="Düzenle">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-danger" title="Sil"
+                                                    data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                                    data-id="@item.Id" data-date="@item.MeasurementDate.ToString("dd/MM/yyyy")">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Silme Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Ölçümü Sil</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><span id="deleteDate"></span> tarihli ölçümü silmek istediðinize emin misiniz?</p>
+                <p class="text-danger"><strong>Bu iþlem geri alýnamaz!</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ýptal</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Sil
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Silme modal'ý için
+        document.getElementById('deleteModal').addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var id = button.getAttribute('data-id');
+            var date = button.getAttribute('data-date');
+            
+            document.getElementById('deleteDate').textContent = date;
+            document.getElementById('deleteForm').action = '@Url.Action("Delete")/' + id;
+        });
+
+        // Grafikler
+        @if (Model.Measurements.Any())
+        {
+            <text>
+            fetch('@Url.Action("GetChartData")')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Kilo Grafiði
+                        new Chart(document.getElementById('weightChart'), {
+                            type: 'line',
+                            data: {
+                                labels: data.labels,
+                                datasets: [{
+                                    label: 'Kilo (kg)',
+                                    data: data.weightData,
+                                    borderColor: 'rgb(13, 110, 253)',
+                                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                                    fill: true,
+                                    tension: 0.3,
+                                    pointRadius: 5,
+                                    pointHoverRadius: 8
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: { display: false }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: false,
+                                        title: { display: true, text: 'Kilo (kg)' }
+                                    }
+                                }
+                            }
+                        });
+
+                        // Boy Grafiði
+                        new Chart(document.getElementById('heightChart'), {
+                            type: 'line',
+                            data: {
+                                labels: data.labels,
+                                datasets: [{
+                                    label: 'Boy (cm)',
+                                    data: data.heightData,
+                                    borderColor: 'rgb(13, 202, 240)',
+                                    backgroundColor: 'rgba(13, 202, 240, 0.1)',
+                                    fill: true,
+                                    tension: 0.3,
+                                    pointRadius: 5,
+                                    pointHoverRadius: 8
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: { display: false }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: false,
+                                        title: { display: true, text: 'Boy (cm)' }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                });
+            </text>
+        }
+    </script>
+}

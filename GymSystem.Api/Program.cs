@@ -9,6 +9,7 @@ using GymSystem.Application.Services.Services;
 using GymSystem.Application.Services.Trainers;
 using GymSystem.Application.Services.AI;
 using GymSystem.Application.Services.Membership;
+using GymSystem.Application.Services;
 
 // Common services
 using GymSystem.Common.Helpers;
@@ -17,6 +18,7 @@ using GymSystem.Application.Abstractions.Services.IGemini;
 using Microsoft.AspNetCore.DataProtection;
 using GymSystem.Application.Services.GymLocations.Mappings;
 using GymSystem.Application.Abstractions.Services.IAppointmentService;
+using GymSystem.Application.Abstractions.Services.IBodyMeasurement;
 using GymSystem.Application.Abstractions.Services.IGymLocationService;
 using GymSystem.Application.Abstractions.Services.IMemberService;
 using GymSystem.Application.Abstractions.Services.IMembershipRequestService;
@@ -117,6 +119,9 @@ Console.WriteLine("[ServiceRegistration] ✓ IAIWorkoutPlanService -> AIWorkoutP
 
 builder.Services.AddScoped<IMembershipRequestService, MembershipRequestService>();
 Console.WriteLine("[ServiceRegistration] ✓ IMembershipRequestService -> MembershipRequestService");
+
+builder.Services.AddScoped<IBodyMeasurementService, BodyMeasurementService>();
+Console.WriteLine("[ServiceRegistration] ✓ IBodyMeasurementService -> BodyMeasurementService");
 
 Console.WriteLine("[ServiceRegistration] All application services registered!");
 

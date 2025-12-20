@@ -18,6 +18,7 @@ public class Member : BaseEntity {
     public GymLocation? CurrentGymLocation { get; set; }
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     public ICollection<AIWorkoutPlan> WorkoutPlans { get; set; } = new List<AIWorkoutPlan>();
+    public ICollection<BodyMeasurement> BodyMeasurements { get; set; } = new List<BodyMeasurement>();
 
     // Helper methods
     /// <summary>

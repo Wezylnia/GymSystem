@@ -43,6 +43,12 @@ public static class ApiEndpoints {
     public static string AIWorkoutPlanById(int id) => $"/api/aiworkoutplans/{id}";
     public static string AIWorkoutPlansByMember(int memberId) => $"/api/aiworkoutplans/member/{memberId}";
 
+    // Body Measurements
+    public const string BodyMeasurements = "/api/bodymeasurements";
+    public static string BodyMeasurementById(int id) => $"/api/bodymeasurements/{id}";
+    public static string BodyMeasurementsByMember(int memberId) => $"/api/bodymeasurements/member/{memberId}";
+    public static string BodyMeasurementsChart(int memberId) => $"/api/bodymeasurements/chart/{memberId}";
+
     // Reports
     public const string ReportsPopularServices = "/api/reports/popular-services";
     public const string ReportsAvailableTrainers = "/api/reports/available-trainers";

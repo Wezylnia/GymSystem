@@ -48,8 +48,10 @@ bld/
 **/Migrations/
 
 # appsettings with sensitive data (keep template only)
+**/appsettings.json
 **/appsettings.Development.json
 **/appsettings.Production.json
+!**/appsettings.template.json
 
 # Database files
 *.mdf

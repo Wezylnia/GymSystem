@@ -1,0 +1,127 @@
+@model GymSystem.Mvc.Models.BodyMeasurementViewModel
+
+@{
+    ViewData["Title"] = "Yeni Ölçüm Ekle";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plus-circle"></i> Yeni Ölçüm Ekle
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="MemberId" />
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="MeasurementDate" class="form-label"></label>
+                            <input asp-for="MeasurementDate" type="date" class="form-control" />
+                            <span asp-validation-for="MeasurementDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Height" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="Height" type="number" step="0.1" min="50" max="250" class="form-control" />
+                                    <span class="input-group-text">cm</span>
+                                </div>
+                                <span asp-validation-for="Height" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Weight" class="form-label"></label>
+                                <div class="input-group">
+                                    <input asp-for="Weight" type="number" step="0.1" min="20" max="300" class="form-control" />
+                                    <span class="input-group-text">kg</span>
+                                </div>
+                                <span asp-validation-for="Weight" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Note" class="form-label"></label>
+                            <textarea asp-for="Note" class="form-control" rows="3" 
+                                      placeholder="Örn: Sabah aç karnýna ölçüm yapýldý"></textarea>
+                            <span asp-validation-for="Note" class="text-danger"></span>
+                        </div>
+
+                        <!-- BMI Önizleme -->
+                        <div class="alert alert-info mb-3" id="bmiPreview" style="display: none;">
+                            <i class="fas fa-calculator"></i>
+                            <strong>Tahmini BMI:</strong> <span id="bmiValue">-</span>
+                            <span id="bmiCategory" class="badge ms-2">-</span>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> Kaydet
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Ýptal
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // BMI hesaplama ve önizleme
+        const heightInput = document.getElementById('Height');
+        const weightInput = document.getElementById('Weight');
+        const bmiPreview = document.getElementById('bmiPreview');
+        const bmiValue = document.getElementById('bmiValue');
+        const bmiCategory = document.getElementById('bmiCategory');
+
+        function calculateBMI() {
+            const height = parseFloat(heightInput.value);
+            const weight = parseFloat(weightInput.value);
+
+            if (height > 0 && weight > 0) {
+                const heightM = height / 100;
+                const bmi = weight / (heightM * heightM);
+                
+                bmiValue.textContent = bmi.toFixed(1);
+                bmiPreview.style.display = 'block';
+
+                // Kategori ve renk
+                let category, badgeClass;
+                if (bmi < 18.5) {
+                    category = 'Zayýf';
+                    badgeClass = 'bg-warning';
+                } else if (bmi < 25) {
+                    category = 'Normal';
+                    badgeClass = 'bg-success';
+                } else if (bmi < 30) {
+                    category = 'Fazla Kilolu';
+                    badgeClass = 'bg-warning';
+                } else {
+                    category = 'Obez';
+                    badgeClass = 'bg-danger';
+                }
+
+                bmiCategory.textContent = category;
+                bmiCategory.className = 'badge ms-2 ' + badgeClass;
+            } else {
+                bmiPreview.style.display = 'none';
+            }
+        }
+
+        heightInput.addEventListener('input', calculateBMI);
+        weightInput.addEventListener('input', calculateBMI);
+
+        // Sayfa yüklendiðinde hesapla
+        calculateBMI();
+    </script>
+}
