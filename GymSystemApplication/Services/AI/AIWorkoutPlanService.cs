@@ -61,6 +61,7 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService {
                 dest.AIGeneratedPlan = aiPlanResponse.Data!;
                 dest.AIModel = !string.IsNullOrEmpty(request.PhotoBase64) ? "gemini-2.0-flash-exp-vision" : "gemini-2.0-flash-exp";
                 dest.FutureBodyImageBase64 = futureBodyImage;
+                dest.ImageUrl = request.PhotoBase64; // Kullanıcının yüklediği fotoğraf
             }));
 
             var workoutPlanRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<AIWorkoutPlan>();
@@ -116,6 +117,7 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService {
                 dest.AIGeneratedPlan = aiPlanResponse.Data!;
                 dest.AIModel = !string.IsNullOrEmpty(request.PhotoBase64) ? "gemini-2.0-flash-exp-vision" : "gemini-2.0-flash-exp";
                 dest.FutureBodyImageBase64 = futureBodyImage;
+                dest.ImageUrl = request.PhotoBase64; // Kullanıcının yüklediği fotoğraf
             }));
 
             var dietPlanRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<AIWorkoutPlan>();

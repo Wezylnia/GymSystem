@@ -48,7 +48,10 @@ public class AIWorkoutPlanMapping : IEntityTypeConfiguration<AIWorkoutPlan> {
             .HasColumnType("text");
 
         entity.Property(e => e.ImageUrl)
-            .HasMaxLength(500);
+            .HasColumnType("text"); // Base64 fotoğraf verisi için text tipi
+
+        entity.Property(e => e.FutureBodyImageBase64)
+            .HasColumnType("text"); // AI tarafından oluşturulan görsel için text tipi
 
         entity.Property(e => e.AIModel)
             .HasMaxLength(100);
