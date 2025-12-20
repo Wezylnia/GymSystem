@@ -21,6 +21,10 @@ public class AIWorkoutPlansController : ControllerBase {
         if (request.MemberId <= 0)
             return BadRequest(new { error = "Geçersiz member ID." });
 
+        // Decimal precision fix - 1 ondalık basamak
+        request.Height = Math.Round(request.Height, 1);
+        request.Weight = Math.Round(request.Weight, 1);
+
         var response = await _aiWorkoutPlanService.GenerateWorkoutPlanAsync(request);
 
         if (!response.IsSuccessful)
@@ -34,6 +38,10 @@ public class AIWorkoutPlansController : ControllerBase {
     public async Task<IActionResult> GenerateDietPlan([FromBody] AIWorkoutPlanDto request) {
         if (request.MemberId <= 0)
             return BadRequest(new { error = "Geçersiz member ID." });
+
+        // Decimal precision fix - 1 ondalık basamak
+        request.Height = Math.Round(request.Height, 1);
+        request.Weight = Math.Round(request.Weight, 1);
 
         var response = await _aiWorkoutPlanService.GenerateDietPlanAsync(request);
 

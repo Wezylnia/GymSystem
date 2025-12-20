@@ -89,12 +89,46 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+        // Virgülden sonra sadece 1 basamak girilmesini saðla
+        function limitDecimalPlaces(input) {
+            input.addEventListener('input', function(e) {
+                let value = e.target.value;
+
+                // Virgül veya nokta kontrolü
+                if (value.includes('.') || value.includes(',')) {
+                    // Noktayý standart yap
+                    value = value.replace(',', '.');
+
+                    const parts = value.split('.');
+                    if (parts[1] && parts[1].length > 1) {
+                        // 1 basamaktan fazla varsa kes
+                        e.target.value = parts[0] + '.' + parts[1].substring(0, 1);
+                    }
+                }
+            });
+
+            // Paste iþleminde de kontrol et
+            input.addEventListener('paste', function(e) {
+                setTimeout(() => {
+                    let value = e.target.value.replace(',', '.');
+                    const parts = value.split('.');
+                    if (parts[1] && parts[1].length > 1) {
+                        e.target.value = parts[0] + '.' + parts[1].substring(0, 1);
+                    }
+                }, 0);
+            });
+        }
+
         // BMI hesaplama ve önizleme
         const heightInput = document.getElementById('Height');
         const weightInput = document.getElementById('Weight');
         const bmiPreview = document.getElementById('bmiPreview');
         const bmiValue = document.getElementById('bmiValue');
         const bmiCategory = document.getElementById('bmiCategory');
+
+        // Boy ve kilo inputlarýna decimal sýnýrlamasý uygula
+        limitDecimalPlaces(heightInput);
+        limitDecimalPlaces(weightInput);
 
         function calculateBMI() {
             const height = parseFloat(heightInput.value);
@@ -103,7 +137,7 @@
             if (height > 0 && weight > 0) {
                 const heightM = height / 100;
                 const bmi = weight / (heightM * heightM);
-                
+
                 bmiValue.textContent = bmi.toFixed(1);
 
                 // Kategori ve renk

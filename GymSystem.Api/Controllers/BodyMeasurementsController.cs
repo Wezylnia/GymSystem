@@ -61,6 +61,10 @@ public class BodyMeasurementsController : ControllerBase {
         if (dto.Height <= 0 || dto.Weight <= 0)
             return BadRequest(new { error = "Boy ve kilo deðerleri sýfýrdan büyük olmalýdýr." });
 
+        // Decimal precision fix - 1 ondalýk basamak
+        dto.Height = Math.Round(dto.Height, 1);
+        dto.Weight = Math.Round(dto.Weight, 1);
+
         var response = await _measurementService.CreateAsync(dto);
 
         if (!response.IsSuccessful)
@@ -80,6 +84,10 @@ public class BodyMeasurementsController : ControllerBase {
 
         if (dto.Height <= 0 || dto.Weight <= 0)
             return BadRequest(new { error = "Boy ve kilo deðerleri sýfýrdan büyük olmalýdýr." });
+
+        // Decimal precision fix - 1 ondalýk basamak
+        dto.Height = Math.Round(dto.Height, 1);
+        dto.Weight = Math.Round(dto.Weight, 1);
 
         var response = await _measurementService.UpdateAsync(dto);
 
