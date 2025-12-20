@@ -18,4 +18,9 @@ public interface IGeminiApiService {
     /// Gemini Vision API ile fotoğraf analizi yapar
     /// </summary>
     Task<ServiceResponse<string>> AnalyzeBodyPhotoAsync(AIWorkoutPlanDto request);
+
+    /// <summary>
+    /// Gemini Imagen API ile 6 ay sonraki hedef vücut görselini oluşturur
+    /// </summary>
+    Task<ServiceResponse<string>> GenerateFutureBodyImageAsync(AIWorkoutPlanDto request);
 }

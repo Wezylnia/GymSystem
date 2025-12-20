@@ -1,5 +1,6 @@
 ﻿using GymSystem.Application.Abstractions.Services.IAIWorkoutPlan.Contract;
 using GymSystem.Application.Abstractions.Services.IGemini;
+using GymSystem.Application.Services.AI.Helpers;
 using GymSystem.Common.Factory.Managers;
 using GymSystem.Common.Helpers;
 using GymSystem.Common.Models;
@@ -17,6 +18,8 @@ public class GeminiApiService : IGeminiApiService {
     private readonly HttpClient _httpClient;
     private readonly string _apiKey;
     private const string API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
+    private const string GEMINI_TEXT_MODEL = "gemini-2.0-flash-exp"; // Text generation
+    private const string GEMINI_IMAGE_MODEL = "gemini-2.5-flash-image"; // Image generation
 
     public GeminiApiService(BaseFactory<GeminiApiService> baseFactory, IHttpClientFactory httpClientFactory, IConfiguration configuration) {
         _baseFactory = baseFactory;
@@ -28,11 +31,7 @@ public class GeminiApiService : IGeminiApiService {
 
     public async Task<ServiceResponse<string>> GenerateWorkoutPlanAsync(AIWorkoutPlanDto request) {
         try {
-            var prompt = BuildWorkoutPrompt(request.Height, request.Weight, request.Gender, request.BodyType, request.Goal);
-
-            if (!string.IsNullOrEmpty(request.PhotoBase64))
-                return await GenerateWithVisionAsync(prompt, request.PhotoBase64);
-
+            var prompt = GeminiPromptHelper.BuildWorkoutPrompt(request.Height, request.Weight, request.Gender, request.BodyType, request.Goal);
             return await GenerateTextAsync(prompt);
         }
         catch (Exception ex) {
@@ -43,11 +42,7 @@ public class GeminiApiService : IGeminiApiService {
 
     public async Task<ServiceResponse<string>> GenerateDietPlanAsync(AIWorkoutPlanDto request) {
         try {
-            var prompt = BuildDietPrompt(request.Height, request.Weight, request.Gender, request.BodyType, request.Goal);
-
-            if (!string.IsNullOrEmpty(request.PhotoBase64))
-                return await GenerateWithVisionAsync(prompt, request.PhotoBase64);
-
+            var prompt = GeminiPromptHelper.BuildDietPrompt(request.Height, request.Weight, request.Gender, request.BodyType, request.Goal);
             return await GenerateTextAsync(prompt);
         }
         catch (Exception ex) {
@@ -58,25 +53,10 @@ public class GeminiApiService : IGeminiApiService {
 
     public async Task<ServiceResponse<string>> AnalyzeBodyPhotoAsync(AIWorkoutPlanDto request) {
         try {
-            var genderText = request.Gender == Domain.Enums.Gender.Female ? "Kadın" : "Erkek";
-            var prompt = $@"Bu fotoğraftaki kişinin fiziksel durumunu analiz et.
-Kişi Bilgileri:
-- Cinsiyet: {genderText}
-- Boy: {request.Height} cm
-- Kilo: {request.Weight} kg
-- Hedef: {request.Goal}
-
-Lütfen şu bilgileri ver:
-1. Vücut tipi analizi (ectomorph/mesomorph/endomorph)
-2. Güncel fiziksel durum değerlendirmesi
-3. Hedefine ulaşmak için öneriler
-4. Tahmini hedefe ulaşma süresi
-
-Türkçe olarak detaylı bir analiz yap.";
-
             if (string.IsNullOrEmpty(request.PhotoBase64))
                 return _responseHelper.SetError<string>(null, "Fotoğraf analizi için fotoğraf gereklidir", 400, "GEMINI_ANALYSIS_002");
 
+            var prompt = GeminiPromptHelper.BuildBodyAnalysisPrompt(request.Height, request.Weight, request.Gender, request.Goal);
             return await GenerateWithVisionAsync(prompt, request.PhotoBase64);
         }
         catch (Exception ex) {
@@ -86,7 +66,7 @@ Türkçe olarak detaylı bir analiz yap.";
     }
 
     private async Task<ServiceResponse<string>> GenerateTextAsync(string prompt) {
-        var url = $"{API_BASE_URL}/models/gemini-2.0-flash-exp:generateContent";
+        var url = $"{API_BASE_URL}/models/{GEMINI_TEXT_MODEL}:generateContent";
 
         var requestBody = new {
             contents = new[] { new { parts = new[] { new { text = prompt } } } },
@@ -94,7 +74,7 @@ Türkçe olarak detaylı bir analiz yap.";
         };
 
         try {
-            _logger.LogInformation("Gemini API'ye istek gönderiliyor: {Url}", url);
+            _logger.LogInformation("Gemini Text API'ye istek gönderiliyor: {Model}", GEMINI_TEXT_MODEL);
 
             var request = new HttpRequestMessage(HttpMethod.Post, url);
             request.Headers.Add("x-goog-api-key", _apiKey);
@@ -125,7 +105,7 @@ Türkçe olarak detaylı bir analiz yap.";
     }
 
     private async Task<ServiceResponse<string>> GenerateWithVisionAsync(string prompt, string photoBase64) {
-        var url = $"{API_BASE_URL}/models/gemini-2.0-flash-exp:generateContent";
+        var url = $"{API_BASE_URL}/models/{GEMINI_TEXT_MODEL}:generateContent";
 
         var base64Data = photoBase64.Contains(",") ? photoBase64.Split(',')[1] : photoBase64;
 
@@ -135,7 +115,7 @@ Türkçe olarak detaylı bir analiz yap.";
         };
 
         try {
-            _logger.LogInformation("Gemini Vision API'ye istek gönderiliyor: {Url}", url);
+            _logger.LogInformation("Gemini Vision API'ye istek gönderiliyor: {Model}", GEMINI_TEXT_MODEL);
 
             var request = new HttpRequestMessage(HttpMethod.Post, url);
             request.Headers.Add("x-goog-api-key", _apiKey);
@@ -165,128 +145,91 @@ Türkçe olarak detaylı bir analiz yap.";
         }
     }
 
-    private string BuildWorkoutPrompt(decimal height, decimal weight, Domain.Enums.Gender gender, string? bodyType, string goal) {
-        var bmi = weight / ((height / 100) * (height / 100));
-        var genderText = gender == Domain.Enums.Gender.Female ? "Kadın" : "Erkek";
-
-        return $@"Sen bir fitness koçusun. Aşağıdaki bilgilere göre KISA ve ÖZ bir haftalık egzersiz planı oluştur.
-
-Bilgiler:
-- Cinsiyet: {genderText}
-- Boy: {height} cm, Kilo: {weight} kg, BMI: {bmi:F2}
-- Vücut Tipi: {bodyType ?? "Belirtilmemiş"}
-- Hedef: {goal}
-
-ÖNEMLİ: Cinsiyete uygun egzersizler seç. {(gender == Domain.Enums.Gender.Female ? "Kadınlar için özellikle alt vücut, kalça ve bacak egzersizlerine odaklan. Ağırlıkları kadınlar için uygun seç." : "Erkekler için göğüs, omuz ve kol egzersizlerine ağırlık ver. Daha yüksek ağırlıklarla çalışılabilir.")}
-
-SADECE ŞU FORMATTA YAZ (gereksiz açıklama yapma):
-
-📊 DURUM ANALİZİ
-BMI: {bmi:F2} - [değerlendirme 1 cümle]
-
-💪 HAFTALIK EGZERSİZ PLANI
-
-PAZARTESİ - [Kas Grubu]
-• Egzersiz 1: 3x12
-• Egzersiz 2: 3x12
-• Egzersiz 3: 3x10
-
-SALI - [Kas Grubu]
-• Egzersiz 1: 3x12
-• Egzersiz 2: 3x12
-
-ÇARŞAMBA - Dinlenme
-
-PERŞEMBE - [Kas Grubu]
-• Egzersiz 1: 3x12
-• Egzersiz 2: 3x12
-
-CUMA - [Kas Grubu]
-• Egzersiz 1: 3x12
-• Egzersiz 2: 3x12
-
-CUMARTESİ - Cardio veya Dinlenme
-
-PAZAR - Dinlenme
-
-🍎 BESLENME ÖNERİSİ
-Günlük kalori: [miktar] kcal
-Protein: [miktar]g | Karbonhidrat: [miktar]g | Yağ: [miktar]g
-
-⚠️ ÖNEMLİ NOTLAR
-• [Not 1]
-• [Not 2]
-
-Türkçe yaz. Kısa ve net ol. Gereksiz açıklama yapma!";
+    public async Task<ServiceResponse<string>> GenerateFutureBodyImageAsync(AIWorkoutPlanDto request) {
+        try {
+            var prompt = GeminiPromptHelper.BuildFutureBodyImagePrompt(request.Gender, request.Goal);
+            return await GenerateImageAsync(prompt);
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Hedef vücut görseli oluşturulurken hata oluştu");
+            return _responseHelper.SetError<string>(null, new ErrorInfo("Hedef vücut görseli oluşturulamadı", "GEMINI_IMAGE_002", ex.StackTrace, 500));
+        }
     }
 
-    private string BuildDietPrompt(decimal height, decimal weight, Domain.Enums.Gender gender, string? bodyType, string goal) {
-        var bmi = weight / ((height / 100) * (height / 100));
-        var genderText = gender == Domain.Enums.Gender.Female ? "Kadın" : "Erkek";
+    private async Task<ServiceResponse<string>> GenerateImageAsync(string prompt) {
+        // Gemini 2.5 Flash Image Generation
+        var url = $"{API_BASE_URL}/models/{GEMINI_IMAGE_MODEL}:generateContent";
 
-        return $@"Sen bir beslenme uzmanısın. Aşağıdaki bilgilere göre KISA ve ÖZ bir haftalık diyet planı oluştur.
+        var requestBody = new {
+            contents = new[] {
+                new {
+                    parts = new[] {
+                        new { text = prompt }
+                    }
+                }
+            },
+            generationConfig = new {
+                responseModalities = new[] { "image", "text" }
+            }
+        };
 
-Bilgiler:
-- Cinsiyet: {genderText}
-- Boy: {height} cm, Kilo: {weight} kg, BMI: {bmi:F2}
-- Vücut Tipi: {bodyType ?? "Belirtilmemiş"}
-- Hedef: {goal}
+        try {
+            _logger.LogInformation("Gemini Image API'ye istek gönderiliyor: {Model}, Prompt: {Prompt}", GEMINI_IMAGE_MODEL, prompt);
 
-ÖNEMLİ: Cinsiyete uygun kalori ve makro besin hesapla. {(gender == Domain.Enums.Gender.Female ? "Kadınlar için genelde 1500-2000 kcal aralığında, demir ve kalsiyum içeren besinlere odaklan." : "Erkekler için genelde 2000-2500 kcal aralığında, protein ağırlıklı beslenme öner.")}
+            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Headers.Add("x-goog-api-key", _apiKey);
+            request.Content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
 
-SADECE ŞU FORMATTA YAZ (gereksiz açıklama yapma):
+            var response = await _httpClient.SendAsync(request);
+            var result = await response.Content.ReadAsStringAsync();
 
-📊 BESİN ANALİZİ
-Günlük kalori: [miktar] kcal
-Protein: [miktar]g | Karbonhidrat: [miktar]g | Yağ: [miktar]g
+            _logger.LogInformation("Gemini Image API yanıtı: {StatusCode}, Response length: {Length}", response.StatusCode, result.Length);
 
-🍽️ HAFTALIK DİYET PLANI
+            if (!response.IsSuccessStatusCode) {
+                _logger.LogError("Gemini Image API hatası: {Status} - {Content}", response.StatusCode, result);
+                return _responseHelper.SetError<string>(null, $"Görsel oluşturma hatası: {response.StatusCode}", (int)response.StatusCode, "GEMINI_IMAGE_API_ERROR");
+            }
 
-PAZARTESİ
-Kahvaltı: [yiyecek] - [kalori]kcal
-Öğle: [yiyecek] - [kalori]kcal
-Akşam: [yiyecek] - [kalori]kcal
+            var jsonDoc = JsonDocument.Parse(result);
 
-SALI
-Kahvaltı: [yiyecek] - [kalori]kcal
-Öğle: [yiyecek] - [kalori]kcal
-Akşam: [yiyecek] - [kalori]kcal
+            // Candidates kontrolü
+            if (jsonDoc.RootElement.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0) {
+                var candidate = candidates[0];
 
-ÇARŞAMBA
-Kahvaltı: [yiyecek] - [kalori]kcal
-Öğle: [yiyecek] - [kalori]kcal
-Akşam: [yiyecek] - [kalori]kcal
+                // Safety check
+                if (candidate.TryGetProperty("finishReason", out var finishReason)) {
+                    var reason = finishReason.GetString();
+                    if (reason == "IMAGE_SAFETY" || reason == "SAFETY") {
+                        _logger.LogWarning("Görsel güvenlik nedeniyle engellendi: {Reason}", reason);
+                        return _responseHelper.SetError<string>(null, "Görsel oluşturulamadı. Lütfen tekrar deneyin.", 400, "GEMINI_SAFETY_BLOCK");
+                    }
+                }
 
-PERŞEMBE
-Kahvaltı: [yiyecek] - [kalori]kcal
-Öğle: [yiyecek] - [kalori]kcal
-Akşam: [yiyecek] - [kalori]kcal
+                if (candidate.TryGetProperty("content", out var content)) {
+                    var parts = content.GetProperty("parts");
 
-CUMA
-Kahvaltı: [yiyecek] - [kalori]kcal
-Öğle: [yiyecek] - [kalori]kcal
-Akşam: [yiyecek] - [kalori]kcal
+                    // Önce inlineData (görsel) ara
+                    foreach (var part in parts.EnumerateArray()) {
+                        if (part.TryGetProperty("inlineData", out var inlineData)) {
+                            var mimeType = inlineData.GetProperty("mimeType").GetString();
+                            var imageData = inlineData.GetProperty("data").GetString();
 
-CUMARTESİ
-Kahvaltı: [yiyecek] - [kalori]kcal
-Öğle: [yiyecek] - [kalori]kcal
-Akşam: [yiyecek] - [kalori]kcal
+                            if (!string.IsNullOrEmpty(imageData)) {
+                                var fullBase64 = $"data:{mimeType};base64,{imageData}";
+                                _logger.LogInformation("Gemini ile görsel başarıyla oluşturuldu");
+                                return _responseHelper.SetSuccess<string>(fullBase64);
+                            }
+                        }
+                    }
+                }
+            }
 
-PAZAR
-Kahvaltı: [yiyecek] - [kalori]kcal
-Öğle: [yiyecek] - [kalori]kcal
-Akşam: [yiyecek] - [kalori]kcal
-
-💊 SUPPLEMENT
-• [takviye 1]
-• [takviye 2]
-
-💧 SU: Günde en az 2.5 litre
-
-⚠️ ÖNEMLİ NOTLAR
-• [Not 1]
-• [Not 2]
-
-Türkçe yaz. Kısa ve net ol. Gereksiz açıklama yapma!";
+            _logger.LogWarning("Görsel oluşturulamadı, tam yanıt: {Result}", result.Length > 2000 ? result.Substring(0, 2000) : result);
+            return _responseHelper.SetError<string>(null, "AI görsel oluşturamadı. Lütfen tekrar deneyin.", 500, "GEMINI_NO_IMAGE");
+        }
+        catch (Exception ex) {
+            _logger.LogError(ex, "Gemini Image API çağrısında hata oluştu");
+            return _responseHelper.SetError<string>(null, new ErrorInfo("Görsel oluşturma hatası", "GEMINI_IMAGE_REQUEST_ERROR", ex.StackTrace, 500));
+        }
     }
 }

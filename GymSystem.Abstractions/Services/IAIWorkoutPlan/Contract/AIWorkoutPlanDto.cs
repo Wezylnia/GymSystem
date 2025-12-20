@@ -23,8 +23,9 @@ public class AIWorkoutPlanDto {
     // AI Generated Content
     public string? AIGeneratedPlan { get; set; }
     public string? AIModel { get; set; }
-    public string? PhotoBase64 { get; set; } // Request için
-    public string? ImageUrl { get; set; } // Response için
+    public string? PhotoBase64 { get; set; } // Request için (giriş fotoğrafı)
+    public string? ImageUrl { get; set; } // Response için (giriş fotoğrafı URL)
+    public string? FutureBodyImageBase64 { get; set; } // AI tarafından oluşturulan 6 ay sonraki hedef görsel
 
     // Metadata
     public bool IsActive { get; set; }

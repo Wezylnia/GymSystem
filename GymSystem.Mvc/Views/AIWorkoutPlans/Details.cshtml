@@ -83,15 +83,46 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <small class="text-muted">
-                            <i class="fas fa-brain"></i> AI Model: <strong>@Model.AIModel</strong>
-                        </small>
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    <i class="fas fa-brain"></i> AI Model: <strong>@Model.AIModel</strong>
+                                </small>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="card shadow mt-4">
+                    @if (!string.IsNullOrEmpty(Model.FutureBodyImageBase64))
+                    {
+                        <div class="card shadow mt-4">
+                            <div class="card-header bg-warning text-dark">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-magic"></i> 6 Ay Sonraki Hedef Görünümünüz
+                                </h4>
+                            </div>
+                            <div class="card-body text-center">
+                                <div class="row">
+                                    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                                    {
+                                        <div class="col-md-6 mb-3">
+                                            <h5 class="text-muted mb-3"><i class="fas fa-user"></i> Şu Anki Görünüm</h5>
+                                            <img src="@Model.ImageUrl" alt="Mevcut Fotoğraf" class="img-fluid rounded shadow" style="max-height: 400px;" />
+                                        </div>
+                                    }
+                                    <div class="col-md-@(!string.IsNullOrEmpty(Model.ImageUrl) ? "6" : "12") mb-3">
+                                        <h5 class="text-success mb-3"><i class="fas fa-star"></i> 6 Ay Sonra (Hedef)</h5>
+                                        <img src="@Model.FutureBodyImageBase64" alt="6 Ay Sonraki Hedef Görünüm" class="img-fluid rounded shadow" style="max-height: 400px;" />
+                                    </div>
+                                </div>
+                                <div class="alert alert-success mt-3">
+                                    <i class="fas fa-info-circle"></i> 
+                                    <strong>Bu görsel AI tarafından oluşturulmuştur.</strong> 
+                                    Düzenli egzersiz ve sağlıklı beslenme ile bu hedefe ulaşabilirsiniz!
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="card shadow mt-4">
                 <div class="card-header @(Model.PlanType == "Workout" ? "bg-primary" : "bg-success") text-white">
                     <h4 class="mb-0">
                         <i class="fas fa-file-alt"></i> AI Tarafından Oluşturulan Plan

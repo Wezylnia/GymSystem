@@ -43,10 +43,24 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService {
                 return _responseHelper.SetError<AIWorkoutPlanDto>(null, aiPlanResponse.Error?.ErrorMessage ?? "AI planı oluşturulamadı", aiPlanResponse.Error?.StatusCode ?? 500, aiPlanResponse.Error?.ErrorCode ?? "AI_WORKOUT_002");
             }
 
+            // Fotoğraf varsa 6 ay sonraki hedef görselini oluştur
+            string? futureBodyImage = null;
+            if (!string.IsNullOrEmpty(request.PhotoBase64)) {
+                _logger.LogInformation("Fotoğraf mevcut, 6 ay sonraki hedef görsel oluşturuluyor...");
+                var futureImageResponse = await geminiService.GenerateFutureBodyImageAsync(request);
+                if (futureImageResponse.IsSuccessful && !string.IsNullOrEmpty(futureImageResponse.Data)) {
+                    futureBodyImage = futureImageResponse.Data;
+                    _logger.LogInformation("6 ay sonraki hedef görsel başarıyla oluşturuldu");
+                } else {
+                    _logger.LogWarning("6 ay sonraki hedef görsel oluşturulamadı: {Error}", futureImageResponse.Error?.ErrorMessage);
+                }
+            }
+
             var workoutPlan = _mapper.Map<AIWorkoutPlan>(request, opts => opts.AfterMap((src, dest) => {
                 dest.PlanType = "Workout";
                 dest.AIGeneratedPlan = aiPlanResponse.Data!;
                 dest.AIModel = !string.IsNullOrEmpty(request.PhotoBase64) ? "gemini-2.0-flash-exp-vision" : "gemini-2.0-flash-exp";
+                dest.FutureBodyImageBase64 = futureBodyImage;
             }));
 
             var workoutPlanRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<AIWorkoutPlan>();
@@ -56,6 +70,7 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService {
             _logger.LogInformation("Workout planı oluşturuldu. Member ID: {MemberId}, Plan ID: {PlanId}", request.MemberId, workoutPlan.Id);
 
             var responseDto = _mapper.Map<AIWorkoutPlanDto>(workoutPlan);
+            responseDto.FutureBodyImageBase64 = futureBodyImage;
             return _responseHelper.SetSuccess(responseDto, "Workout planı başarıyla oluşturuldu");
         }
         catch (Exception ex) {
@@ -83,10 +98,24 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService {
                 return _responseHelper.SetError<AIWorkoutPlanDto>(null, aiPlanResponse.Error?.ErrorMessage ?? "AI diet planı oluşturulamadı", aiPlanResponse.Error?.StatusCode ?? 500, aiPlanResponse.Error?.ErrorCode ?? "AI_DIET_002");
             }
 
+            // Fotoğraf varsa 6 ay sonraki hedef görselini oluştur
+            string? futureBodyImage = null;
+            if (!string.IsNullOrEmpty(request.PhotoBase64)) {
+                _logger.LogInformation("Fotoğraf mevcut, 6 ay sonraki hedef görsel oluşturuluyor...");
+                var futureImageResponse = await geminiService.GenerateFutureBodyImageAsync(request);
+                if (futureImageResponse.IsSuccessful && !string.IsNullOrEmpty(futureImageResponse.Data)) {
+                    futureBodyImage = futureImageResponse.Data;
+                    _logger.LogInformation("6 ay sonraki hedef görsel başarıyla oluşturuldu");
+                } else {
+                    _logger.LogWarning("6 ay sonraki hedef görsel oluşturulamadı: {Error}", futureImageResponse.Error?.ErrorMessage);
+                }
+            }
+
             var dietPlan = _mapper.Map<AIWorkoutPlan>(request, opts => opts.AfterMap((src, dest) => {
                 dest.PlanType = "Diet";
                 dest.AIGeneratedPlan = aiPlanResponse.Data!;
                 dest.AIModel = !string.IsNullOrEmpty(request.PhotoBase64) ? "gemini-2.0-flash-exp-vision" : "gemini-2.0-flash-exp";
+                dest.FutureBodyImageBase64 = futureBodyImage;
             }));
 
             var dietPlanRepository = _baseFactory.CreateRepositoryFactory().CreateRepository<AIWorkoutPlan>();
@@ -96,6 +125,7 @@ public class AIWorkoutPlanService : IAIWorkoutPlanService {
             _logger.LogInformation("Diet planı oluşturuldu. Member ID: {MemberId}, Plan ID: {PlanId}", request.MemberId, dietPlan.Id);
 
             var responseDto = _mapper.Map<AIWorkoutPlanDto>(dietPlan);
+            responseDto.FutureBodyImageBase64 = futureBodyImage;
             return _responseHelper.SetSuccess(responseDto, "Diet planı başarıyla oluşturuldu");
         }
         catch (Exception ex) {

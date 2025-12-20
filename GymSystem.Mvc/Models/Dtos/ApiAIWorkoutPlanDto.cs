@@ -13,6 +13,7 @@ public class ApiAIWorkoutPlanDto {
     public string Goal { get; set; } = string.Empty;
     public string AIGeneratedPlan { get; set; } = string.Empty;
     public string? ImageUrl { get; set; }
+    public string? FutureBodyImageBase64 { get; set; } // AI tarafından oluşturulan 6 ay sonraki hedef görsel
     public string? AIModel { get; set; }
     public DateTime CreatedAt { get; set; }
 

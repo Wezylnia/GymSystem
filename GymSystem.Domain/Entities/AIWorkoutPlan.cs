@@ -18,7 +18,8 @@ public class AIWorkoutPlan : BaseEntity {
 
     // AI output
     public string AIGeneratedPlan { get; set; } = string.Empty; // AI'dan gelen plan metni
-    public string? ImageUrl { get; set; } // DALL-E ile oluşturulan görsel URL'i
+    public string? ImageUrl { get; set; } // Kullanıcının yüklediği fotoğraf URL'i
+    public string? FutureBodyImageBase64 { get; set; } // AI tarafından oluşturulan 6 ay sonraki hedef görsel (base64)
     public string? AIModel { get; set; } // Kullanılan AI modeli (örn: gpt-4, dall-e-3)
 
     // Navigation properties
