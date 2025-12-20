@@ -19,7 +19,7 @@ public class GeminiApiService : IGeminiApiService {
     private readonly string _apiKey;
     private const string API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
     private const string GEMINI_TEXT_MODEL = "gemini-2.0-flash-exp"; // Text generation
-    private const string GEMINI_IMAGE_MODEL = "gemini-2.5-flash-image"; // Image generation
+    private const string GEMINI_IMAGE_MODEL = "gemini-2.0-flash-exp-image-generation"; // Image generation with editing
 
     public GeminiApiService(BaseFactory<GeminiApiService> baseFactory, IHttpClientFactory httpClientFactory, IConfiguration configuration) {
         _baseFactory = baseFactory;
@@ -145,91 +145,121 @@ public class GeminiApiService : IGeminiApiService {
         }
     }
 
-    public async Task<ServiceResponse<string>> GenerateFutureBodyImageAsync(AIWorkoutPlanDto request) {
-        try {
-            var prompt = GeminiPromptHelper.BuildFutureBodyImagePrompt(request.Gender, request.Goal);
-            return await GenerateImageAsync(prompt);
+        public async Task<ServiceResponse<string>> GenerateFutureBodyImageAsync(AIWorkoutPlanDto request) {
+            try {
+                var hasPhoto = !string.IsNullOrEmpty(request.PhotoBase64);
+                var prompt = GeminiPromptHelper.BuildFutureBodyImagePrompt(request.Gender, request.Goal, hasPhoto);
+                return await GenerateImageAsync(prompt, request.PhotoBase64);
+            }
+            catch (Exception ex) {
+                _logger.LogError(ex, "Hedef vücut görseli oluşturulurken hata oluştu");
+                return _responseHelper.SetError<string>(null, new ErrorInfo("Hedef vücut görseli oluşturulamadı", "GEMINI_IMAGE_002", ex.StackTrace, 500));
+            }
         }
-        catch (Exception ex) {
-            _logger.LogError(ex, "Hedef vücut görseli oluşturulurken hata oluştu");
-            return _responseHelper.SetError<string>(null, new ErrorInfo("Hedef vücut görseli oluşturulamadı", "GEMINI_IMAGE_002", ex.StackTrace, 500));
-        }
-    }
 
-    private async Task<ServiceResponse<string>> GenerateImageAsync(string prompt) {
-        // Gemini 2.5 Flash Image Generation
-        var url = $"{API_BASE_URL}/models/{GEMINI_IMAGE_MODEL}:generateContent";
+            private async Task<ServiceResponse<string>> GenerateImageAsync(string prompt, string? photoBase64 = null) {
+                // Gemini 2.0 Flash Image Generation with editing
+                var url = $"{API_BASE_URL}/models/{GEMINI_IMAGE_MODEL}:generateContent";
 
-        var requestBody = new {
-            contents = new[] {
-                new {
-                    parts = new[] {
-                        new { text = prompt }
-                    }
+                object requestBody;
+
+                if (!string.IsNullOrEmpty(photoBase64)) {
+                    // Fotoğraf varsa, fotoğrafı düzenle
+                    var base64Data = photoBase64.Contains(",") ? photoBase64.Split(',')[1] : photoBase64;
+
+                    requestBody = new {
+                        contents = new[] {
+                            new {
+                                parts = new object[] {
+                                    new { text = prompt },
+                                    new { inline_data = new { mime_type = "image/jpeg", data = base64Data } }
+                                }
+                            }
+                        },
+                        generationConfig = new {
+                            responseModalities = new[] { "image", "text" }
+                        }
+                    };
                 }
-            },
-            generationConfig = new {
-                responseModalities = new[] { "image", "text" }
-            }
-        };
-
-        try {
-            _logger.LogInformation("Gemini Image API'ye istek gönderiliyor: {Model}, Prompt: {Prompt}", GEMINI_IMAGE_MODEL, prompt);
-
-            var request = new HttpRequestMessage(HttpMethod.Post, url);
-            request.Headers.Add("x-goog-api-key", _apiKey);
-            request.Content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-
-            var response = await _httpClient.SendAsync(request);
-            var result = await response.Content.ReadAsStringAsync();
-
-            _logger.LogInformation("Gemini Image API yanıtı: {StatusCode}, Response length: {Length}", response.StatusCode, result.Length);
-
-            if (!response.IsSuccessStatusCode) {
-                _logger.LogError("Gemini Image API hatası: {Status} - {Content}", response.StatusCode, result);
-                return _responseHelper.SetError<string>(null, $"Görsel oluşturma hatası: {response.StatusCode}", (int)response.StatusCode, "GEMINI_IMAGE_API_ERROR");
-            }
-
-            var jsonDoc = JsonDocument.Parse(result);
-
-            // Candidates kontrolü
-            if (jsonDoc.RootElement.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0) {
-                var candidate = candidates[0];
-
-                // Safety check
-                if (candidate.TryGetProperty("finishReason", out var finishReason)) {
-                    var reason = finishReason.GetString();
-                    if (reason == "IMAGE_SAFETY" || reason == "SAFETY") {
-                        _logger.LogWarning("Görsel güvenlik nedeniyle engellendi: {Reason}", reason);
-                        return _responseHelper.SetError<string>(null, "Görsel oluşturulamadı. Lütfen tekrar deneyin.", 400, "GEMINI_SAFETY_BLOCK");
-                    }
+                else {
+                    // Fotoğraf yoksa sadece text prompt ile görsel oluştur
+                    requestBody = new {
+                        contents = new[] {
+                            new {
+                                parts = new[] {
+                                    new { text = prompt }
+                                }
+                            }
+                        },
+                        generationConfig = new {
+                            responseModalities = new[] { "image", "text" }
+                        }
+                    };
                 }
 
-                if (candidate.TryGetProperty("content", out var content)) {
-                    var parts = content.GetProperty("parts");
+                try {
+                    _logger.LogInformation("Gemini Image API'ye istek gönderiliyor: {Model}, HasPhoto: {HasPhoto}", GEMINI_IMAGE_MODEL, !string.IsNullOrEmpty(photoBase64));
 
-                    // Önce inlineData (görsel) ara
-                    foreach (var part in parts.EnumerateArray()) {
-                        if (part.TryGetProperty("inlineData", out var inlineData)) {
-                            var mimeType = inlineData.GetProperty("mimeType").GetString();
-                            var imageData = inlineData.GetProperty("data").GetString();
+                    var request = new HttpRequestMessage(HttpMethod.Post, url);
+                    request.Headers.Add("x-goog-api-key", _apiKey);
+                    request.Content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
 
-                            if (!string.IsNullOrEmpty(imageData)) {
-                                var fullBase64 = $"data:{mimeType};base64,{imageData}";
-                                _logger.LogInformation("Gemini ile görsel başarıyla oluşturuldu");
-                                return _responseHelper.SetSuccess<string>(fullBase64);
+                    // Görsel oluşturma uzun sürebilir, 120 saniye timeout
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(120));
+                    var response = await _httpClient.SendAsync(request, cts.Token);
+                    var result = await response.Content.ReadAsStringAsync();
+
+                    _logger.LogInformation("Gemini Image API yanıtı: {StatusCode}, Response length: {Length}", response.StatusCode, result.Length);
+
+                    if (!response.IsSuccessStatusCode) {
+                        _logger.LogError("Gemini Image API hatası: {Status} - {Content}", response.StatusCode, result);
+                        return _responseHelper.SetError<string>(null, $"Görsel oluşturma hatası: {response.StatusCode}", (int)response.StatusCode, "GEMINI_IMAGE_API_ERROR");
+                    }
+
+                    var jsonDoc = JsonDocument.Parse(result);
+
+                    // Candidates kontrolü
+                    if (jsonDoc.RootElement.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0) {
+                        var candidate = candidates[0];
+
+                        // Safety check
+                        if (candidate.TryGetProperty("finishReason", out var finishReason)) {
+                            var reason = finishReason.GetString();
+                            if (reason == "IMAGE_SAFETY" || reason == "SAFETY") {
+                                _logger.LogWarning("Görsel güvenlik nedeniyle engellendi: {Reason}", reason);
+                                return _responseHelper.SetError<string>(null, "Görsel oluşturulamadı. Lütfen tekrar deneyin.", 400, "GEMINI_SAFETY_BLOCK");
+                            }
+                        }
+
+                        if (candidate.TryGetProperty("content", out var content)) {
+                            var parts = content.GetProperty("parts");
+
+                            // Önce inlineData (görsel) ara
+                            foreach (var part in parts.EnumerateArray()) {
+                                if (part.TryGetProperty("inlineData", out var inlineData)) {
+                                    var mimeType = inlineData.GetProperty("mimeType").GetString();
+                                    var imageData = inlineData.GetProperty("data").GetString();
+
+                                    if (!string.IsNullOrEmpty(imageData)) {
+                                        var fullBase64 = $"data:{mimeType};base64,{imageData}";
+                                        _logger.LogInformation("Gemini ile görsel başarıyla oluşturuldu");
+                                        return _responseHelper.SetSuccess<string>(fullBase64);
+                                    }
+                                }
                             }
                         }
                     }
+
+                    _logger.LogWarning("Görsel oluşturulamadı, tam yanıt: {Result}", result.Length > 2000 ? result.Substring(0, 2000) : result);
+                    return _responseHelper.SetError<string>(null, "AI görsel oluşturamadı. Lütfen tekrar deneyin.", 500, "GEMINI_NO_IMAGE");
+                }
+                catch (OperationCanceledException) {
+                    _logger.LogWarning("Gemini Image API isteği zaman aşımına uğradı (120 saniye)");
+                    return _responseHelper.SetError<string>(null, "Görsel oluşturma zaman aşımına uğradı. Lütfen tekrar deneyin.", 408, "GEMINI_IMAGE_TIMEOUT");
+                }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Gemini Image API çağrısında hata oluştu");
+                    return _responseHelper.SetError<string>(null, new ErrorInfo("Görsel oluşturma hatası", "GEMINI_IMAGE_REQUEST_ERROR", ex.StackTrace, 500));
                 }
             }
-
-            _logger.LogWarning("Görsel oluşturulamadı, tam yanıt: {Result}", result.Length > 2000 ? result.Substring(0, 2000) : result);
-            return _responseHelper.SetError<string>(null, "AI görsel oluşturamadı. Lütfen tekrar deneyin.", 500, "GEMINI_NO_IMAGE");
         }
-        catch (Exception ex) {
-            _logger.LogError(ex, "Gemini Image API çağrısında hata oluştu");
-            return _responseHelper.SetError<string>(null, new ErrorInfo("Görsel oluşturma hatası", "GEMINI_IMAGE_REQUEST_ERROR", ex.StackTrace, 500));
-        }
-    }
-}

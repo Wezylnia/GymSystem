@@ -165,21 +165,37 @@ Lütfen þu bilgileri ver:
 Türkçe olarak detaylý bir analiz yap.";
     }
 
-    /// <summary>
-    /// Hedef vücut görseli için prompt oluþturur
-    /// </summary>
-    public static string BuildFutureBodyImagePrompt(Gender gender, string goal) {
-        var goalLower = goal.ToLower();
-        var genderText = gender == Gender.Female ? "30 year old female" : "30 year old male";
+            /// <summary>
+            /// Hedef vücut görseli için prompt oluþturur
+            /// Kullanýcýnýn fotoðrafý varsa düzenleme prompt'u, yoksa genel görsel prompt'u döner
+            /// </summary>
+            public static string BuildFutureBodyImagePrompt(Gender gender, string goal, bool hasPhoto = true) {
+                var goalLower = goal.ToLower();
 
-        if (goalLower.Contains("kas") || goalLower.Contains("muscle") || goalLower.Contains("bulk")) {
-            return $"Generate only an image without any text response. A {genderText} lifting weights at the gym.";
+                if (hasPhoto) {
+                    // Fotoðraf düzenleme prompt'u - sadece görsel, text yok
+                    if (goalLower.Contains("kas") || goalLower.Contains("muscle") || goalLower.Contains("bulk")) {
+                        return "Edit this photo of me to show how I would look after 6 months of regular weight training and muscle building. Keep my face, hair color and general appearance the same, but make my body more muscular and fit. Return ONLY the edited image, no text.";
+                    }
+
+                    if (goalLower.Contains("zayýfla") || goalLower.Contains("kilo ver") || goalLower.Contains("weight loss") || goalLower.Contains("diet")) {
+                        return "Edit this photo of me to show how I would look after 6 months of regular diet and cardio. Keep my face, hair color and general appearance the same, but make my body slimmer and more fit. Return ONLY the edited image, no text.";
+                    }
+
+                    return "Edit this photo of me to show how I would look after 6 months of regular exercise. Keep my face, hair color and general appearance the same, but make my body healthier and more fit. Return ONLY the edited image, no text.";
+                }
+
+                // Fotoðraf yoksa genel görsel oluþtur
+                var genderText = gender == Gender.Female ? "30 year old woman" : "30 year old man";
+
+                if (goalLower.Contains("kas") || goalLower.Contains("muscle") || goalLower.Contains("bulk")) {
+                    return $"Generate ONLY an image with no text response: A fit {genderText} lifting weights at the gym, realistic photo style.";
+                }
+
+                if (goalLower.Contains("zayýfla") || goalLower.Contains("kilo ver") || goalLower.Contains("weight loss") || goalLower.Contains("diet")) {
+                    return $"Generate ONLY an image with no text response: A slim {genderText} jogging in a park, realistic photo style.";
+                }
+
+                return $"Generate ONLY an image with no text response: A healthy {genderText} stretching before workout, realistic photo style.";
+            }
         }
-
-        if (goalLower.Contains("zayýfla") || goalLower.Contains("kilo ver") || goalLower.Contains("weight loss") || goalLower.Contains("diet")) {
-            return $"Generate only an image without any text response. A {genderText} jogging in a park.";
-        }
-
-        return $"Generate only an image without any text response. A {genderText} stretching before workout.";
-    }
-}
